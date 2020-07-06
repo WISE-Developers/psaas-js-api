@@ -1,0 +1,201 @@
+syntax = "proto3";
+
+option java_package = "ca.cwfgm.psaas.proto";
+option java_multiple_files = true;
+option csharp_namespace = "PSaaS_API.NET.Proto";
+
+package psaas.api;
+
+/**
+ * Default values for a selection of job inputs.
+ */
+message JobDefaults {
+    //The default fire growth model options
+    FgmOptions fgmOptions = 1;
+    
+    //The default FBP options
+    FbpOptions fbpOptions = 2;
+
+    //The default FMC options
+    FmcOptions fmcOptions = 3;
+
+    //The default FWI options
+    FwiOptions fwiOptions = 4;
+
+    //Default settings for summary file outputs
+    SummaryFileDefaults summaryFileDefaults = 5;
+
+    //Default settings for vector file metadata
+    VectorFileMetadata vectorFileMetadata = 6;
+
+    /**
+     * Default values for fire growth
+     * model options.
+     */
+    message FgmOptions {
+        //The default maximum timestep during acceleration
+        string maxAccTs = 1;
+
+        //The default distance resolution (m)
+        double distanceResolution = 2;
+
+        //The default perimeter resolution (m)
+        double perimeterResolution = 3;
+
+        //The default minimum spreading ROS
+        double minimumSpreadingRos = 4;
+
+        //The default for whether the simulation should stop when the fire reaches the end of the grid
+        bool stopAtGridEnd = 5;
+
+        //The default for whether the simulation should use breaching
+        bool breaching = 6;
+
+        //The default for whether the simulation should use a dynamic spatial threshold
+        bool dynamicSpatialThreshold = 7;
+
+        //The default for whether the simulation should use spotting
+        bool spotting = 8;
+
+        //The default for whether the simulation should purge non-displayable timesteps
+        bool purgeNonDisplayable = 9;
+
+        //The default for the ignition location tweaking parameter dx
+        double dx = 10;
+
+        //The default for the ignition location tweaking parameter dy
+        double dy = 11;
+
+        //The default for the ignition start time tweaking parameter dt
+        string dt = 12;
+
+        //The defualt for whether the growth percentile should be used
+        bool growthPercentileApplied = 13;
+
+        //The default growth percentile
+        double growthPercentile = 14;
+    }
+
+    /**
+     * Default values for FBP options.
+     */
+    message FbpOptions {
+        //The default for whether wind effects are enabled
+        bool windEffect = 1;
+
+        //The default for whether green-up is enabled
+        bool greenUp = 2;
+
+        //The default for whether terrain effect is enabled
+        bool terrainEffect = 3;
+    }
+
+    /**
+     * Default values for FMC options.
+     */
+    message FmcOptions {
+        //The default elevation where no data exists
+        double noDataElev = 1;
+
+        //The default percent override
+        double percentOverride = 2;
+
+        //The default terrain value
+        bool terrain = 3;
+    }
+
+    /**
+     * Default fire weather index options.
+     */
+    message FwiOptions {
+        //The default for enabling spatial interpolation on FWI values
+        bool fwiSpatialInterpolation = 1;
+
+        //The default for calculating FWI values from spatially interpolated weather
+        bool fwiFromSpatialWeather = 2;
+
+        //The default for applying history to effected FWI values
+        bool historyOnEffectedFwi = 3;
+
+        //The default enabled/disabled state for burning conditions
+        bool burningConditionsOn = 4;
+
+        //The default for enabling temporal interpolation for FWI values
+        bool fwiTemporalInterpolation = 5;
+    }
+
+    /**
+     * Default values for summary file outputs.
+     */
+    message SummaryFileDefaults {
+        //Add a summary of input values to the summary file
+        bool inputSummary = 1;
+
+        //Add the elevation info to the summary file
+        bool elevationInfo = 2;
+
+        //Add the location information to the summary file
+        bool location = 3;
+
+        //Add the grid details to the summary file
+        bool gridInfo = 4;
+
+        //Add the time to execute the simulation to the summary file
+        bool timeToExecute = 5;
+    }
+
+    /**
+     * Detault settings for the metadata stored in vector
+     * file outputs.
+     */
+    message VectorFileMetadata {
+        //The default units to use for perimeter values
+        PerimeterUnit perimeterUnit = 1;
+
+        //The default units to use for area values
+        AreaUnits areaUnits = 2;
+
+        //Add the active perimeter size to the metadata
+        bool activePerimeter = 3;
+
+        //Add the total perimeter to the metadata
+        bool totalPerimeter = 4;
+
+        //Add the fire size to the metadata
+        bool fireSize = 5;
+        
+        //Add the simulation date to the metadata
+        bool simulationDate = 6;
+
+        //Add the ignition name to the metadata
+        bool ignitionName = 7;
+
+        //Add the job name to the metadata
+        bool jobName = 8;
+
+        //Add the scenario name to the metadata
+        bool scenarioName = 9;
+
+        //Add the PSaaS version to the metadata
+        bool psaasVersion = 10;
+
+        enum PerimeterUnit {
+            MILES = 0;
+            KILOMETRES = 1;
+            METRES = 2;
+            FEET = 3;
+            YARDS = 4;
+            CHAIN = 5;
+        }
+
+        enum AreaUnits {
+			ACRES = 0;
+			KILOMETRES_SQUARE = 1;
+			METRES_SQUARE = 2;
+			HECTARES = 3;
+			MILES_SQUARE = 4;
+			FEET_SQUARE = 5;
+			YARDS_SQUARE = 6;
+        }
+    }
+}
