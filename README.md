@@ -22,13 +22,19 @@ This module can be referenced from the package.json for your project. The depend
 Additional ways to reference the module:
 
 1) Directly using the repository URL
-<pre><code><span style="color: rgb(153, 0, 0)">git+https</span><span style="color: #005cc5">://bitbucket.org/psaasredapp/psaas-js-api.git</span></code></pre>
+```
+git+https://bitbucket.org/psaasredapp/psaas-js-api.git
+```
 
 2) Reference a specific commit instead of the head of the repository
-<pre><code><span style="color: rgb(153, 0, 0)">bitbucket</span><span style="color: #005cc5">:psaasredapp/psaas-js-api</span><span style="color: rgb(187, 136, 68)">#85e0660390aab21d32f70fda97438520122de8d9</span></code></pre>
+```
+bitbucket:psaasredapp/psaas-js-api#85e0660390aab21d32f70fda97438520122de8d9
+```
 
 3) Reference a specific tag within the repository
-<pre><code><span style="color: rgb(153, 0, 0)">bitbucket</span><span style="color: #005cc5">:psaasredapp/psaas-js-api</span><span style="color: rgb(187, 136, 68)">#v6.2.5.6_20200609</span></code></pre>
+```
+bitbucket:psaasredapp/psaas-js-api#v6.2.5.6_20200609
+```
 
 The URI fragments shown in 2 and 3 can also be used with the direct URL to the repository shown in 1.
 
