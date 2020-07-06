@@ -35,7 +35,7 @@ class ServerConfiguration {
         try {
             var rootPath;
             try {
-                rootPath = path.dirname(require.resolve("psaas-api/package.json"));
+                rootPath = path.dirname(require.resolve("psaas-js-api/package.json"));
             }
             catch (e2) {
                 //if the package can't be resolved it will throw a MODULE_NOT_FOUND error
@@ -184,7 +184,7 @@ class JobDefaults extends psaasGlobals_1.IPSaaSSerializable {
         let defaults = null;
         var protoPath;
         try {
-            protoPath = path.join(path.dirname(require.resolve("psaas-api/package.json")), "proto");
+            protoPath = path.join(path.dirname(require.resolve("psaas-js-api/package.json")), "proto");
         }
         catch (e) {
             //if the package can't be resolved it will throw a MODULE_NOT_FOUND error

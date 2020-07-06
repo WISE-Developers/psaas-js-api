@@ -42,7 +42,7 @@ const consoleReader = readline.createInterface({
 console.log("Configuring PSaaS Node API");
 var rootPath;
 try {
-    rootPath = path.dirname(require.resolve("psaas-api/package.json"));
+    rootPath = path.dirname(require.resolve("psaas-js-api/package.json"));
 }
 catch (e2) {
     //if the package can't be resolved it will throw a MODULE_NOT_FOUND error
