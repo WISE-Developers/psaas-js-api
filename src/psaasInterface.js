@@ -15,7 +15,7 @@ const net = require("net");
 const psaasGlobals_1 = require("./psaasGlobals");
 class VersionInfo {
 }
-VersionInfo.version_info = '6.2.2.1' /*/vers*/;
+VersionInfo.version_info = '6.2.5.7' /*/vers*/;
 VersionInfo.release_date = 'date' /*/rld*/;
 exports.VersionInfo = VersionInfo;
 var GridFileType;
