@@ -21,6 +21,7 @@ psaas_js_api_1.client.JobManager.setDefaults({
 });
 //the directory of the test files
 let localDir = serverConfig.exampleDirectory;
+let psaasVersion = '6.2.5.6';
 //make sure the local directory has been configured
 if (localDir.includes('@JOBS@')) {
     console.log("The job directory has not been configured. Please edit the job directory before running the example server.");
@@ -34,8 +35,8 @@ if (localDir.includes('@JOBS@')) {
     //set this to the location of the test files folder.
     let prom = new psaas_js_api_1.psaas.PSaaS();
     //add the projection and elevation files as attachments
-    let projContents = fs.readFileSync(localDir + psaas_js_api_1.psaas.VersionInfo.version_info + '/test/elevation.prj', "utf8");
-    let elevContents = fs.readFileSync(localDir + psaas_js_api_1.psaas.VersionInfo.version_info + '/test/elevation.asc', "utf8");
+    let projContents = fs.readFileSync(localDir + psaasVersion + '/test/elevation.prj', "utf8");
+    let elevContents = fs.readFileSync(localDir + psaasVersion + '/test/elevation.asc', "utf8");
     let projAttachment = prom.addAttachment('elevation.prj', projContents);
     let elevAttachment = prom.addAttachment('elevation.asc', elevContents);
     if (!projAttachment || !elevAttachment) {
@@ -44,25 +45,25 @@ if (localDir.includes('@JOBS@')) {
     prom.setProjectionFile('' + projAttachment);
     prom.setElevationFile('' + elevAttachment);
     //add the rest of the files as paths to locations on disk
-    prom.setFuelmapFile(localDir + psaas_js_api_1.psaas.VersionInfo.version_info + '/test/fbp_fuel_type.asc');
-    prom.setLutFile(localDir + psaas_js_api_1.psaas.VersionInfo.version_info + '/test/fbp_lookup_table.lut');
+    prom.setFuelmapFile(localDir + psaasVersion + '/test/fbp_fuel_type.asc');
+    prom.setLutFile(localDir + psaasVersion + '/test/fbp_lookup_table.lut');
     prom.setTimezoneByValue(25); //hard coded to CDT, see example_timezone.js for an example getting the IDs
-    let degree_curing = prom.addGridFile(psaas_js_api_1.psaas.GridFileType.DEGREE_CURING, localDir + psaas_js_api_1.psaas.VersionInfo.version_info + '/test/degree_of_curing.asc', localDir + psaas_js_api_1.psaas.VersionInfo.version_info + '/test/degree_of_curing.prj');
+    let degree_curing = prom.addGridFile(psaas_js_api_1.psaas.GridFileType.DEGREE_CURING, localDir + psaasVersion + '/test/degree_of_curing.asc', localDir + psaasVersion + '/test/degree_of_curing.prj');
     let fuel_patch = prom.addLandscapeFuelPatch("O-1a Matted Grass", "O-1b Standing Grass");
-    let gravel_road = prom.addFileFuelBreak(localDir + psaas_js_api_1.psaas.VersionInfo.version_info + '/test/access_gravel_road.kmz');
+    let gravel_road = prom.addFileFuelBreak(localDir + psaasVersion + '/test/access_gravel_road.kmz');
     gravel_road.setName("Gravel Road");
-    let unimproved_road = prom.addFileFuelBreak(localDir + psaas_js_api_1.psaas.VersionInfo.version_info + '/test/access_unimproved_road.kmz');
+    let unimproved_road = prom.addFileFuelBreak(localDir + psaasVersion + '/test/access_unimproved_road.kmz');
     unimproved_road.setName("Unimproved Road");
-    let river = prom.addFileFuelBreak(localDir + psaas_js_api_1.psaas.VersionInfo.version_info + '/test/hydrology_river.kmz');
+    let river = prom.addFileFuelBreak(localDir + psaasVersion + '/test/hydrology_river.kmz');
     river.setName("Rivers");
-    let stream = prom.addFileFuelBreak(localDir + psaas_js_api_1.psaas.VersionInfo.version_info + '/test/hydrology_stream.kmz');
+    let stream = prom.addFileFuelBreak(localDir + psaasVersion + '/test/hydrology_stream.kmz');
     stream.setName("Streams");
     let ws = prom.addWeatherStation(1483.0, new psaas_js_api_1.globals.LatLon(51.654700, -115.361700));
-    let b3Yaha = ws.addWeatherStream(localDir + psaas_js_api_1.psaas.VersionInfo.version_info + '/test/weather_B3_hourly_Sep25toOct30_2001.txt', 94.0, 17, psaas_js_api_1.psaas.HFFMCMethod.LAWSON, 89.0, 58.0, 482.0, 0.0, "2001-09-25", "2001-10-30");
+    let b3Yaha = ws.addWeatherStream(localDir + psaasVersion + '/test/weather_B3_hourly_Sep25toOct30_2001.txt', 94.0, 17, psaas_js_api_1.psaas.HFFMCMethod.LAWSON, 89.0, 58.0, 482.0, 0.0, "2001-09-25", "2001-10-30");
     let wpatch = prom.addLandscapeWeatherPatch("2001-10-16T13:00:00", "13:00:00", "2001-10-16T21:00:00", "21:00:00");
     wpatch.setWindDirOperation(psaas_js_api_1.psaas.WeatherPatchOperation.PLUS, 10);
     wpatch.setRhOperation(psaas_js_api_1.psaas.WeatherPatchOperation.PLUS, 5);
-    let wpatch2 = prom.addFileWeatherPatch(localDir + psaas_js_api_1.psaas.VersionInfo.version_info + '/test/weather_patch_wd270.kmz', "2001-10-16T13:00:00", "13:00:00", "2001-10-16T21:00:00", "21:00:00");
+    let wpatch2 = prom.addFileWeatherPatch(localDir + psaasVersion + '/test/weather_patch_wd270.kmz', "2001-10-16T13:00:00", "13:00:00", "2001-10-16T21:00:00", "21:00:00");
     wpatch2.setWindDirOperation(psaas_js_api_1.psaas.WeatherPatchOperation.EQUAL, 270);
     //create the ignition points
     let ll1 = new psaas_js_api_1.globals.LatLon(51.65287648142513, -115.4779078053444);
