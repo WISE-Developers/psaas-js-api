@@ -8,13 +8,13 @@ The API documentation can be viewed at [spydmobile.bitbucket.io](https://spydmob
 
 ## Usage
 
-This module can be referenced from the package.json for your project. The dependency name is `psaas-js-api`. There are multiple ways to access the module with the following being the simplest.
+This module can be referenced from the package.json for your project. The dependency name is `psaas-js-api`. There are multiple ways to access the module with the following being the recommended.
 
 ```json
 {
     "name": "test-project",
     "dependencies": {
-        "psaas-js-api": "bitbucket:psaasredapp/psaas-js-api"
+        "psaas-js-api": "bitbucket:psaasredapp/psaas-js-api#v6.2.5.6_20200609"
     }
 }
 ```
@@ -26,14 +26,14 @@ Additional ways to reference the module:
 git+https://bitbucket.org/psaasredapp/psaas-js-api.git
 ```
 
-2) Reference a specific commit instead of the head of the repository
+2) Reference a specific commit instead of a tag
 ```
 bitbucket:psaasredapp/psaas-js-api#85e0660390aab21d32f70fda97438520122de8d9
 ```
 
-3) Reference a specific tag within the repository
+3) Use the head revision of the repository
 ```
-bitbucket:psaasredapp/psaas-js-api#v6.2.5.6_20200609
+bitbucket:psaasredapp/psaas-js-api
 ```
 
 The URI fragments shown in 2 and 3 can also be used with the direct URL to the repository shown in 1.
