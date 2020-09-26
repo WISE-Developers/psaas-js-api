@@ -5,8 +5,11 @@
     "main": "index.js",
     "types": "index.d.ts",
     "author": "Heartland Software Solutions Inc.",
+    "repository": {
+        "type": "git",
+        "url": "bitbucket:psaasredapp/psaas-js-api"
+    },
     "dependencies": {
-        "formidable": "^1.2.1",
         "replace-in-file": "^3.4.4",
         "readline": "^1.3.0",
         "dateformat": "^3.0.0",
@@ -18,12 +21,11 @@
       "postinstall": "node scripts/build_config.js"
     },
     "files": [
-      "index.js",
-      "index.d.ts",
-      "src/**",
-      "proto/**",
-      "config/**",
-      "scripts/**"
+        "index.js",
+        "index.d.ts",
+        "src/**",
+        "proto/**",
+        "config/**",
+        "scripts/**"
     ]
-  }
-  
+}
