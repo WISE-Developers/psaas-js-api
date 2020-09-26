@@ -21,6 +21,7 @@ const net = require("net");
 const protobuf = require("protobufjs");
 const fs = require("fs");
 const path = require("path");
+const npmConf = require("npm-conf");
 const psaasGlobals_1 = require("./psaasGlobals");
 /**
  * Server configuration details. Can be loaded from
@@ -42,23 +43,28 @@ class ServerConfiguration {
                 rootPath = "./";
             }
             var protoPath = path.join(rootPath, "proto");
-            var configPath = jobPath;
-            //use the config.json from the jobs directory if available, otherwise look locally
-            if (configPath == null || configPath.length == 0) {
-                const internalConfigPath = path.join(rootPath, "config", "config.json");
-                const internalConfig = JSON.parse(fs.readFileSync(internalConfigPath, 'utf8'));
-                if (internalConfig.hasOwnProperty("config_path")) {
-                    configPath = internalConfig["config_path"];
-                }
-                else {
-                    configPath = "./";
+            this.configLocation = jobPath;
+            //if the user didn't specify a job directory try loading one from the npm configuration
+            if (this.configLocation == null || this.configLocation.length == 0) {
+                const conf = npmConf();
+                this.configLocation = conf.get('psaas-js-api:job_directory');
+                //use the config.json from the jobs directory if available, otherwise look locally
+                if (this.configLocation == null || this.configLocation.length == 0) {
+                    const internalConfigPath = path.join(rootPath, "config", "config.json");
+                    const internalConfig = JSON.parse(fs.readFileSync(internalConfigPath, 'utf8'));
+                    if (internalConfig.hasOwnProperty("config_path")) {
+                        this.configLocation = internalConfig["config_path"];
+                    }
+                    else {
+                        this.configLocation = "./";
+                    }
                 }
             }
-            configPath = path.join(configPath, "config.json");
-            if (fs.existsSync(configPath)) {
+            this.configLocation = path.join(this.configLocation, "config.json");
+            if (fs.existsSync(this.configLocation)) {
                 let definition = protobuf.loadSync(path.join(protoPath, "psaas_config.proto"));
                 let jobDefaultsDefinition = definition.lookupType("psaas.api.ServerConfiguration");
-                let fileData = fs.readFileSync(configPath, null);
+                let fileData = fs.readFileSync(this.configLocation, null);
                 let config = jobDefaultsDefinition.toObject(JSON.parse(fileData.toString()));
                 this.builderPort = config.builder.port;
                 this.builderAddress = config.builder.hostname;
@@ -88,6 +94,25 @@ class ServerConfiguration {
                 //initial message is invalid
             }
         }
+    }
+    /**
+     * Log the configuration values to the console.
+     */
+    log() {
+        if (this.configLocation != null && fs.existsSync(this.configLocation))
+            console.log(`Reading configuration from "${this.configLocation}".`);
+        else
+            console.log("No configuration file was found.");
+        console.log(`Connecting to PSaaS Builder at ${this.builderAddress}:${this.builderPort}`);
+        if (this.mqttAddress != null && this.mqttAddress.length > 0) {
+            console.log(`Connecting to an MQTT broker at ${this.mqttAddress}:${this.mqttPort} using topic ${this.mqttTopic}.`);
+            if (this.mqttUsername != null && this.mqttPassword != null)
+                console.log("Connecting to MQTT with a username and password.");
+            else if (this.mqttUsername != null)
+                console.log("Connecting to MQTT with an unprotected username.");
+        }
+        if (this.exampleDirectory != null && this.exampleDirectory.length > 0)
+            console.log(`Example data should be located in ${this.exampleDirectory}.`);
     }
 }
 exports.ServerConfiguration = ServerConfiguration;

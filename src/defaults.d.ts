@@ -26,7 +26,12 @@ export declare class ServerConfiguration {
     mqttUsername?: string;
     mqttPassword?: string;
     exampleDirectory: string;
+    private configLocation;
     constructor(jobPath?: string);
+    /**
+     * Log the configuration values to the console.
+     */
+    log(): void;
 }
 export declare class JobDefaults extends IPSaaSSerializable {
     static readonly TYPE_JOBLOCATION: string;

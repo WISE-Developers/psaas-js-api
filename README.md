@@ -40,11 +40,32 @@ The URI fragments shown in 2 and 3 can also be used with the direct URL to the r
 
 ## Configuration
 
-After being installed the module will run a script that will ask the user to input the location of their job directory. This will be asked inline with the install command. It is necessary to be able to locate the config.json file that contains the server configuration. If the installation is being automated or you don't want to specify the location for any reason run npm with the `--ignore-scripts` option. You can specify the job directory manually at runtime when constructing a [ServerConfiguration](https://spydmobile.bitbucket.io/psaas_js/classes/_defaults_.serverconfiguration.html) object. Pass the constructor the path to the job directory.
+### Job Directory
+
+The job directory can be set using [npm-config](https://docs.npmjs.com/cli-commands/config.html). The config key is `psaas-js-api:job_directory`. If no directory is set the default will be `C:\jobs`. The config value can be set for different user levels including the current user, globally, and for the current project. The following examples set the job directory to `/user/home/foo/jobs` as an example for Linux.
+
+- For the current user account
+```console
+foo@bar:~$ npm config set psaas-js-api:job_directory /user/home/foo/jobs
+```
+
+- Globally
+```console
+foo@bar:~$ npm config set psaas-js-api:job_directory /user/home/foo/jobs -g
+```
+
+- Just for the current project
+```console
+foo@bar:project$ npm config set psaas-js-api:job_directory /user/home/foo/jobs --userconfig ./.npmrc
+```
+
+If you have used the old method of setting the job directory through the setup script that was run on install that directory will still be loaded by the API if no other method of setting the value has been used.
+
+You can also specify the job directory manually at runtime when constructing a [ServerConfiguration](https://spydmobile.bitbucket.io/psaas_js/classes/_defaults_.serverconfiguration.html) object. Pass the constructor the path to the job directory.
 
 ```javascript
 const psaas = require("psaas-js-api");
 const defaults_1 = psaas.defaults;
 
-let serverConfig = new defaults_1.ServerConfiguration("C:\\path\\to\\jobs");
+let serverConfig = new defaults_1.ServerConfiguration("/user/home/foo/jobs");
 ```
