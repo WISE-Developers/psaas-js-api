@@ -2563,13 +2563,16 @@ class Output_GridFile {
         }
         return true;
     }
+    static streamNullableString(value) {
+        return value || "";
+    }
     /**
      * Streams the grid file to a socket.
      * @param builder
      */
     stream(builder) {
         let tmp = this.scenarioName + '|' + this.filename + '|' + this.outputTime + '|' + this.statistic + '|' + this.interpMethod + '|' + (+this.shouldStream) + '|' + this.compression;
-        tmp = tmp + '|' + this.shouldMinimize + '|' + this.subScenarioName + '|' + this.subScenarioOverrideTimes.length;
+        tmp = tmp + '|' + this.shouldMinimize + '|' + Output_GridFile.streamNullableString(this.subScenarioName) + '|' + this.subScenarioOverrideTimes.length;
         for (let e of this.subScenarioOverrideTimes) {
             tmp = tmp + '|' + e.subScenarioName + '|' + e.exportTime;
         }
