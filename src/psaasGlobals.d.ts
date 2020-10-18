@@ -170,10 +170,29 @@ export declare class Duration {
     protected _tokenIndex: number;
     protected _duration: string;
     /**
-     * Is the duration valid (not zero).
+     * Is the duration valid (at least one value has been specified).
      * @return boolean
      */
     isValid(): boolean;
+    /**
+     * Is the current duration less than another.
+     * @param other The other duration to compare against.
+     * @internal
+     */
+    isLessThan(other: Duration): boolean;
+    /**
+     * Convert the days/hours/minutes/seconds portion of the duration into a number of seconds.
+     * @returns The number of seconds represented by the duration. Will be negative if {@link Duration#isNegative} is true.
+     * @internal
+     */
+    toSeconds(): number;
+    /**
+     * Convert the years/months/days portion of the duration into a number of days. Will be an
+     * approximation because the duration doesn't reference a specific year.
+     * @returns The number of days represented by the duration. Will be negative if {@link Duration#isNegative} is true.
+     * @internal
+     */
+    toDays(): number;
     /**
      * Create a new time duration.
      * @param years
@@ -200,7 +219,7 @@ export declare class Duration {
      * @param seconds
      * @param negative Is the duration negative in time.
      */
-    static createTime(hours: any, minutes: any, seconds: any, negative: any): Duration;
+    static createTime(hours: number, minutes: number, seconds: number, negative: boolean): Duration;
     /**
      * Convert the Duration into a properly formatted xml duration string.
      */
@@ -258,7 +277,14 @@ export declare class Timezone {
      * Construct a new timezone.
      */
     constructor();
+    /**
+     * Is the timezone valid.
+     */
     isValid(): boolean;
+    /**
+     * Check to find errors in the timezone.
+     */
+    checkValid(): Array<ValidationError>;
     /**
      * Streams the timezone to a socket.
      * @param builder A socket connection to stream to.
@@ -448,6 +474,11 @@ export declare class FGMOptions {
      */
     isValid(): boolean;
     /**
+     * Find all errors that may exist in the FGM options.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
      * Check to see if the type is part of this class. Assign $data to the appropriate variable if it is.
      * @param type
      * @param data
@@ -486,6 +517,11 @@ export declare class FBPOptions {
      * Checks to see if all of the required values have been set.
      */
     isValid: () => boolean;
+    /**
+     * Find all errors that may be in the FBP options.
+     * @returns A list of the errors that were found.
+     */
+    checkValid: () => Array<ValidationError>;
     tryParse(type: string, data: string): boolean;
     /**
      * Streams the FBP options to a socket.
@@ -535,6 +571,11 @@ export declare class FMCOptions {
      * Checks to see if all required values have been set.
      */
     isValid(): boolean;
+    /**
+     * Find all errors that may exist in the FMC options.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
     tryParse(type: string, data: string): boolean;
     /**
      * Streams the FMC options to a socket.
@@ -589,6 +630,11 @@ export declare class FWIOptions {
      * Checks to see if all required values have been set.
      */
     isValid(): boolean;
+    /**
+     * Find all errors that may exist in the FWI options.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
     tryParse(type: string, data: string): boolean;
     /**
      * Streams the FWI options to a socket.
@@ -696,11 +742,11 @@ export declare class VectorMetadata {
      * or an intermediate step.
      */
     identifyFinalPerimeter: boolean;
-    err: any;
     /**
      * Checks to see if all required values have been set.
      */
     isValid(): boolean;
+    checkValid(): Array<ValidationError>;
     tryParse(type: string, data: string): boolean;
 }
 export declare enum PSaaSLogLevel {
@@ -793,6 +839,11 @@ export declare class SummaryOutputs {
      * Checks to see if all required values have been set.
      */
     isValid(): boolean;
+    /**
+     * Find all errors that may exist in the summary output settings.
+     * @returns A list of all errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
     tryParse(type: string, data: string): boolean;
 }
 /**
@@ -978,4 +1029,23 @@ export declare enum GlobalStatistics {
      */
     AREA_CHANGE = 83,
     BURN = 84
+}
+export declare class ValidationError {
+    /**
+     * The name of the property that was invalid or the index of the invalid
+     * object if for an array.
+     */
+    propertyName: string | number;
+    /**
+     * A message about the invalid property.
+     */
+    message: string;
+    /**
+     * The object for this level of the validation check.
+     */
+    object: any;
+    children: ValidationError[];
+    constructor(propertyName: string | number, message: string, object: any);
+    addChild(child: ValidationError): void;
+    getValue(): any;
 }

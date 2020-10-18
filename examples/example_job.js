@@ -21,11 +21,28 @@ psaas_js_api_1.client.JobManager.setDefaults({
 });
 //the directory of the test files
 let localDir = serverConfig.exampleDirectory;
-let psaasVersion = '6.2.5.7';
+let psaasVersion = '6.2.6.0';
 //make sure the local directory has been configured
 if (localDir.includes('@JOBS@')) {
     console.log("The job directory has not been configured. Please edit the job directory before running the example server.");
     process.exit();
+}
+/**
+ * Recursively handle nodes of the validation tree and
+ * print relevant ones to the console.
+ * @param node The node of the validation tree to handle.
+ */
+function handleErrorNode(node) {
+    //leaf node
+    if (node.children.length == 0) {
+        console.error(`'${node.getValue()}' is invalid for '${node.propertyName}': "${node.message}"`);
+    }
+    //branch node
+    else {
+        node.children.forEach(child => {
+            handleErrorNode(child);
+        });
+    }
 }
 //an asynchronous function for creating a job and listening for status messages.
 (async function () {
@@ -117,7 +134,14 @@ if (localDir.includes('@JOBS@')) {
     //stream output files to a GeoServer instance
     //prom.streamOutputToGeoServer("admin", "password", "192.168.0.178:8080/geoserver", "prometheus", "prometheus_store", "EPSG:4326");
     //test to see if all required parameters have been set
-    if (prom.isValid()) {
+    let errors = prom.checkValid();
+    if (errors.length > 0) {
+        //write the errors to the console
+        errors.forEach(node => {
+            handleErrorNode(node);
+        });
+    }
+    else {
         //start the job asynchronously
         let wrapper = await prom.beginJobPromise();
         //trim the name of the newly started job

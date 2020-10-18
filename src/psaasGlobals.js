@@ -3,10 +3,12 @@
  * Global classes needed for multiple parts of the API.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ValidationError = exports.GlobalStatistics = exports.SummaryOutputs = exports.PSaaSLogger = exports.PSaaSLogLevel = exports.VectorMetadata = exports.FWIOptions = exports.FMCOptions = exports.FBPOptions = exports.FGMOptions = exports.AssetOperation = exports.Timezone = exports.TimezoneName = exports.Duration = exports.LatLon = exports.Province = exports.Units = exports.IPSaaSSerializable = exports.SocketHelper = exports.SocketMsg = void 0;
 /** ignore this comment */
 const net = require("net");
 class SocketMsg {
 }
+exports.SocketMsg = SocketMsg;
 SocketMsg.STARTUP = "STARTUP";
 SocketMsg.SHUTDOWN = "SHUTDOWN";
 SocketMsg.BEGINDATA = "BEGINDATA";
@@ -16,7 +18,6 @@ SocketMsg.GETDEFAULTS = "GETDEFAULTS";
 SocketMsg.GETTIMEZONES = "LIST_TIMEZONES";
 SocketMsg.NEWLINE = "\n";
 SocketMsg.DEBUG_NO_FILETEST = false;
-exports.SocketMsg = SocketMsg;
 class SocketHelper {
     constructor() {
         this.port = 80;
@@ -237,11 +238,76 @@ class Duration {
         };
     }
     /**
-     * Is the duration valid (not zero).
+     * Is the duration valid (at least one value has been specified).
      * @return boolean
      */
     isValid() {
-        return this.years > 0 || this.months > 0 || this.days > 0 || this.hours > 0 || this.minutes > 0 || this.seconds > 0;
+        if (this.years < 0 && this.months < 0 && this.days < 0 && this.hours < 0 && this.minutes < 0 && this.seconds < 0) {
+            return false;
+        }
+        return true;
+    }
+    /**
+     * Is the current duration less than another.
+     * @param other The other duration to compare against.
+     * @internal
+     */
+    isLessThan(other) {
+        const myDays = this.toDays();
+        const otherDays = other.toDays();
+        if (myDays < otherDays) {
+            return true;
+        }
+        else if (myDays == otherDays) {
+            return this.toSeconds() < other.toSeconds();
+        }
+        return false;
+    }
+    /**
+     * Convert the days/hours/minutes/seconds portion of the duration into a number of seconds.
+     * @returns The number of seconds represented by the duration. Will be negative if {@link Duration#isNegative} is true.
+     * @internal
+     */
+    toSeconds() {
+        let val = 0;
+        if (this.seconds > 0) {
+            val = val + this.seconds;
+        }
+        if (this.minutes > 0) {
+            val = val + (60 * this.minutes);
+        }
+        if (this.hours > 0) {
+            val = val + (3600 * this.hours);
+        }
+        if (this.isNegative) {
+            return -val;
+        }
+        return val;
+    }
+    /**
+     * Convert the years/months/days portion of the duration into a number of days. Will be an
+     * approximation because the duration doesn't reference a specific year.
+     * @returns The number of days represented by the duration. Will be negative if {@link Duration#isNegative} is true.
+     * @internal
+     */
+    toDays() {
+        let val = 0;
+        if (this.hours > 0) {
+            val = val + (this.hours / 24);
+        }
+        if (this.days > 0) {
+            val = val + this.days;
+        }
+        if (this.months > 0) {
+            val = val + (30 * this.months);
+        }
+        if (this.years > 0) {
+            val = val + (365.25 * this.years);
+        }
+        if (this.isNegative) {
+            return -val;
+        }
+        return val;
     }
     /**
      * Create a new time duration.
@@ -422,11 +488,24 @@ class Timezone {
         this.offset = new Duration();
         this.value = -1;
     }
+    /**
+     * Is the timezone valid.
+     */
     isValid() {
-        if (this.value >= 0 || this.offset.isValid()) {
-            return true;
+        let err = this.checkValid();
+        return err.length == 0;
+    }
+    /**
+     * Check to find errors in the timezone.
+     */
+    checkValid() {
+        let errs = new Array();
+        if (this.value < 0) {
+            if (!this.offset.isValid()) {
+                errs.push(new ValidationError("offset", "The timezone offset is not valid.", this));
+            }
         }
-        return false;
+        return errs;
     }
     /**
      * Streams the timezone to a socket.
@@ -501,8 +580,8 @@ class Timezone {
             .catch(err => { throw err; });
     }
 }
-Timezone.PARAM_TIMEZONE = "timezone";
 exports.Timezone = Timezone;
+Timezone.PARAM_TIMEZONE = "timezone";
 class TimezoneGetter extends IPSaaSSerializable {
     /*
      * This method connects to the builder and retrieves the timezones
@@ -672,39 +751,81 @@ class FGMOptions {
      * Checks to see if all required values have been set.
      */
     isValid() {
-        if (this.stopAtGridEnd == null || this.breaching == null || this.maxAccTS == null ||
-            this.spotting == null || this.distRes == null || this.perimRes == null) {
-            return false;
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the FGM options.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
+        if (this.stopAtGridEnd == null) {
+            errs.push(new ValidationError("stopAtGridEnd", "Whether to the simulation should stop if it reaches the grid boundary is not set.", this));
         }
-        if (this.distRes < 0.2 || this.distRes > 10.0 || this.perimRes < 0.2 || this.perimRes > 10.0) {
-            return false;
+        if (this.breaching == null) {
+            errs.push(new ValidationError("breaching", "Whether breaching should be used is not set.", this));
+        }
+        if (this.maxAccTS == null) {
+            errs.push(new ValidationError("maxAccTS", "The maximum timestep to use during acceleration is not set.", this));
+        }
+        else if (!this.maxAccTS.isValid()) {
+            errs.push(new ValidationError("maxAccTS", "The maximum timestep to use during acceleration is not valid.", this));
+        }
+        if (this.spotting == null) {
+            errs.push(new ValidationError("spotting", "Whether spotting should be used is not set.", this));
+        }
+        if (this.distRes == null) {
+            errs.push(new ValidationError("distRes", "The distance resolution is not set.", this));
+        }
+        else if (this.distRes < 0.2 || this.distRes > 10.0) {
+            errs.push(new ValidationError("distRes", "The specified distance resolution is invalid.", this));
+        }
+        if (this.perimRes == null) {
+            errs.push(new ValidationError("perimRes", "The perimeter resolution is not set.", this));
+        }
+        else if (this.perimRes < 0.2 || this.perimRes > 10.0) {
+            errs.push(new ValidationError("perimRes", "The perimeter resolution is not valid.", this));
         }
         if (this.minimumSpreadingROS != null) {
             if (this.minimumSpreadingROS < 0.0000001 || this.minimumSpreadingROS > 1.0) {
-                return false;
+                errs.push(new ValidationError("minimumSpreadingROS", "The minimum spreading ROS is set but is not valid.", this));
             }
         }
         if (this.dx != null) {
             if (this.dx < -250.0 || this.dx > 250.0) {
-                return false;
+                errs.push(new ValidationError("dx", "A delta value for the x direction of the ignition points is set but is not valid.", this));
             }
         }
         if (this.dy != null) {
             if (this.dy < -250.0 || this.dy > 250.0) {
-                return false;
+                errs.push(new ValidationError("dy", "A delta value for the y direction of the ignition points is set but is not valid.", this));
             }
         }
         if (this.dt != null) {
             if (this.dt.hours < -4.0 || this.dt.hours > 4.0) {
-                return false;
+                errs.push(new ValidationError("dt", "A delta value for the start time of the ignition points is set but is not valid.", this));
             }
         }
         if (this.dwd != null) {
             if (this.dwd < -360.0 || this.dwd > 360.0) {
-                return false;
+                errs.push(new ValidationError("dwd", "A delta value for the wind direction is set but is not valid.", this));
             }
         }
-        return true;
+        if (this.growthPercentileApplied != null && this.growthPercentileApplied) {
+            if (this.growthPercentile == null || this.growthPercentile <= 0.0 || this.growthPercentile >= 100.0) {
+                errs.push(new ValidationError("growthPercentile", "Growth percentile is enabled but the specified growth percentile is not valid.", this));
+            }
+        }
+        if (this.initialVertexCount < 6 || this.initialVertexCount > 64) {
+            errs.push(new ValidationError("initialVertexCount", "The specified initial vertex count is not valid.", this));
+        }
+        if (this.ignitionSize <= 0.0 || this.ignitionSize > 25.0) {
+            errs.push(new ValidationError("ignitionSize", "The specified ignition size is not valid.", this));
+            }
+        if (this.globalAssetOperation == AssetOperation.STOP_AFTER_X && this.assetCollisionCount < 0) {
+            errs.push(new ValidationError("assetCollisionCount", "The number of assets to stop the simulation after reaching has not been set.", this));
+        }
+        return errs;
     }
     /**
      * Check to see if the type is part of this class. Assign $data to the appropriate variable if it is.
@@ -898,6 +1019,7 @@ class FGMOptions {
         return "";
     }
 }
+exports.FGMOptions = FGMOptions;
 FGMOptions.PARAM_MAXACCTS = "maxaccts";
 FGMOptions.PARAM_DISTRES = "distres";
 FGMOptions.PARAM_PERIMRES = "perimres";
@@ -928,7 +1050,6 @@ FGMOptions.DEFAULT_DY = "fgmd_dy";
 FGMOptions.DEFAULT_DT = "fmgd_dt";
 FGMOptions.DEFAULT_GROWTHAPPLIED = "fgmd_growthPercApplied";
 FGMOptions.DEFAULT_GROWTHPERC = "fgmd_growthPercentile";
-exports.FGMOptions = FGMOptions;
 /**
  * The fire behaviour prediction options.
  * @author "Travis Redpath"
@@ -948,7 +1069,14 @@ class FBPOptions {
          * Checks to see if all of the required values have been set.
          */
         this.isValid = () => {
-            return true;
+            return this.checkValid().length == 0;
+        };
+        /**
+         * Find all errors that may be in the FBP options.
+         * @returns A list of the errors that were found.
+         */
+        this.checkValid = () => {
+            return new Array();
         };
     }
     tryParse(type, data) {
@@ -991,11 +1119,11 @@ class FBPOptions {
         }
     }
 }
+exports.FBPOptions = FBPOptions;
 FBPOptions.PARAM_TERRAIN = "terraineffect";
 FBPOptions.PARAM_WINDEFF = "windeffect";
 FBPOptions.DEFAULT_TERRAINEFF = "TERRAINEFFECT";
 FBPOptions.DEFAULT_WINDEFFECT = "fgmd_windeffect";
-exports.FBPOptions = FBPOptions;
 /**
  * The foliar moisture content options.
  * @author "Travis Redpath"
@@ -1028,18 +1156,26 @@ class FMCOptions {
      * Checks to see if all required values have been set.
      */
     isValid() {
-        if (this.nodataElev == -9999) {
-            return false;
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the FMC options.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
+        if (this.nodataElev == null) {
+            errs.push(new ValidationError("nodataElev", "The elevation to use where NODATA exists was not set.", this));
         }
-        if (this.nodataElev < 0.0 || this.nodataElev > 7000.0) {
-            return false;
+        else if ((this.nodataElev < 0 && this.nodataElev != -9999) || this.nodataElev > 7000) {
+            errs.push(new ValidationError("nodataElev", "The elevation to use where NODATA exists is invalid.", this));
         }
-        if (this.perOverride != -1) {
+        if (this.perOverride != null && this.perOverride != -1) {
             if (this.perOverride < 0.0 || this.perOverride > 300.0) {
-                return false;
+                errs.push(new ValidationError("perOverride", "The FMC percent override was set but is invalid.", this));
             }
         }
-        return true;
+        return errs;
     }
     tryParse(type, data) {
         if (type === FMCOptions.DEFAULT_PEROVER) {
@@ -1065,7 +1201,7 @@ class FMCOptions {
      * @param builder
      */
     stream(builder) {
-        if (this.perOverride >= 0) {
+        if (this.perOverride != null && this.perOverride >= 0) {
             builder.write(FMCOptions.PARAM_PEROVER + SocketMsg.NEWLINE);
             builder.write(this.perOverride + SocketMsg.NEWLINE);
         }
@@ -1081,11 +1217,11 @@ class FMCOptions {
      * @param builder
      */
     streamCopy(builder) {
-        if (this.perOverride >= 0) {
+        if (this.perOverride != null && this.perOverride >= 0) {
             builder.write(FMCOptions.PARAM_PEROVER + SocketMsg.NEWLINE);
             builder.write(this.perOverride + SocketMsg.NEWLINE);
         }
-        if (this.nodataElev != -9999) {
+        if (this.nodataElev != null && this.nodataElev != -9999) {
             builder.write(FMCOptions.PARAM_NODATAELEV + SocketMsg.NEWLINE);
             builder.write(this.nodataElev + SocketMsg.NEWLINE);
         }
@@ -1095,6 +1231,7 @@ class FMCOptions {
         }
     }
 }
+exports.FMCOptions = FMCOptions;
 FMCOptions.PARAM_PEROVER = "peroverride";
 FMCOptions.PARAM_NODATAELEV = "nodataelev";
 FMCOptions.PARAM_TERRAIN = "fmc_terrain";
@@ -1102,7 +1239,6 @@ FMCOptions.DEFAULT_PEROVER = "PEROVERRIDEVAL";
 FMCOptions.DEFAULT_NODATAELEV = "NODATAELEV";
 FMCOptions.DEFAULT_TERRAIN = "fmcd_terrain";
 FMCOptions.DEFAULT_ACCURATELOCATION = "fmcd_accuratelocation";
-exports.FMCOptions = FMCOptions;
 /**
  * The fire weather index options.
  * @author "Travis Redpath"
@@ -1137,7 +1273,14 @@ class FWIOptions {
      * Checks to see if all required values have been set.
      */
     isValid() {
-        return true;
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the FWI options.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        return new Array();
     }
     tryParse(type, data) {
         if (type === FWIOptions.DEFAULT_FWISPACINTERP) {
@@ -1189,6 +1332,7 @@ class FWIOptions {
         }
     }
 }
+exports.FWIOptions = FWIOptions;
 FWIOptions.PARAM_FWISPACIAL = "fwispacinterp";
 FWIOptions.PARAM_FWIFROMSPACIAL = "fwifromspacweather";
 FWIOptions.PARAM_HISTORYFWI = "historyonfwi";
@@ -1199,7 +1343,6 @@ FWIOptions.DEFAULT_FWIFROMSPACWEATH = "FWIFROMSPACWEATH";
 FWIOptions.DEFAULT_HISTORYONFWI = "HISTORYONFWI";
 FWIOptions.DEFAULT_BURNINGCONDITIONSON = "fwid_burnconditions";
 FWIOptions.DEFAULT_TEMPORALINTERP = "fwid_tempinterp";
-exports.FWIOptions = FWIOptions;
 /**
  * Possible metadata that could be written to vector files.
  * @author "Travis Redpath"
@@ -1296,23 +1439,43 @@ class VectorMetadata {
      * Checks to see if all required values have been set.
      */
     isValid() {
-        if (this.version == null || this.scenName == null || this.jobName == null || this.igName == null ||
-            this.simDate == null || this.fireSize == null || this.perimTotal == null ||
-            this.perimActive == null) {
-            this.err = 1;
-            return false;
+        return this.checkValid().length == 0;
+    }
+    checkValid() {
+        const errs = new Array();
+        if (this.version == null) {
+            errs.push(new ValidationError("version", "Whether the Prometheus version metadata should be exported or not has not been set.", this));
+        }
+        if (this.scenName == null) {
+            errs.push(new ValidationError("version", "Whether the scenario name metadata should be exported or not has not been set.", this));
+        }
+        if (this.jobName == null) {
+            errs.push(new ValidationError("version", "Whether the job name metadata should be exported or not has not been set.", this));
+        }
+        if (this.igName == null) {
+            errs.push(new ValidationError("version", "Whether the ignition name metadata should be exported or not has not been set.", this));
+        }
+        if (this.simDate == null) {
+            errs.push(new ValidationError("version", "Whether the simulation date metadata should be exported or not has not been set.", this));
+        }
+        if (this.fireSize == null) {
+            errs.push(new ValidationError("version", "Whether the fire area metadata should be exported or not has not been set.", this));
+        }
+        if (this.perimTotal == null) {
+            errs.push(new ValidationError("version", "Whether the total perimeter size metadata should be exported or not has not been set.", this));
+        }
+        if (this.perimActive == null) {
+            errs.push(new ValidationError("version", "Whether the active perimeter size metadata should be exported or not has not been set.", this));
         }
         if (this.areaUnit != Units.FT2 && this.areaUnit != Units.KM2 && this.areaUnit != Units.M2 && this.areaUnit != Units.MI2 &&
             this.areaUnit != Units.HA && this.areaUnit != Units.YD2 && this.areaUnit != Units.ACRE) {
-            this.err = this.areaUnit;
-            return false;
+            errs.push(new ValidationError("areaUnit", "Invalid unit for area metadata.", this));
         }
         if (this.perimUnit != Units.FT && this.perimUnit != Units.KM && this.perimUnit != Units.M && this.perimUnit != Units.MI &&
             this.perimUnit != Units.YARD && this.perimUnit != Units.CHAIN) {
-            this.err = 3;
-            return false;
+            errs.push(new ValidationError("areaUnit", "Invalid unit for perimeter size metadata.", this));
         }
-        return true;
+        return errs;
     }
     tryParse(type, data) {
         if (type === VectorMetadata.DEFAULT_VERSION) {
@@ -1358,6 +1521,7 @@ class VectorMetadata {
         return false;
     }
 }
+exports.VectorMetadata = VectorMetadata;
 VectorMetadata.DEFAULT_VERSION = "VERSION";
 VectorMetadata.DEFAULT_SCENNAME = "SCENNAME";
 VectorMetadata.DEFAULT_JOBNAME = "JOBNAME";
@@ -1368,7 +1532,6 @@ VectorMetadata.DEFAULT_PERIMTOTAL = "PERIMTOTAL";
 VectorMetadata.DEFAULT_PERIMACTIVE = "PERIMACTIVE";
 VectorMetadata.DEFAULT_AREAUNIT = "AREAUNIT";
 VectorMetadata.DEFAULT_PERIMUNIT = "PERIMUNIT";
-exports.VectorMetadata = VectorMetadata;
 var PSaaSLogLevel;
 (function (PSaaSLogLevel) {
     PSaaSLogLevel[PSaaSLogLevel["VERBOSE"] = 1] = "VERBOSE";
@@ -1418,8 +1581,8 @@ class PSaaSLogger {
         }
     }
 }
-PSaaSLogger.instance = null;
 exports.PSaaSLogger = PSaaSLogger;
+PSaaSLogger.instance = null;
 /**
  * Which summary values to output.
  * @author "Travis Redpath"
@@ -1488,19 +1651,26 @@ class SummaryOutputs {
      * Checks to see if all required values have been set.
      */
     isValid() {
-        return true;
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the summary output settings.
+     * @returns A list of all errors that were found.
+     */
+    checkValid() {
+        return [];
     }
     tryParse(type, data) {
         //TODO parse
         return false;
     }
 }
+exports.SummaryOutputs = SummaryOutputs;
 SummaryOutputs.DEFAULT_TIMETOEXEC = "TIMETOEXEC";
 SummaryOutputs.DEFAULT_GRIDINFO = "GRIDINFO";
 SummaryOutputs.DEFAULT_LOCATION = "LOCATION";
 SummaryOutputs.DEFAULT_ELEVINFO = "ELEVINFO";
 SummaryOutputs.DEFAULT_INPUTSUM = "INPUTSUMMARY";
-exports.SummaryOutputs = SummaryOutputs;
 /**
  * All supported statistics values that can be used across the API.
  * Not all locations will support all statistics.
@@ -1686,4 +1856,22 @@ var GlobalStatistics;
     GlobalStatistics[GlobalStatistics["AREA_CHANGE"] = 83] = "AREA_CHANGE";
     GlobalStatistics[GlobalStatistics["BURN"] = 84] = "BURN";
 })(GlobalStatistics = exports.GlobalStatistics || (exports.GlobalStatistics = {}));
+class ValidationError {
+    constructor(propertyName, message, object) {
+        this.children = new Array();
+        this.propertyName = propertyName;
+        this.message = message;
+        this.object = object;
+    }
+    addChild(child) {
+        this.children.push(child);
+    }
+    getValue() {
+        if (this.propertyName == null) {
+            return this;
+        }
+        return this.object[this.propertyName];
+    }
+}
+exports.ValidationError = ValidationError;
 //# sourceMappingURL=psaasGlobals.js.map

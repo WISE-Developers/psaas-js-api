@@ -9,7 +9,7 @@
  */
 /// <reference types="node" />
 import * as net from "net";
-import { LatLon, Duration, FGMOptions, FBPOptions, FMCOptions, FWIOptions, Timezone, VectorMetadata, SummaryOutputs, IPSaaSSerializable, AssetOperation, GlobalStatistics } from "./psaasGlobals";
+import { LatLon, Duration, FGMOptions, FBPOptions, FMCOptions, FWIOptions, Timezone, VectorMetadata, SummaryOutputs, IPSaaSSerializable, AssetOperation, GlobalStatistics, ValidationError } from "./psaasGlobals";
 export declare class VersionInfo {
     static readonly version_info: String;
     static readonly release_date: String;
@@ -64,6 +64,11 @@ export declare class GridFile {
      */
     isValid(): boolean;
     /**
+     * Find all errors that may be in the grid file.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
      * Streams the grid file to a socket.
      * @param builder
      */
@@ -90,7 +95,7 @@ export declare class WeatherPatchDetails {
      * The value to apply with this operation.
      */
     value: number;
-    isValid(): boolean;
+    checkValid(): Array<ValidationError>;
 }
 export declare class WeatherPatch_Temperature extends WeatherPatchDetails {
 }
@@ -110,7 +115,7 @@ export declare class WeatherPatch_Precipitation extends WeatherPatchDetails {
 export declare class WeatherPatch_WindSpeed extends WeatherPatchDetails {
 }
 export declare class WeatherPatch_WindDirection extends WeatherPatchDetails {
-    isValid(): boolean;
+    checkValid(): Array<ValidationError>;
 }
 /**
  * Information about a weather patch input file.
@@ -238,6 +243,11 @@ export declare class WeatherPatch {
      */
     isValid(): boolean;
     /**
+     * Find all errors in the weather patch.
+     * @returns A list of errors in the weather patch.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
      * Streams the weather patch file to a socket.
      * @param builder
      */
@@ -282,6 +292,11 @@ export declare class WeatherGrid_GridFile {
      * Check to make sure all parameters have been set to valid values.
      */
     isValid(): boolean;
+    /**
+     * Find a list of all errors in the weather grid file.
+     * @returns A list of errors.
+     */
+    checkValid(): Array<ValidationError>;
 }
 /**
  * Information about a weather grid input.
@@ -350,6 +365,11 @@ export declare class WeatherGrid {
      * Are all required values set.
      */
     isValid(): boolean;
+    /**
+     * Find all errors in the weather grid.
+     * @returns A list of errors found.
+     */
+    checkValid(): Array<ValidationError>;
     /**
      * Streams the weather grid file to a socket.
      * @param builder
@@ -427,6 +447,10 @@ export declare class FuelPatch {
      */
     isValid(): boolean;
     /**
+     * Find all errors that may be in the fuel patch.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
      * Streams the fuel patch file to a socket.
      * @param builder
      */
@@ -482,6 +506,11 @@ export declare class FuelBreak {
      */
     isValid(): boolean;
     /**
+     * Find any errors that may exist in the fuelbreak.
+     * @returns A list of errors.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
      * Streams the fuel break file to a socket.
      * @param builder
      */
@@ -532,15 +561,15 @@ export declare class PSaaSInputsFiles {
      * An array of grid files.
      */
     gridFiles: GridFile[];
-    protected _error: string;
-    /**
-     * Get the error if isValid returns false.
-     */
-    error(): string;
     /**
      * Are all required values specified.
      */
     isValid(): boolean;
+    /**
+     * Find all errors that exist in the PSaaS input files.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
     /**
      * Streams the input files to a socket.
      * @param builder
@@ -658,6 +687,11 @@ export declare class WeatherStream {
      */
     isValid(): boolean;
     /**
+     * Find any errors that may be in the weather stream.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
      * Streams the weather station to a socket.
      * @param builder
      */
@@ -698,6 +732,11 @@ export declare class WeatherStation {
      * Checks to see if all required values are specified.
      */
     isValid(): boolean;
+    /**
+     * Look for errors in the weather station.
+     * @returns A list of all errors found in the weather station.
+     */
+    checkValid(): Array<ValidationError>;
     /**
      * Add a weather stream to the station.
      * @param filename The file location for the streams data. Can either be the actual file path
@@ -814,6 +853,7 @@ export declare class Ignition {
      * Checks to see if all required values have been set.
      */
     isValid(): boolean;
+    checkValid(): Array<ValidationError>;
     /**
      * Streams the ignition to a socket.
      * @param builder
@@ -874,6 +914,11 @@ export declare class AssetFile {
      */
     isValid(): boolean;
     /**
+     * Find all errors that may exist in the asset.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
      * Streams the ignition to a socket.
      * @param builder
      */
@@ -899,6 +944,12 @@ export declare class IgnitionReference {
      * Optional sub-scenario building options.
      */
     singlePointIgnitionOptions: SinglePointIgnitionOptions;
+    isValid(): boolean;
+    /**
+     * Find all errors that may exist in the ignition reference.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
 }
 export declare class PolylineIgnitionOptions {
     /**
@@ -917,6 +968,7 @@ export declare class PolylineIgnitionOptions {
      * Index of the point ignition to use in the specified polyline(s), or -1 to use all points.
      */
     pointIndex: number;
+    checkValid(): Array<ValidationError>;
 }
 export declare class MultiPointIgnitionOptions {
     /**
@@ -927,12 +979,14 @@ export declare class MultiPointIgnitionOptions {
      * Index of the point ignition to use in the specified polyline(s), or -1 to use all points.
      */
     pointIndex: number;
+    checkValid(): Array<ValidationError>;
 }
 export declare class SinglePointIgnitionOptions {
     /**
      * A name for the sub-scenario.
      */
     name: string;
+    checkValid(): Array<ValidationError>;
 }
 /**
  * A condition for burning.
@@ -967,10 +1021,16 @@ export declare class BurningConditions {
      * The minimum ISI that will allow burning (optional).
      */
     isiGreater: number;
+    constructor();
     /**
      * Checks to see if all required values have been set.
      */
     isValid(): boolean;
+    /**
+     * Find all errors that may exist in the burn condition.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
 }
 export declare class LayerInfoOptions {
     subNames: Array<string>;
@@ -991,6 +1051,11 @@ export declare class LayerInfo {
     getName(): string;
     constructor(id: string);
     isValid(): boolean;
+    /**
+     * Find all errors that may exist in the layer reference.
+     * @returns A list of all errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
 }
 /**
  * A reference to an asset that has been added to a scenario. Contains options
@@ -1011,6 +1076,7 @@ export declare class AssetReference {
     collisionCount: number;
     getName(): string;
     constructor(id: string);
+    checkValid(): Array<ValidationError>;
 }
 /**
  * Settings to modify PSaaS behaviour at the end of every timestep.
@@ -1019,6 +1085,11 @@ export declare class AssetReference {
 export declare class TimestepSettings {
     private static readonly PARAM_EMIT_STATISTIC;
     private statistics;
+    /**
+     * Check to see if a global statistic if valid to be used as a timestep setting.
+     * @param stat True if the input statistic if valid for timestep settings.
+     */
+    private static validateInput;
     /**
      * Add a statistic to output.
      * @param stat The name of the statistic to add.
@@ -1031,6 +1102,11 @@ export declare class TimestepSettings {
      * @returns A boolean indicating if the string was found and removed
      */
     removeStatistic(statistic: GlobalStatistics): boolean;
+    /**
+     * Find all errors that may exist in the timestep settings.
+     * @returns A list of all errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
     /**
      * Streams the settings to a socket.
      * @param builder
@@ -1059,6 +1135,12 @@ export declare class StreamOptions {
      * to this sub-scnario. Must be formatted as ISO-8601.
      */
     ignitionTime: string;
+    isValid(): boolean;
+    /**
+     * Find all errors that may exist in the stream sub-scenario options.
+     * @returns A list of all errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
 }
 /**
  * A reference to a weather stream/station used by a scenario.
@@ -1081,6 +1163,12 @@ export declare class StationStream {
      * be created if multiple weather streams are referenced.
      */
     streamOptions: StreamOptions;
+    isValid(): boolean;
+    /**
+     * Find all errors that may exist in the weather stream reference.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
 }
 /**
  * A simulation scenario.
@@ -1354,6 +1442,11 @@ export declare class Scenario {
      */
     isValid(): boolean;
     /**
+     * Find all errors that may exist in the scenario.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
      * Streams the scenario to a socket.
      * @param builder
      */
@@ -1389,6 +1482,11 @@ export declare class FuelOption {
      * The value of the applied option.
      */
     value: number;
+    /**
+     * Find all errors that may exist in the fuel option.
+     * @returns A list of all errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
     /**
      * Streams the fuel option to a socket.
      * @param builder
@@ -1428,16 +1526,17 @@ export declare class PSaaSInputs {
      * Assets that can stop simulations when reached.
      */
     assetFiles: AssetFile[];
-    protected _error: string;
-    /**
-     * Get a string describing an error if isValid returned false.
-     */
-    error(): string;
     constructor();
     /**
-     * Are required inputs set.
+     * Validate the user specified inputs.
+     * @returns A list of errors found during validation.
      */
     isValid(): boolean;
+    /**
+     * Find any errors in the PSaaS input values.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
     /**
      * Streams the input settings to a socket.
      * @param builder
@@ -1503,6 +1602,7 @@ export declare class ExportTimeOverride {
      * The export time to use instead of the one defined in the {@link Output_GridFile} class.
      */
     exportTime: string;
+    checkValid(): Array<ValidationError>;
 }
 export declare class Output_GridFile {
     private static readonly PARAM_GRIDFILE;
@@ -1561,6 +1661,8 @@ export declare class Output_GridFile {
      * Checks to see if all required values have been set.
      */
     isValid(): boolean;
+    checkValid(): Array<ValidationError>;
+    private static streamNullableString;
     /**
      * Streams the grid file to a socket.
      * @param builder
@@ -1587,6 +1689,7 @@ export declare class PerimeterTimeOverride {
      * The time to use instead of {@link VectorFile#perimEndTime}.
      */
     endTime: string;
+    checkValid(): Array<ValidationError>;
 }
 export declare class VectorFile {
     private static readonly PARAM_VECTORFILE;
@@ -1653,12 +1756,12 @@ export declare class VectorFile {
     remove_subScenarioOverrides(remove: PerimeterTimeOverride): void;
     private static streamNullableBoolean;
     private static streamNullableString;
-    _error: any;
     constructor();
     /**
      * Checks to see if all required values have been set.
      */
     isValid(): boolean;
+    checkValid(): Array<ValidationError>;
     /**
      * Streams the vector file to a socket.
      * @param builder
@@ -1696,6 +1799,11 @@ export declare class SummaryFile {
      * Determine if all of the required values have been set.
      */
     isValid(): boolean;
+    /**
+     * Find all errors that may exist in the summary file output.
+     * @returns A list of all errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
     /**
      * Streams the summary options to a socket.
      * @param builder
@@ -1788,6 +1896,11 @@ export declare class StatsFile {
      */
     isValid(): boolean;
     /**
+     * Find all errors that may be in the statistics file output.
+     * @returns A list of all errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
      * Streams the stats options to a socket.
      * @param builder
      */
@@ -1867,6 +1980,11 @@ export declare class PSaaSOutputs {
      */
     isValid(): boolean;
     /**
+     * Find all errors that may exist in the PSaaS outputs.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
      * Streams the output settings to a socket.
      * @param builder
      */
@@ -1880,9 +1998,18 @@ export declare class PSaaSOutputs {
  */
 export declare abstract class OutputStreamInfo extends IPSaaSSerializable {
     protected static readonly PARAM_URL = "output_stream";
+    /**
+     * Find all errors in the stream settings.
+     * @returns A list of all errors that were found.
+     */
+    abstract checkValid(): Array<ValidationError>;
     abstract stream(builder: net.Socket): void;
 }
 export declare class MqttOutputStreamInfo extends OutputStreamInfo {
+    /**
+     * @inheritdoc
+     */
+    checkValid(): Array<ValidationError>;
     /**
      * Streams the output stream information to a socket.
      * @param builder
@@ -1925,6 +2052,10 @@ export declare class GeoServerOutputStreamInfo extends OutputStreamInfo {
      * enabled.
      */
     declaredSrs: string;
+    /**
+     * @inheritdoc
+     */
+    checkValid(): Array<ValidationError>;
     /**
      * Streams the outptu stream information to a socket.
      */
@@ -2143,7 +2274,81 @@ export declare class UnitSettings {
      */
     massAreaOutput: MassAreaUnit;
     /**
+     * Find all errors that may exist in the unit settings.
+     * @returns A list of all errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
      * Streams the attachment to a socket.
+     * @param builder
+     */
+    stream(builder: net.Socket): void;
+}
+/**
+ * The types of load balancing available in PSaaS.
+ */
+export declare enum LoadBalanceType {
+    /**
+     * Don't use any load balancing. The generated FGM will be sent to
+     * a single instance of PSaaS Manager and it will run all scenarios.
+     */
+    NONE = 0,
+    /**
+     * Every instance of PSaaS Manager in the same cluster will receive
+     * the generated FGM. An external service will provide scenario
+     * indices to run so that each instance of PSaaS that is processing
+     * the FGM will run different scenarios. The indices will be
+     * communicated to the PSaaS instance over MQTT. See the
+     * [MQTT documentation](https://spydmobile.bitbucket.io/psaas_mqtt/#topic-psaas/{originator}/delegator/balance)
+     * for more information.
+     */
+    EXTERNAL_COUNTER = 1,
+    /**
+     * The generated FGM will be sent to a single instance of PSaaS
+     * Manager. A file that the user creates will provide scenario
+     * indices to the instance of PSaaS that runs the FGM. The file
+     * must be named balance.txt and each line must contian a valid
+     * scenario index that should be run. Typically used for debugging
+     * to force PSaaS to only process a single scenario when many
+     * are present in the FGM.
+     */
+    LOCAL_FILE = 2
+}
+/**
+ * Options for running the job not related directly to
+ * scenarios or fire growth.
+ */
+export declare class JobOptions extends IPSaaSSerializable {
+    private static readonly PARAM_OPTIONS;
+    /**
+     * The type of load balancing to use to run the job.
+     */
+    loadBalance: LoadBalanceType;
+    /**
+     * A priority to use to sort the job queue. When a
+     * job is recieved by an instance of PSaaS Manager
+     * it will be placed in the job queue immediately
+     * below the first job found with the same or higher
+     * priority that isn't already running starting from
+     * the bottom of the queue.
+     *
+     * The priority can be any valid integer value.
+     */
+    priority: number;
+    /**
+     * Should the job be validated by PSaaS instead of
+     * being run. The user can redo the job if there
+     * is a validation error or restart the job so
+     * that it simulates in PSaaS using MQTT commands.
+     */
+    validate: boolean;
+    /**
+     * Find all errors that may exist in the job settings.
+     * @readonly A list of all errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
+     * Streams the options to a socket.
      * @param builder
      */
     stream(builder: net.Socket): void;
@@ -2180,7 +2385,11 @@ export declare class PSaaS extends IPSaaSSerializable {
      * or statistics files.
      */
     exportUnits: UnitSettings;
-    protected _error: string;
+    /**
+     * Options concering how to run the job, not related directly
+     * to scenarios or fire growth.
+     */
+    jobOptions: JobOptions;
     protected builder: net.Socket;
     /**
      * An array of files that can be used in place of
@@ -2193,15 +2402,16 @@ export declare class PSaaS extends IPSaaSSerializable {
      * make sure that the names are unique.
      */
     private attachmentIndex;
-    /**
-     * Get an error message if one has been set.
-     */
-    error(): string;
     constructor();
     /**
      * Are the input and output values for the job valid.
      */
     isValid(): boolean;
+    /**
+     * Get a list of errors that exist in the current PSaaS configuration.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
     /**
      * Specify the timezone for all specified times.
      * @param zone The hour offset from UTC.
@@ -2261,7 +2471,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * NZ-41, NZ-43, NZ-46, NZ-50, NZ-53, NZ-62, NZ-63, or NZ-65 fuel type. If unset, this also
      * sets the grass fuel load to 0.35kg/m^2.
      * @param fuel The fuel type to set the grass curing for.
-     * @param value The grass curing.
+     * @param value The grass curing (0 - 100%).
      */
     setGrassCuring(fuel: "O-1a" | "O-1b" | "NZ-2" | "NZ-15" | "NZ-30" | "NZ-31" | "NZ-32" | "NZ-33" | "NZ-40" | "NZ-41" | "NZ-43" | "NZ-46" | "NZ-50" | "NZ-53" | "NZ-62" | "NZ-63" | "NZ-65", value: number): void;
     /**
@@ -2275,7 +2485,7 @@ export declare class PSaaS extends IPSaaSSerializable {
     /**
      * Set the crown base height.
      * @param fuel The fuel type to set the grass fuel load for. Must be C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
-     * @param value The crown base height.
+     * @param value The crown base height (m).
      */
     setCrownBaseHeight(fuel: "C-6" | "NZ-60" | "NZ-61" | "NZ-66" | "NZ-67" | "NZ-71", value: number): void;
     /**
@@ -2676,6 +2886,19 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @throws This method can only be called once at a time per instance.
      */
     beginJobPromise(): Promise<StartJobWrapper>;
+    /**
+     * Sends the job to the job manager for validation.
+     * @throws This method can only be called once at a time per instance.
+     */
+    validateJob(callback: (job: PSaaS, name: string) => any): void;
+    /**
+     * Sends the job to the job manager for validation. The job won't run
+     * completely until the user issues the rerun command later.
+     * @returns A {@link StartJobWrapper} that contains the name of the newly
+     * 			started job as well as the current {@link PSaaS} object.
+     * @throws This method can only be called once at a time per instance.
+     */
+    validateJobPromise(): Promise<StartJobWrapper>;
     private beginJobInternal;
 }
 export declare class StartJobWrapper {

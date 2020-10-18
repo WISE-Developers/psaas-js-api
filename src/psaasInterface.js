@@ -9,15 +9,16 @@
  * For an example see index.js.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Admin = exports.StopPriority = exports.StartJobWrapper = exports.PSaaS = exports.JobOptions = exports.LoadBalanceType = exports.UnitSettings = exports.MassAreaUnit = exports.IntensityUnit = exports.VelocityUnit = exports.CoordinateUnit = exports.AngleUnit = exports.PercentUnit = exports.EnergyUnit = exports.MassUnit = exports.PressureUnit = exports.TemperatureUnit = exports.VolumeUnit = exports.AreaUnit = exports.DistanceUnit = exports.TimeUnit = exports.GeoServerOutputStreamInfo = exports.MqttOutputStreamInfo = exports.OutputStreamInfo = exports.PSaaSOutputs = exports.StatsFile = exports.StatsFileType = exports.SummaryFile = exports.VectorFile = exports.PerimeterTimeOverride = exports.VectorFileType = exports.Output_GridFile = exports.ExportTimeOverride = exports.Output_GridFileCompression = exports.Output_GridFileInterpolation = exports.PSaaSInputs = exports.FuelOption = exports.FuelOptionType = exports.Scenario = exports.StationStream = exports.StreamOptions = exports.TimestepSettings = exports.AssetReference = exports.LayerInfo = exports.LayerInfoOptions = exports.BurningConditions = exports.SinglePointIgnitionOptions = exports.MultiPointIgnitionOptions = exports.PolylineIgnitionOptions = exports.IgnitionReference = exports.AssetFile = exports.AssetShapeType = exports.Ignition = exports.IgnitionType = exports.WeatherStation = exports.WeatherStream = exports.HFFMCMethod = exports.PSaaSInputsFiles = exports.FuelBreak = exports.FuelBreakType = exports.FuelPatch = exports.FromFuel = exports.FuelPatchType = exports.WeatherGrid = exports.WeatherGrid_GridFile = exports.WeatherGridType = exports.WeatherGridSector = exports.WeatherPatch = exports.WeatherPatch_WindDirection = exports.WeatherPatch_WindSpeed = exports.WeatherPatch_Precipitation = exports.WeatherPatch_RelativeHumidity = exports.WeatherPatch_Temperature = exports.WeatherPatchDetails = exports.WeatherPatchType = exports.WeatherPatchOperation = exports.GridFile = exports.GridFileType = exports.VersionInfo = void 0;
 /** ignore this comment */
 const fs = require("fs");
 const net = require("net");
 const psaasGlobals_1 = require("./psaasGlobals");
 class VersionInfo {
 }
-VersionInfo.version_info = '6.2.5.7' /*/vers*/;
-VersionInfo.release_date = 'date' /*/rld*/;
 exports.VersionInfo = VersionInfo;
+VersionInfo.version_info = '6.2.6.0' /*/vers*/;
+VersionInfo.release_date = 'August 26, 2020' /*/rld*/;
 var GridFileType;
 (function (GridFileType) {
     GridFileType[GridFileType["NONE"] = -1] = "NONE";
@@ -69,23 +70,31 @@ class GridFile {
      * Are all required values set.
      */
     isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may be in the grid file.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        let errs = new Array();
         if (!this.id || this.id.length === 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the grid file.", this));
         }
         if (this.type < GridFileType.FUEL_GRID && this.type > GridFileType.TREE_HEIGHT) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("type", "An invalid type has been set on the grid file.", this));
         }
         if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
             //the filename must be either an attachment or a local file
             if (!this.filename.startsWith("attachment:/") && !fs.existsSync(this.filename)) {
-                return false;
+                errs.push(new psaasGlobals_1.ValidationError("filename", "The grid file file does not exist.", this));
             }
             //the projection must be either an attachment or a local file
             if (!this.projection.startsWith("attachment:/") && !fs.existsSync(this.projection)) {
-                return false;
+                errs.push(new psaasGlobals_1.ValidationError("projection", "The grid file projection does not exist.", this));
             }
         }
-        return true;
+        return errs;
     }
     /**
      * Streams the grid file to a socket.
@@ -97,9 +106,9 @@ class GridFile {
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
+exports.GridFile = GridFile;
 GridFile.PARAM_GRID_FILE = "inputgridfile";
 GridFile.counter = 0;
-exports.GridFile = GridFile;
 var WeatherPatchOperation;
 (function (WeatherPatchOperation) {
     WeatherPatchOperation[WeatherPatchOperation["EQUAL"] = 0] = "EQUAL";
@@ -115,14 +124,15 @@ var WeatherPatchType;
     WeatherPatchType[WeatherPatchType["LANDSCAPE"] = 4] = "LANDSCAPE";
 })(WeatherPatchType = exports.WeatherPatchType || (exports.WeatherPatchType = {}));
 class WeatherPatchDetails {
-    isValid() {
+    checkValid() {
+        let errs = new Array();
         if (this.operation < 0 || this.operation > WeatherPatchOperation.DIVIDE) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("operation", "An invalid operation has been set on the weather patch details.", this));
         }
         if (this.value <= 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("value", "An invalid value has been set on the weather patch details.", this));
         }
-        return true;
+        return errs;
     }
 }
 exports.WeatherPatchDetails = WeatherPatchDetails;
@@ -152,14 +162,15 @@ class WeatherPatch_WindSpeed extends WeatherPatchDetails {
 }
 exports.WeatherPatch_WindSpeed = WeatherPatch_WindSpeed;
 class WeatherPatch_WindDirection extends WeatherPatchDetails {
-    isValid() {
+    checkValid() {
+        let errs = new Array();
         if (this.operation < 0 || this.operation > WeatherPatchOperation.MINUS) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("operation", "An invalid operation has been set on the wind direction weather patch details.", this));
         }
         if (this.value <= 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("value", "An invalid value has been set on the weather patch details.", this));
         }
-        return true;
+        return errs;
     }
 }
 exports.WeatherPatch_WindDirection = WeatherPatch_WindDirection;
@@ -315,25 +326,93 @@ class WeatherPatch {
      * Are all required values set.
      */
     isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors in the weather patch.
+     * @returns A list of errors in the weather patch.
+     */
+    checkValid() {
+        let errs = new Array();
         if (!this.id || this.id.length === 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the weather patch.", this));
         }
-        if (this.startTime.length == 0 || this.endTime.length == 0 || this.startTimeOfDay.length == 0 ||
-            this.endTimeOfDay.length == 0) {
-            return false;
+        if (this.startTimeOfDay.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("startTimeOfDay", "No start time of day has been set on the weather patch.", this));
+        }
+        if (this.endTimeOfDay.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("endTimeOfDay", "No end time of day has been set on the weather patch.", this));
+        }
+        if (this.startTime.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("startTime", "No start time has been set on the weather patch.", this));
+        }
+        if (this.endTime.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("endTime", "No start time has been set on the weather patch.", this));
         }
         if (this.type == WeatherPatchType.FILE) {
             if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
                 //the filename must be an attachment or a local file
                 if (!this.filename.startsWith("attachment:/") && !fs.existsSync(this.filename)) {
-                    return false;
+                    errs.push(new psaasGlobals_1.ValidationError("filename", "The weather patch file does not exist.", this));
                 }
             }
         }
-        else if (this.type == WeatherPatchType.POLYGON && this.feature.length == 0) {
-            return false;
+        else if (this.type == WeatherPatchType.POLYGON) {
+            if (this.feature.length == 0) {
+                errs.push(new psaasGlobals_1.ValidationError("feature", "No points have been added to the polygon weather patch.", this));
+            }
         }
-        return true;
+        if (this.temperature != null) {
+            let tempErr = this.temperature.checkValid();
+            if (tempErr.length > 0) {
+                let err = new psaasGlobals_1.ValidationError("temperature", "Errors found in weather patch temperature details.", this.temperature);
+                tempErr.forEach(temp => {
+                    err.addChild(temp);
+                });
+                errs.push(err);
+            }
+        }
+        if (this.rh != null) {
+            let tempErr = this.rh.checkValid();
+            if (tempErr.length > 0) {
+                let err = new psaasGlobals_1.ValidationError("rh", "Errors found in weather patch relative humidity details.", this.rh);
+                tempErr.forEach(temp => {
+                    err.addChild(temp);
+                });
+                errs.push(err);
+            }
+        }
+        if (this.precip != null) {
+            let tempErr = this.precip.checkValid();
+            if (tempErr.length > 0) {
+                let err = new psaasGlobals_1.ValidationError("precip", "Errors found in weather patch precipitation details.", this.precip);
+                tempErr.forEach(temp => {
+                    err.addChild(temp);
+                });
+                errs.push(err);
+            }
+        }
+        if (this.windSpeed != null) {
+            let tempErr = this.windSpeed.checkValid();
+            if (tempErr.length > 0) {
+                let err = new psaasGlobals_1.ValidationError("windSpeed", "Errors found in weather patch wind speed details.", this.windSpeed);
+                tempErr.forEach(temp => {
+                    err.addChild(temp);
+                });
+                errs.push(err);
+            }
+        }
+        if (this.windDirection != null) {
+            let tempErr = this.windDirection.checkValid();
+            if (tempErr.length > 0) {
+                let err = new psaasGlobals_1.ValidationError("windDirection", "Errors found in weather patch wind direction details.", this.windDirection);
+                tempErr.forEach(temp => {
+                    err.addChild(temp);
+                });
+                errs.push(err);
+            }
+        }
+        return errs;
     }
     /**
      * Streams the weather patch file to a socket.
@@ -372,9 +451,9 @@ class WeatherPatch {
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
+exports.WeatherPatch = WeatherPatch;
 WeatherPatch.PARAM_WEATHER_PATCH = "weatherpatch";
 WeatherPatch.counter = 0;
-exports.WeatherPatch = WeatherPatch;
 var WeatherGridSector;
 (function (WeatherGridSector) {
     WeatherGridSector[WeatherGridSector["NORTH"] = 0] = "NORTH";
@@ -414,26 +493,34 @@ class WeatherGrid_GridFile {
      * Check to make sure all parameters have been set to valid values.
      */
     isValid() {
-        if (this.speed < 0) {
-            return false;
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find a list of all errors in the weather grid file.
+     * @returns A list of errors.
+     */
+    checkValid() {
+        let errs = new Array();
+        if (this.speed < 0 || this.speed > 250) {
+            errs.push(new psaasGlobals_1.ValidationError("speed", "The wind speed must be >= 0km/h and <= 250km/h.", this));
         }
         if (this.sector != WeatherGridSector.NORTH && this.sector != WeatherGridSector.NORTHEAST &&
             this.sector != WeatherGridSector.EAST && this.sector != WeatherGridSector.SOUTHEAST &&
             this.sector != WeatherGridSector.SOUTH && this.sector != WeatherGridSector.SOUTHWEST &&
             this.sector != WeatherGridSector.WEST && this.sector != WeatherGridSector.NORTHWEST) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("sector", "The wind direction sector is not one of the valid values.", this));
         }
         if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
             //the filename must be an attachment or a local file
             if (!this.filename.startsWith("attachment:/") && !fs.existsSync(this.filename)) {
-                return false;
+                errs.push(new psaasGlobals_1.ValidationError("filename", "The weather grid data file does not exist.", this));
             }
             //the projection file must be an attachment or a local file
             if (!this.projection.startsWith("attachment:/") && !fs.existsSync(this.projection)) {
-                return false;
+                errs.push(new psaasGlobals_1.ValidationError("projection", "The weather grid data projection file does not exist.", this));
             }
         }
-        return true;
+        return errs;
     }
 }
 exports.WeatherGrid_GridFile = WeatherGrid_GridFile;
@@ -521,14 +608,48 @@ class WeatherGrid {
      * Are all required values set.
      */
     isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors in the weather grid.
+     * @returns A list of errors found.
+     */
+    checkValid() {
+        let errs = new Array();
         if (!this.id || this.id.length === 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the weather grid.", this));
         }
-        if (this.startTimeOfDay.length == 0 || this.endTimeOfDay.length == 0 ||
-            this.startTime.length == 0 || this.endTime.length == 0) {
-            return false;
+        if (this.startTimeOfDay.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("startTimeOfDay", "No start time of day has been set on the weather grid.", this));
         }
-        return true;
+        if (this.endTimeOfDay.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("endTimeOfDay", "No end time of day has been set on the weather grid.", this));
+        }
+        if (this.startTime.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("startTime", "No start time has been set on the weather grid.", this));
+        }
+        if (this.endTime.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("endTime", "No start time has been set on the weather grid.", this));
+        }
+        let dataErrs = new Array();
+        for (let i = 0; i < this.gridData.length; i++) {
+            let tempErr = this.gridData[i].checkValid();
+            if (tempErr.length > 0) {
+                let err = new psaasGlobals_1.ValidationError(i, `Error in weather grid data file at ${i}.`, this.gridData);
+                tempErr.forEach(temp => {
+                    err.addChild(temp);
+                });
+                dataErrs.push(err);
+            }
+        }
+        if (dataErrs.length > 0) {
+            let tempErr = new psaasGlobals_1.ValidationError("gridData", "Errors in weather grid data.", this);
+            dataErrs.forEach(err => {
+                tempErr.addChild(err);
+            });
+            errs.push(tempErr);
+        }
+        return errs;
     }
     /**
      * Streams the weather grid file to a socket.
@@ -543,9 +664,9 @@ class WeatherGrid {
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
+exports.WeatherGrid = WeatherGrid;
 WeatherGrid.PARAM_WEATHER_GRID = "weathergrid";
 WeatherGrid.counter = 0;
-exports.WeatherGrid = WeatherGrid;
 var FuelPatchType;
 (function (FuelPatchType) {
     FuelPatchType[FuelPatchType["FILE"] = 0] = "FILE";
@@ -619,31 +740,40 @@ class FuelPatch {
      * Are all required values set.
      */
     isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may be in the fuel patch.
+     */
+    checkValid() {
+        let errs = new Array();
         if (!this.id || this.id.length === 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the fuel patch.", this));
         }
         if (this.type != FuelPatchType.FILE && this.type != FuelPatchType.LANDSCAPE && this.type != FuelPatchType.POLYGON) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("type", "An invalid type has been set for the fuelbreak. Must be one of FILE, LANDSCAPE, or POLYGON.", this));
         }
         if (this.fromFuel == null && this.fromFuelRule != FromFuel.ALL && this.fromFuelRule != FromFuel.NODATA &&
             this.fromFuelRule != FromFuel.ALL_COMBUSTABLE && this.fromFuelIndex == null) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("fromFuel", "No from fuel has been set on the fuel patch.", this));
         }
         if (this.toFuel.length == 0 && this.toFuelIndex == null) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("toFuel", "No to fuel has been set on the fuel patch.", this));
         }
         if (this.type == FuelPatchType.FILE) {
             if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
                 //the file must be an attachment or a local file
                 if (!this.filename.startsWith("attachment:/") && !fs.existsSync(this.filename)) {
-                    return false;
+                    errs.push(new psaasGlobals_1.ValidationError("filename", "The fuel patch file does not exist.", this));
                 }
             }
         }
-        else if (this.type == FuelPatchType.POLYGON && this.feature.length == 0) {
-            return false;
+        else if (this.type == FuelPatchType.POLYGON) {
+            if (this.feature.length == 0) {
+                errs.push(new psaasGlobals_1.ValidationError("feature", "No points have been added to the polygon fuel patch.", this));
+            }
         }
-        return true;
+        return errs;
     }
     /**
      * Streams the fuel patch file to a socket.
@@ -684,9 +814,9 @@ class FuelPatch {
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
+exports.FuelPatch = FuelPatch;
 FuelPatch.PARAM_FUELPATCH = "fuelpatch";
 FuelPatch.counter = 0;
-exports.FuelPatch = FuelPatch;
 var FuelBreakType;
 (function (FuelBreakType) {
     FuelBreakType[FuelBreakType["FILE"] = 0] = "FILE";
@@ -738,27 +868,39 @@ class FuelBreak {
      * @return boolean
      */
     isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find any errors that may exist in the fuelbreak.
+     * @returns A list of errors.
+     */
+    checkValid() {
+        let errs = new Array();
         if (!this.id || this.id.length === 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the fuelbreak.", this));
         }
-        if (this.type != FuelBreakType.FILE && this.type != FuelBreakType.POLYLINE && this.type != FuelBreakType.POLYGON) {
-            return false;
-        }
-        if (this.type == FuelBreakType.POLYLINE && this.width < 0) {
-            return false;
+        if (this.type == FuelBreakType.POLYLINE) {
+            if (this.width < 0 || this.width > 250.0) {
+                errs.push(new psaasGlobals_1.ValidationError("width", "The fuelbreak width must be greater than 0m and less than 250m.", this));
+            }
         }
         else if (this.type == FuelBreakType.FILE) {
             if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
                 //the file must be an attachment or a local file
                 if (!this.filename.startsWith("attachment:/") && !fs.existsSync(this.filename)) {
-                    return false;
+                    errs.push(new psaasGlobals_1.ValidationError("filename", "The fuelbreak file does not exist.", this));
                 }
             }
         }
-        else if (this.type == FuelBreakType.POLYGON && this.feature.length == 0) {
-            return false;
+        else if (this.type == FuelBreakType.POLYGON) {
+            if (this.feature.length == 0) {
+                errs.push(new psaasGlobals_1.ValidationError("feature", "No points have been added to the polygon fuelbreak.", this));
+            }
         }
-        return true;
+        else {
+            errs.push(new psaasGlobals_1.ValidationError("type", "An invalid type has been set for the fuelbreak. Must be one of FILE, POLYLINE, or POLYGON.", this));
+        }
+        return errs;
     }
     /**
      * Streams the fuel break file to a socket.
@@ -785,9 +927,9 @@ class FuelBreak {
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
+exports.FuelBreak = FuelBreak;
 FuelBreak.PARAM_FUELBREAK = "fuelbreakfile";
 FuelBreak.counter = 0;
-exports.FuelBreak = FuelBreak;
 /**
  * All information regarding the input files for PSaaS.
  * @author "Travis Redpath"
@@ -832,87 +974,168 @@ class PSaaSInputsFiles {
         this.gridFiles = new Array();
     }
     /**
-     * Get the error if isValid returns false.
-     */
-    error() {
-        return this._error;
-    }
-    /**
      * Are all required values specified.
      */
     isValid() {
-        this._error = "";
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that exist in the PSaaS input files.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        let _errors = new Array();
+        //check if the projection was specified
         if (this.projFile.length == 0) {
-            this._error = "Projection file was not specified.";
-            return false;
+            _errors.push(new psaasGlobals_1.ValidationError("projFile", "No projection file has been specified.", this));
         }
+        else if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST && !this.projFile.startsWith("attachment:/") && !fs.existsSync(this.projFile)) {
+            _errors.push(new psaasGlobals_1.ValidationError("projFile", "The specified projection file does not exist.", this));
+        }
+        //check if the LUT file was specified
         if (this.lutFile.length == 0) {
-            this._error = "LUT file was not specified.";
-            return false;
+            _errors.push(new psaasGlobals_1.ValidationError("lutFile", "No lookup table has been specified.", this));
         }
+        else if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST && !this.lutFile.startsWith("attachment:/") && !fs.existsSync(this.lutFile)) {
+            _errors.push(new psaasGlobals_1.ValidationError("lutFile", "The specified lookup table does not exist.", this));
+        }
+        //check if the fuelmap was specified
         if (this.fuelmapFile.length == 0) {
-            this._error = "Fuel map file was not specified.";
-            return false;
+            _errors.push(new psaasGlobals_1.ValidationError("fuelmapFile", "No fuelmap file has been specified.", this));
         }
-        if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
-            if (!this.projFile.startsWith("attachment:/") && !fs.existsSync(this.projFile)) {
-                this._error = "Projection file file does not exist (" + this.projFile + ").";
-                return false;
-            }
-            if (!this.lutFile.startsWith("attachment:/") && !fs.existsSync(this.lutFile)) {
-                this._error = "LUT file does not exist.";
-                return false;
-            }
-            if (!this.fuelmapFile.startsWith("attachment:/") && !fs.existsSync(this.fuelmapFile)) {
-                this._error = "Fuel map file does not exist.";
-                return false;
-            }
-            if (this.elevFile.length > 0 && !this.elevFile.startsWith("attachment:/") && !fs.existsSync(this.elevFile)) {
-                this._error = "Elevation file does not exist.";
-                return false;
-            }
+        else if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST && !this.fuelmapFile.startsWith("attachment:/") && !fs.existsSync(this.fuelmapFile)) {
+            _errors.push(new psaasGlobals_1.ValidationError("fuelmapFile", "The specified fuelmap file does not exist.", this));
         }
-        for (let i = 0; i < this.fuelBreakFiles.length - 1; i++) {
+        //the elevation file is optional but if it was set make sure it exists
+        if (this.elevFile.length > 0 && !psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST && !this.elevFile.startsWith("attachment:/") && !fs.existsSync(this.elevFile)) {
+            _errors.push(new psaasGlobals_1.ValidationError("elevFile", "The specified elevation file does not exist.", this));
+        }
+        let tempErrs = new Array();
+        //check the fuelbreak files for validity
+        for (let i = 0; i < this.fuelBreakFiles.length; i++) {
+            let fbErr = new psaasGlobals_1.ValidationError(i, `Errors found in the fuelbreak at index ${i}.`, this.fuelBreakFiles);
             for (let j = i + 1; j < this.fuelBreakFiles.length; j++) {
                 if (this.fuelBreakFiles[i].id.toUpperCase() === this.fuelBreakFiles[j].id.toUpperCase()) {
-                    this._error = "Fuel break names must be unique.";
-                    return false;
+                    let err = new psaasGlobals_1.ValidationError("id", "Duplicate fuelbreak IDs.", this.fuelBreakFiles[i]);
+                    fbErr.addChild(err);
+                    break;
                 }
             }
+            this.fuelBreakFiles[i].checkValid().forEach(err => {
+                fbErr.addChild(err);
+            });
+            if (fbErr.children.length > 0) {
+                tempErrs.push(fbErr);
+            }
         }
-        for (let i = 0; i < this.fuelPatchFiles.length - 1; i++) {
+        if (tempErrs.length > 0) {
+            let err = new psaasGlobals_1.ValidationError("fuelBreakFiles", "Errors found in fuelbreaks.", this);
+            tempErrs.forEach(temp => {
+                err.addChild(temp);
+            });
+            _errors.push(err);
+        }
+        tempErrs = new Array();
+        //check the fuel patch files for validity
+        for (let i = 0; i < this.fuelPatchFiles.length; i++) {
+            let fpErr = new psaasGlobals_1.ValidationError(i, `Errors found in the fuel patch at index ${i}.`, this.fuelPatchFiles);
             for (let j = i + 1; j < this.fuelPatchFiles.length; j++) {
                 if (this.fuelPatchFiles[i].id.toUpperCase() === this.fuelPatchFiles[j].id.toUpperCase()) {
-                    this._error = "Fuel patch names must be unique.";
-                    return false;
+                    let err = new psaasGlobals_1.ValidationError("id", "Duplicate fuel patch IDs.", this.fuelPatchFiles[i]);
+                    fpErr.addChild(err);
+                    break;
                 }
             }
+            this.fuelPatchFiles[i].checkValid().forEach(err => {
+                fpErr.addChild(err);
+            });
+            if (fpErr.children.length > 0) {
+                tempErrs.push(fpErr);
+            }
         }
-        for (let i = 0; i < this.weatherGridFiles.length - 1; i++) {
+        if (tempErrs.length > 0) {
+            let err = new psaasGlobals_1.ValidationError("fuelPatchFiles", "Errors found in fuel patches.", this);
+            tempErrs.forEach(temp => {
+                err.addChild(temp);
+            });
+            _errors.push(err);
+        }
+        tempErrs = new Array();
+        //check the weather grid files for validity
+        for (let i = 0; i < this.weatherGridFiles.length; i++) {
+            let wgErr = new psaasGlobals_1.ValidationError(i, `Errors found in the weather grid at index ${i}.`, this.weatherGridFiles);
             for (let j = i + 1; j < this.weatherGridFiles.length; j++) {
                 if (this.weatherGridFiles[i].id.toUpperCase() === this.weatherGridFiles[j].id.toUpperCase()) {
-                    this._error = "Weather grid names must be unique.";
-                    return false;
+                    let err = new psaasGlobals_1.ValidationError("id", "Duplicate weather grid IDs.", this.weatherGridFiles[i]);
+                    wgErr.addChild(err);
+                    break;
                 }
             }
+            this.weatherGridFiles[i].checkValid().forEach(err => {
+                wgErr.addChild(err);
+            });
+            if (wgErr.children.length > 0) {
+                tempErrs.push(wgErr);
+            }
         }
-        for (let i = 0; i < this.weatherPatchFiles.length - 1; i++) {
+        if (tempErrs.length > 0) {
+            let err = new psaasGlobals_1.ValidationError("weatherGridFiles", "Errors found in weather grids.", this);
+            tempErrs.forEach(temp => {
+                err.addChild(temp);
+            });
+            _errors.push(err);
+        }
+        tempErrs = new Array();
+        //check the weather patch files for validity
+        for (let i = 0; i < this.weatherPatchFiles.length; i++) {
+            let wgErr = new psaasGlobals_1.ValidationError(i, `Errors found in the weather patch at index ${i}.`, this.weatherPatchFiles);
             for (let j = i + 1; j < this.weatherPatchFiles.length; j++) {
                 if (this.weatherPatchFiles[i].id.toUpperCase() === this.weatherPatchFiles[j].id.toUpperCase()) {
-                    this._error = "Weather patch names must be unique.";
-                    return false;
+                    let err = new psaasGlobals_1.ValidationError("id", "Duplicate weather patch IDs.", this.weatherGridFiles[i]);
+                    wgErr.addChild(err);
+                    break;
                 }
             }
+            this.weatherPatchFiles[i].checkValid().forEach(err => {
+                wgErr.addChild(err);
+            });
+            if (wgErr.children.length > 0) {
+                tempErrs.push(wgErr);
+            }
         }
-        for (let i = 0; i < this.gridFiles.length - 1; i++) {
+        if (tempErrs.length > 0) {
+            let err = new psaasGlobals_1.ValidationError("weatherPatchFiles", "Errors found in weather patches.", this);
+            tempErrs.forEach(temp => {
+                err.addChild(temp);
+            });
+            _errors.push(err);
+        }
+        tempErrs = new Array();
+        //check the grid files for validity
+        for (let i = 0; i < this.gridFiles.length; i++) {
+            let gfErr = new psaasGlobals_1.ValidationError(i, `Errors found in the weather patch at index ${i}.`, this.weatherPatchFiles);
             for (let j = i + 1; j < this.gridFiles.length; j++) {
                 if (this.gridFiles[i].id.toUpperCase() === this.gridFiles[j].id.toUpperCase()) {
-                    this._error = "Grid file names must be unique.";
-                    return false;
+                    let err = new psaasGlobals_1.ValidationError("id", "Duplicate grid file IDs.", this.weatherGridFiles[i]);
+                    gfErr.addChild(err);
+                    break;
                 }
             }
+            this.gridFiles[i].checkValid().forEach(err => {
+                gfErr.addChild(err);
+            });
+            if (gfErr.children.length > 0) {
+                tempErrs.push(gfErr);
+            }
         }
-        return true;
+        if (tempErrs.length > 0) {
+            let err = new psaasGlobals_1.ValidationError("gridFiles", "Errors found in grid files.", this);
+            tempErrs.forEach(temp => {
+                err.addChild(temp);
+            });
+            _errors.push(err);
+        }
+        return _errors;
     }
     /**
      * Streams the input files to a socket.
@@ -947,11 +1170,11 @@ class PSaaSInputsFiles {
         return "";
     }
 }
+exports.PSaaSInputsFiles = PSaaSInputsFiles;
 PSaaSInputsFiles.PARAM_PROJ = "projfile";
 PSaaSInputsFiles.PARAM_LUT = "lutfile";
 PSaaSInputsFiles.PARAM_FUELMAP = "fuelmapfile";
 PSaaSInputsFiles.PARAM_ELEVATION = "elevationfile";
-exports.PSaaSInputsFiles = PSaaSInputsFiles;
 var HFFMCMethod;
 (function (HFFMCMethod) {
     HFFMCMethod[HFFMCMethod["VAN_WAGNER"] = 0] = "VAN_WAGNER";
@@ -1059,24 +1282,48 @@ class WeatherStream {
      * Checks to see if all required values have been set.
      */
     isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find any errors that may be in the weather stream.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        let errs = new Array();
         if (!this.id || this.id.length === 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the weather stream.", this));
         }
         if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
             //the file must be an attachment or a local file
             if (!this.filename.startsWith("attachment:/") && !fs.existsSync(this.filename)) {
-                return false;
+                errs.push(new psaasGlobals_1.ValidationError("filename", "The specified weather file does not exist.", this));
             }
         }
-        if (this.starting_ffmc < 0 || this.starting_dmc < 0 || this.starting_dc < 0 ||
-            this.starting_precip < 0 || this.hffmc_hour < -1 || this.hffmc_hour > 23 ||
-            (this.hffmc_method != HFFMCMethod.LAWSON && this.hffmc_method != HFFMCMethod.VAN_WAGNER)) {
-            return false;
+        if (this.starting_ffmc < 0 || this.starting_ffmc > 101.0) {
+            errs.push(new psaasGlobals_1.ValidationError("starting_ffmc", "Invalid starting FFMC value for the weather stream.", this));
         }
-        if (this.start_time.length == 0 || this.end_time.length == 0) {
-            return false;
+        if (this.starting_dmc < 0 || this.starting_dmc > 500.0) {
+            errs.push(new psaasGlobals_1.ValidationError("starting_dmc", "Invalid starting DMC value for the weather stream.", this));
         }
-        return true;
+        if (this.starting_dc < 0 || this.starting_dc > 1500.0) {
+            errs.push(new psaasGlobals_1.ValidationError("starting_dc", "Invalid starting DC value for the weather stream.", this));
+        }
+        if (this.starting_precip < 0) {
+            errs.push(new psaasGlobals_1.ValidationError("starting_precip", "Invalid starting precipitation value for the weather stream.", this));
+        }
+        if (this.hffmc_hour < -1 || this.hffmc_hour > 23) {
+            errs.push(new psaasGlobals_1.ValidationError("hffmc_hour", "Invalid starting HFFMC hour for the weather stream.", this));
+        }
+        if (this.hffmc_method != HFFMCMethod.LAWSON && this.hffmc_method != HFFMCMethod.VAN_WAGNER) {
+            errs.push(new psaasGlobals_1.ValidationError("hffmc_method", "Invalid HFFMC calculation method for the weather stream.", this));
+        }
+        if (this.start_time.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("start_time", "No start time has been set for the weather stream.", this));
+        }
+        if (this.end_time.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("end_time", "No end time has been set for the weather stream.", this));
+        }
+        return errs;
     }
     /**
      * Streams the weather station to a socket.
@@ -1095,9 +1342,9 @@ class WeatherStream {
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
+exports.WeatherStream = WeatherStream;
 WeatherStream.PARAM_WEATHERSTREAM = "weatherstream";
 WeatherStream.counter = 0;
-exports.WeatherStream = WeatherStream;
 class WeatherStation {
     constructor() {
         /**
@@ -1134,25 +1381,45 @@ class WeatherStation {
      * Checks to see if all required values are specified.
      */
     isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Look for errors in the weather station.
+     * @returns A list of all errors found in the weather station.
+     */
+    checkValid() {
+        let errs = new Array();
         if (!this.id || this.id.length === 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the weather station.", this));
         }
         if (this.location == null) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("location", "The location of the weather station has not been set.", this));
         }
-        for (let v of this.streams) {
-            if (!v.isValid()) {
-                return false;
-            }
-        }
-        for (let i = 0; i < this.streams.length - 1; i++) {
+        let weatherStreamErrs = new Array();
+        for (let i = 0; i < this.streams.length; i++) {
+            let wsErr = new psaasGlobals_1.ValidationError(i, `Errors found in the weather stream at index ${i}.`, this.streams);
             for (let j = i + 1; j < this.streams.length; j++) {
                 if (this.streams[i].id.toUpperCase() === this.streams[j].id.toUpperCase()) {
-                    return false;
+                    let err = new psaasGlobals_1.ValidationError("id", "Duplicate weather stream IDs.", this.streams[i]);
+                    wsErr.addChild(err);
+                    break;
                 }
             }
+            this.streams[i].checkValid().forEach(err => {
+                wsErr.addChild(err);
+            });
+            if (wsErr.children.length > 0) {
+                weatherStreamErrs.push(wsErr);
+            }
         }
-        return true;
+        if (weatherStreamErrs.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("streams", "Errors found in weather streams.", this);
+            weatherStreamErrs.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        return errs;
     }
     /**
      * Add a weather stream to the station.
@@ -1260,9 +1527,9 @@ class WeatherStation {
         }
     }
 }
+exports.WeatherStation = WeatherStation;
 WeatherStation.PARAM_WEATHERSTATION = "weatherstation";
 WeatherStation.counter = 0;
-exports.WeatherStation = WeatherStation;
 var IgnitionType;
 (function (IgnitionType) {
     IgnitionType[IgnitionType["FILE"] = 0] = "FILE";
@@ -1328,27 +1595,33 @@ class Ignition {
      * Checks to see if all required values have been set.
      */
     isValid() {
+        return this.checkValid().length == 0;
+    }
+    checkValid() {
+        let errs = new Array();
         if (!this.id || this.id.length === 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the ignition.", this));
         }
         if (this.startTime.length == 0) {
-            return false;
-        }
-        if (this.type != IgnitionType.FILE && this.type != IgnitionType.POLYLINE && this.type != IgnitionType.POLYGON && this.type != IgnitionType.POINT) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("startTime", "No start time has been set for the ignition.", this));
         }
         if (this.type == IgnitionType.FILE) {
             if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
                 //the file must be an attachment or a local file
                 if (!this.filename.startsWith("attachment:/") && fs.existsSync(this.filename)) {
-                    return false;
+                    errs.push(new psaasGlobals_1.ValidationError("filename", "The specified ignition file does not exist.", this));
                 }
             }
         }
-        else if ((this.type == IgnitionType.POLYLINE || this.type == IgnitionType.POLYGON || this.type == IgnitionType.POINT) && this.feature.length == 0) {
-            return false;
+        else if ((this.type == IgnitionType.POLYLINE || this.type == IgnitionType.POLYGON || this.type == IgnitionType.POINT)) {
+            if (this.feature.length == 0) {
+                errs.push(new psaasGlobals_1.ValidationError("feature", "No locations have been added to the ignition.", this));
+            }
         }
-        return true;
+        else {
+            errs.push(new psaasGlobals_1.ValidationError("type", "Invalid ignition type.", this));
+        }
+        return errs;
     }
     /**
      * Streams the ignition to a socket.
@@ -1385,9 +1658,9 @@ class Ignition {
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
+exports.Ignition = Ignition;
 Ignition.PARAM_IGNITION = "ignition";
 Ignition.counter = 0;
-exports.Ignition = Ignition;
 /**
  * The type of shape that is being used to describe an
  * asset.
@@ -1443,24 +1716,32 @@ class AssetFile {
      * Checks to see if all required values have been set.
      */
     isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the asset.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
         if (!this.id || this.id.length === 0) {
-            return false;
-        }
-        if (this.type != AssetShapeType.FILE && this.type != AssetShapeType.POLYLINE && this.type != AssetShapeType.POLYGON && this.type != AssetShapeType.POINT) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the asset.", this));
         }
         if (this.type == AssetShapeType.FILE) {
             if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
                 //the file must be an attachment or a local file
                 if (!this.filename.startsWith("attachment:/") && fs.existsSync(this.filename)) {
-                    return false;
+                    errs.push(new psaasGlobals_1.ValidationError("filename", "The specified asset file does not exist.", this));
                 }
             }
         }
         else if ((this.type == AssetShapeType.POLYLINE || this.type == AssetShapeType.POLYGON || this.type == AssetShapeType.POINT) && this.feature.length == 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("feature", "No locations have been added to the asset.", this));
         }
-        return true;
+        else {
+            errs.push(new psaasGlobals_1.ValidationError("type", "Invalid asset type.", this));
+        }
+        return errs;
     }
     /**
      * Streams the ignition to a socket.
@@ -1480,13 +1761,64 @@ class AssetFile {
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
+exports.AssetFile = AssetFile;
 AssetFile.PARAM_ASSET_FILE = "asset_file";
 AssetFile.counter = 0;
-exports.AssetFile = AssetFile;
 /**
  * Options for associating an ignition point with a scenario.
  */
 class IgnitionReference {
+    isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the ignition reference.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
+        if (this.ignition == null || this.ignition.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("ignition", "No ignition reference was set.", this));
+        }
+        let count = 0;
+        if (this.polylineIgnitionOptions != null) {
+            count++;
+            let optionsErrs = this.polylineIgnitionOptions.checkValid();
+            if (optionsErrs.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError("polylineIgnitionOptions", "Errors in sub-scenario options for polyline ignitions.", this);
+                optionsErrs.forEach(err => {
+                    temp.addChild(err);
+                });
+                errs.push(temp);
+            }
+        }
+        if (this.multiPointIgnitionOptions != null) {
+            count++;
+            let optionsErrs = this.multiPointIgnitionOptions.checkValid();
+            if (optionsErrs.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError("multiPointIgnitionOptions", "Errors in sub-scenario options for multi-point ignitions.", this);
+                optionsErrs.forEach(err => {
+                    temp.addChild(err);
+                });
+                errs.push(temp);
+            }
+        }
+        if (this.singlePointIgnitionOptions != null) {
+            count++;
+            let optionsErrs = this.singlePointIgnitionOptions.checkValid();
+            if (optionsErrs.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError("singlePointIgnitionOptions", "Errors in sub-scenario options for single point ignitions.", this);
+                optionsErrs.forEach(err => {
+                    temp.addChild(err);
+                });
+                errs.push(temp);
+            }
+        }
+        if (count > 0) {
+            errs.push(new psaasGlobals_1.ValidationError(null, "More than one sub-scenario type has been specified.", this));
+        }
+        return errs;
+    }
 }
 exports.IgnitionReference = IgnitionReference;
 class PolylineIgnitionOptions {
@@ -1504,6 +1836,13 @@ class PolylineIgnitionOptions {
          */
         this.pointIndex = -1;
     }
+    checkValid() {
+        const errs = new Array();
+        if (this.name == null || this.name.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("name", "No name has been set for the sub-scenario.", this));
+        }
+        return errs;
+    }
 }
 exports.PolylineIgnitionOptions = PolylineIgnitionOptions;
 class MultiPointIgnitionOptions {
@@ -1513,9 +1852,23 @@ class MultiPointIgnitionOptions {
          */
         this.pointIndex = -1;
     }
+    checkValid() {
+        const errs = new Array();
+        if (this.name == null || this.name.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("name", "No name has been set for the sub-scenario.", this));
+        }
+        return errs;
+    }
 }
 exports.MultiPointIgnitionOptions = MultiPointIgnitionOptions;
 class SinglePointIgnitionOptions {
+    checkValid() {
+        const errs = new Array();
+        if (this.name == null || this.name.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("name", "No name has been set for the sub-scenario.", this));
+        }
+        return errs;
+    }
 }
 exports.SinglePointIgnitionOptions = SinglePointIgnitionOptions;
 /**
@@ -1529,27 +1882,78 @@ class BurningConditions {
          */
         this.date = "";
         /**
+         * The time of day that the burning condition starts to take effect (optional).
+         */
+        this.startTime = null;
+        /**
+         * The time of day that the burning condition stops (optional).
+         */
+        this.endTime = null;
+        /**
          * The minimum FWI value that will allow burning (optional).
          */
-        this.fwiGreater = -1;
+        this.fwiGreater = 0;
         /**
          * The minimum wind speed that will allow burning (optional).
          */
-        this.wsGreater = -1;
+        this.wsGreater = 0;
         /**
          * The maximum relative humidity that will allow burning (optional).
          */
-        this.rhLess = -1;
+        this.rhLess = 100;
         /**
          * The minimum ISI that will allow burning (optional).
          */
-        this.isiGreater = -1;
+        this.isiGreater = 0;
+        this.startTime = psaasGlobals_1.Duration.createTime(0, 0, 0, false);
+        this.endTime = psaasGlobals_1.Duration.createTime(23, 59, 59, false);
     }
     /**
      * Checks to see if all required values have been set.
      */
     isValid() {
-        return this.date.length > 0;
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the burn condition.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
+        if (this.date.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("date", "No date was set to apply the burn conditions to.", this));
+        }
+        let startReady = true;
+        if (this.startTime == null) {
+            startReady = false;
+            errs.push(new psaasGlobals_1.ValidationError("startTime", "No start time of day has been set for the burn condition.", this));
+        }
+        else if (!this.startTime.isValid() || this.startTime.isNegative || this.startTime.years > 0 || this.startTime.days > 0 || this.startTime.hours > 23) {
+            startReady = false;
+            errs.push(new psaasGlobals_1.ValidationError("startTime", "The start time of day for the burn condition is invalid.", this));
+        }
+        if (this.endTime == null) {
+            errs.push(new psaasGlobals_1.ValidationError("endTime", "No end time of day has been set for the burn condition.", this));
+        }
+        else if (!this.endTime.isValid() || this.endTime.isNegative || psaasGlobals_1.Duration.createTime(24, 0, 0, false).isLessThan(this.endTime)) {
+            errs.push(new psaasGlobals_1.ValidationError("endTime", "The end time of day for the burn condition is invalid.", this));
+        }
+        else if (startReady && this.endTime.isLessThan(this.startTime)) {
+            errs.push(new psaasGlobals_1.ValidationError("endTime", "The end time of day for the burn condition is before the start time of day.", this));
+        }
+        if (this.fwiGreater < 0) {
+            errs.push(new psaasGlobals_1.ValidationError("fwiGreater", "The specified minimum FWI required for burning is invalid.", this));
+        }
+        if (this.wsGreater < 0 || this.wsGreater > 200) {
+            errs.push(new psaasGlobals_1.ValidationError("wsGreater", "The specified minimum wind speed required for burning is invalid.", this));
+        }
+        if (this.rhLess < 0 || this.rhLess > 100) {
+            errs.push(new psaasGlobals_1.ValidationError("rhLess", "The specified maximum relative humidity required for burning is invalid.", this));
+        }
+        if (this.isiGreater < 0) {
+            errs.push(new psaasGlobals_1.ValidationError("isiGreater", "The specified minimum ISI required for burning is invalid.", this));
+        }
+        return errs;
     }
 }
 exports.BurningConditions = BurningConditions;
@@ -1579,10 +1983,21 @@ class LayerInfo {
         return this.name;
     }
     isValid() {
-        if (this.name.length == 0 || this.index < 0) {
-            return false;
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the layer reference.
+     * @returns A list of all errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
+        if (this.name == null || this.name.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("name", "No layer reference has been set.", this));
         }
-        return true;
+        if (this.index < 0) {
+            errs.push(new psaasGlobals_1.ValidationError("index", "The layer index has not been set.", this));
+        }
+        return errs;
     }
 }
 exports.LayerInfo = LayerInfo;
@@ -1609,6 +2024,16 @@ class AssetReference {
     getName() {
         return this.name;
     }
+    checkValid() {
+        const errs = new Array();
+        if (this.name == null || this.name.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("name", "No aseet reference has been set.", this));
+        }
+        if (this.operation == psaasGlobals_1.AssetOperation.STOP_AFTER_X && this.collisionCount < 1) {
+            errs.push(new psaasGlobals_1.ValidationError("collisionCount", "The collision count has not been set when the asset operation is to stop after reaching X assets.", this));
+        }
+        return errs;
+    }
 }
 exports.AssetReference = AssetReference;
 /**
@@ -1620,11 +2045,10 @@ class TimestepSettings {
         this.statistics = new Array();
     }
     /**
-     * Add a statistic to output.
-     * @param stat The name of the statistic to add.
-     * @returns The added statistic, or null if an invalid statistic was passed.
+     * Check to see if a global statistic if valid to be used as a timestep setting.
+     * @param stat True if the input statistic if valid for timestep settings.
      */
-    addStatistic(stat) {
+    static validateInput(stat) {
         if (stat != psaasGlobals_1.GlobalStatistics.TOTAL_BURN_AREA && stat != psaasGlobals_1.GlobalStatistics.TOTAL_PERIMETER &&
             stat != psaasGlobals_1.GlobalStatistics.EXTERIOR_PERIMETER && stat != psaasGlobals_1.GlobalStatistics.ACTIVE_PERIMETER && stat != psaasGlobals_1.GlobalStatistics.TOTAL_PERIMETER_CHANGE &&
             stat != psaasGlobals_1.GlobalStatistics.TOTAL_PERIMETER_GROWTH_RATE && stat != psaasGlobals_1.GlobalStatistics.EXTERIOR_PERIMETER_CHANGE && stat != psaasGlobals_1.GlobalStatistics.EXTERIOR_PERIMETER_GROWTH_RATE &&
@@ -1635,6 +2059,17 @@ class TimestepSettings {
             stat != psaasGlobals_1.GlobalStatistics.MAX_SFC && stat != psaasGlobals_1.GlobalStatistics.MAX_TFC && stat != psaasGlobals_1.GlobalStatistics.MAX_FI && stat != psaasGlobals_1.GlobalStatistics.MAX_FL &&
             stat != psaasGlobals_1.GlobalStatistics.TICKS && stat != psaasGlobals_1.GlobalStatistics.PROCESSING_TIME && stat != psaasGlobals_1.GlobalStatistics.GROWTH_TIME &&
             stat != psaasGlobals_1.GlobalStatistics.DATE_TIME && stat != psaasGlobals_1.GlobalStatistics.SCENARIO_NAME && stat != psaasGlobals_1.GlobalStatistics.HFI && stat != psaasGlobals_1.GlobalStatistics.HCFB) {
+            return false;
+        }
+        return true;
+    }
+    /**
+     * Add a statistic to output.
+     * @param stat The name of the statistic to add.
+     * @returns The added statistic, or null if an invalid statistic was passed.
+     */
+    addStatistic(stat) {
+        if (!TimestepSettings.validateInput(stat)) {
             return null;
         }
         this.statistics.push(stat);
@@ -1654,6 +2089,28 @@ class TimestepSettings {
         return false;
     }
     /**
+     * Find all errors that may exist in the timestep settings.
+     * @returns A list of all errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
+        let statErrs = new Array();
+        for (let i = 0; i < this.statistics.length; i++) {
+            if (!TimestepSettings.validateInput(this.statistics[i])) {
+                let temp = new psaasGlobals_1.ValidationError(i, `Invalid timestep setting output found at ${i}.`, this.statistics);
+                statErrs.push(temp);
+            }
+        }
+        if (statErrs.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("statistics", "Invalid timestep settings found.", this);
+            statErrs.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        return errs;
+    }
+    /**
      * Streams the settings to a socket.
      * @param builder
      */
@@ -1664,8 +2121,8 @@ class TimestepSettings {
         });
     }
 }
-TimestepSettings.PARAM_EMIT_STATISTIC = "mng_statistic";
 exports.TimestepSettings = TimestepSettings;
+TimestepSettings.PARAM_EMIT_STATISTIC = "mng_statistic";
 /**
  * Options for creating sub-scenarios when adding weather streams to
  * a scenario.
@@ -1690,6 +2147,29 @@ class StreamOptions {
          */
         this.ignitionTime = "";
     }
+    isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the stream sub-scenario options.
+     * @returns A list of all errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
+        if (this.name == null) {
+            errs.push(new psaasGlobals_1.ValidationError("name", "The sub-scenario name cannot be null.", this));
+        }
+        if (this.startTime == null) {
+            errs.push(new psaasGlobals_1.ValidationError("startTime", "The start time cannot be null.", this));
+        }
+        if (this.endTime == null) {
+            errs.push(new psaasGlobals_1.ValidationError("endTime", "The end time cannot be null.", this));
+        }
+        if (this.ignitionTime == null) {
+            errs.push(new psaasGlobals_1.ValidationError("ignitionTime", "The ignition time cannot be null.", this));
+        }
+        return errs;
+    }
 }
 exports.StreamOptions = StreamOptions;
 /**
@@ -1702,6 +2182,33 @@ class StationStream {
          * be created if multiple weather streams are referenced.
          */
         this.streamOptions = null;
+    }
+    isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the weather stream reference.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
+        if (this.station == null || this.station.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("station", "No weather station has been set on the weather stream reference.", this));
+        }
+        if (this.stream == null || this.stream.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("stream", "No weather stream has been set on the weather stream reference.", this));
+        }
+        if (this.streamOptions != null) {
+            let streamErrs = this.streamOptions.checkValid();
+            if (streamErrs.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError("streamOptions", "Errors found in stream sub-scenario options.", this);
+                streamErrs.forEach(err => {
+                    temp.addChild(err);
+                });
+                errs.push(temp);
+            }
+        }
+        return errs;
     }
 }
 exports.StationStream = StationStream;
@@ -2119,37 +2626,162 @@ class Scenario {
      * Checks to see if all required values have been set.
      */
     isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the scenario.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
         if (!this.id || this.id.length === 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the scenario.", this));
         }
         if (this.isCopy) {
             if (this.scenToCopy.length == 0) {
-                return false;
+                errs.push(new psaasGlobals_1.ValidationError("scenToCopy", "The scenario has been specified as a copy of another but the other scenarios ID was not set.", this));
             }
         }
         else {
-            if (this.startTime.length == 0 || this.endTime.length == 0) {
-                return false;
+            if (this.startTime.length == 0) {
+                errs.push(new psaasGlobals_1.ValidationError("startTime", "The start time for the scenario has not been set.", this));
             }
-            if (!this.fgmOptions.isValid()) {
-                return false;
+            if (this.endTime.length == 0) {
+                errs.push(new psaasGlobals_1.ValidationError("endTime", "The end time for the scenario has not been set.", this));
             }
-            if (!this.fbpOptions.isValid()) {
-                return false;
+            if (this.displayInterval == null || this.displayInterval.toSeconds() == 0) {
+                errs.push(new psaasGlobals_1.ValidationError("displayInterval", "The scenario display interval is not set.", this));
             }
-            if (!this.fmcOptions.isValid()) {
-                return false;
+            let tempErr = this.fgmOptions.checkValid();
+            if (tempErr.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError("fgmOptions", "Invalid FGM options.", this);
+                tempErr.forEach(err => {
+                    temp.addChild(err);
+                });
+                errs.push(temp);
             }
-            if (!this.fwiOptions.isValid()) {
-                return false;
+            tempErr = this.fbpOptions.checkValid();
+            if (tempErr.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError("fbpOptions", "Invalid FBP options.", this);
+                tempErr.forEach(err => {
+                    temp.addChild(err);
+                });
+                errs.push(temp);
             }
-            for (let bc of this.burningConditions) {
-                if (!bc.isValid()) {
-                    return false;
+            tempErr = this.fmcOptions.checkValid();
+            if (tempErr.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError("fmcOptions", "Invalid FMC options.", this);
+                tempErr.forEach(err => {
+                    temp.addChild(err);
+                });
+                errs.push(temp);
+            }
+            tempErr = this.fwiOptions.checkValid();
+            if (tempErr.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError("fwiOptions", "Invalid FWI options.", this);
+                tempErr.forEach(err => {
+                    temp.addChild(err);
+                });
+                errs.push(temp);
+            }
+            let burns = new psaasGlobals_1.ValidationError("burningConditions", "Errors in burning condition.", this);
+            for (let i = 0; i < this.burningConditions.length; i++) {
+                const burnErr = new psaasGlobals_1.ValidationError(i, `Errors found in burn condition at ${i}.`, this.burningConditions);
+                this.burningConditions[i].checkValid().forEach(err => {
+                    burnErr.addChild(err);
+                });
+                if (burnErr.children.length > 0) {
+                    burns.addChild(burnErr);
                 }
             }
+            if (burns.children.length > 0) {
+                errs.push(burns);
+            }
+            let stationErrs = new Array();
+            for (let i = 0; i < this.stationStreams.length; i++) {
+                const station = new psaasGlobals_1.ValidationError(i, `Errors found in weather stream reference at ${i}.`, this.stationStreams);
+                this.stationStreams[i].checkValid().forEach(err => {
+                    station.addChild(err);
+                });
+                if (station.children.length > 0) {
+                    stationErrs.push(station);
+                }
+            }
+            if (stationErrs.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError("stationStreams", "Errors found in weather stream references.", this);
+                stationErrs.forEach(err => {
+                    temp.addChild(err);
+                });
+                errs.push(temp);
+            }
+            let vectorErrs = new Array();
+            for (let i = 0; i < this.vectorInfo.length; i++) {
+                if (this.vectorInfo[i].length == 0) {
+                    const vector = new psaasGlobals_1.ValidationError(i, `Errors found in vector reference at ${i}.`, this.vectorInfo);
+                    vector.addChild(new psaasGlobals_1.ValidationError(i, "No vector ID has been specified.", this));
+                    vectorErrs.push(vector);
+                }
+            }
+            if (vectorErrs.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError("vectorInfo", "Errors found in vector references.", this);
+                vectorErrs.forEach(err => {
+                    temp.addChild(err);
+                });
+                errs.push(temp);
+            }
+            let ignitionErrs = new Array();
+            for (let i = 0; i < this.ignitionInfo.length; i++) {
+                const ignition = new psaasGlobals_1.ValidationError(i, `Errors found in ignition reference at ${i}.`, this.ignitionInfo);
+                this.ignitionInfo[i].checkValid().forEach(err => {
+                    ignition.addChild(err);
+                });
+                if (ignition.children.length > 0) {
+                    ignitionErrs.push(ignition);
+                }
+            }
+            if (ignitionErrs.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError("ignitionInfo", "Errors found in ignition references.", this);
+                ignitionErrs.forEach(err => {
+                    temp.addChild(err);
+                });
+                errs.push(temp);
+            }
+            let layerErrs = new Array();
+            for (let i = 0; i < this.layerInfo.length; i++) {
+                const layer = new psaasGlobals_1.ValidationError(i, `Errors found in layer reference at ${i}.`, this.layerInfo);
+                this.layerInfo[i].checkValid().forEach(err => {
+                    layer.addChild(err);
+                });
+                if (layer.children.length > 0) {
+                    layerErrs.push(layer);
+                }
+            }
+            if (layerErrs.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError("layerInfo", "Errors found in layer references.", this);
+                layerErrs.forEach(err => {
+                    temp.addChild(err);
+                });
+                errs.push(temp);
+            }
+            let assetErrs = new Array();
+            for (let i = 0; i < this.assetFiles.length; i++) {
+                const asset = new psaasGlobals_1.ValidationError(i, `Errors found in asset reference at ${i}.`, this.assetFiles);
+                this.assetFiles[i].checkValid().forEach(err => {
+                    asset.addChild(err);
+                });
+                if (asset.children.length > 0) {
+                    assetErrs.push(asset);
+                }
+            }
+            if (assetErrs.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError("assetFiles", "Errors found in asset references.", this);
+                assetErrs.forEach(err => {
+                    temp.addChild(err);
+                });
+                errs.push(temp);
+            }
         }
-        return true;
+        return errs;
     }
     /**
      * Streams the scenario to a socket.
@@ -2245,6 +2877,7 @@ class Scenario {
         builder.write(Scenario.PARAM_SCENARIO_END + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
+exports.Scenario = Scenario;
 Scenario.PARAM_SCENARIO_BEGIN = "scenariostart";
 Scenario.PARAM_SCENARIO_END = "scenarioend";
 Scenario.PARAM_SCENARIONAME = "scenarioname";
@@ -2261,7 +2894,6 @@ Scenario.PARAM_PRIMARY_STREAM = "primarystream";
 Scenario.PARAM_SCENARIO_TO_COPY = "scenariotocopy";
 Scenario.PARAM_ASSET_REF = "asset_ref";
 Scenario.counter = 0;
-exports.Scenario = Scenario;
 /**
  * Types of options that can be applied to the fuels in
  * the lookup table.
@@ -2281,6 +2913,42 @@ var FuelOptionType;
  */
 class FuelOption {
     /**
+     * Find all errors that may exist in the fuel option.
+     * @returns A list of all errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
+        if (this.fuelType == null || this.fuelType.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("fuelType", "No fuel type has been specified.", this));
+        }
+        if (this.optionType == FuelOptionType.CROWN_BASE_HEIGHT) {
+            if (this.value < 0.0 || this.value > 25.0) {
+                errs.push(new psaasGlobals_1.ValidationError("value", "An invalid crown base height has been specified.", this));
+            }
+        }
+        else if (this.optionType == FuelOptionType.GRASS_CURING) {
+            if (this.value < 0.0 || this.value > 1.0) {
+                errs.push(new psaasGlobals_1.ValidationError("value", "An invalid grass curing degree has been specified.", this));
+            }
+        }
+        else if (this.optionType == FuelOptionType.GRASS_FUEL_LOAD) {
+            if (this.value < 0.0 || this.value > 5.0) {
+                errs.push(new psaasGlobals_1.ValidationError("value", "An invalid grass fuel load has been specified.", this));
+            }
+        }
+        else if (this.optionType == FuelOptionType.PERCENT_CONIFER) {
+            if (this.value < 0.0 || this.value > 100.0) {
+                errs.push(new psaasGlobals_1.ValidationError("value", "An invalid percent conifer has been specified.", this));
+            }
+        }
+        else if (this.optionType == FuelOptionType.PERCENT_DEAD_FIR) {
+            if (this.value < 0.0 || this.value > 100.0) {
+                errs.push(new psaasGlobals_1.ValidationError("value", "An invalid percent dead fir has been specified.", this));
+            }
+        }
+        return errs;
+    }
+    /**
      * Streams the fuel option to a socket.
      * @param builder
      */
@@ -2290,8 +2958,8 @@ class FuelOption {
         builder.write(data);
     }
 }
-FuelOption.PARAM_FUEL_OPTION = "fuel_option_setting";
 exports.FuelOption = FuelOption;
+FuelOption.PARAM_FUEL_OPTION = "fuel_option_setting";
 /**
  * A class that holds information about the files and settings that will be inputs to PSaaS.
  * @author "Travis Redpath"
@@ -2322,81 +2990,155 @@ class PSaaSInputs {
         this.timezone = new psaasGlobals_1.Timezone();
     }
     /**
-     * Get a string describing an error if isValid returned false.
-     */
-    error() {
-        return this._error;
-    }
-    /**
-     * Are required inputs set.
+     * Validate the user specified inputs.
+     * @returns A list of errors found during validation.
      */
     isValid() {
-        this._error = "";
-        if (!this.timezone.isValid()) {
-            this._error = "Invalid timezone offset";
-            return false;
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find any errors in the PSaaS input values.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        let _errors = new Array();
+        let errs = this.timezone.checkValid();
+        if (errs.length > 0) {
+            let timeErr = new psaasGlobals_1.ValidationError("timezone", "Errors in the simulation timezone.", this);
+            errs.forEach(err => {
+                timeErr.addChild(err);
+            });
+            _errors.push(timeErr);
         }
-        if (!this.files.isValid()) {
-            this._error = this.files.error();
-            return false;
+        errs = this.files.checkValid();
+        if (errs.length > 0) {
+            let timeErr = new psaasGlobals_1.ValidationError("files", "Errors in PSaaS input files.", this);
+            errs.forEach(err => {
+                timeErr.addChild(err);
+            });
+            _errors.push(timeErr);
         }
         if (this.weatherStations.length < 1) {
-            this._error = "There were no weather stations specified.";
-            return false;
+            _errors.push(new psaasGlobals_1.ValidationError("weatherStations", "No weather stations have been added.", this));
         }
         if (this.scenarios.length < 1) {
-            this._error = "There were no scenarios specified.";
-            return false;
+            _errors.push(new psaasGlobals_1.ValidationError("scenarios", "No scenarios have been added.", this));
         }
-        for (let i = 0; i < this.weatherStations.length - 1; i++) {
-            if (!this.weatherStations[i].isValid()) {
-                this._error = `Invalid weather station ${this.weatherStations[i].getId()}`;
-                return false;
-            }
+        let weatherStationErrors = new Array();
+        for (let i = 0; i < this.weatherStations.length; i++) {
+            let wsErr = new psaasGlobals_1.ValidationError(i, `Errors found in weather station at index ${i}.`, this.weatherStations);
             for (let j = i + 1; j < this.weatherStations.length; j++) {
                 if (this.weatherStations[i].id.toUpperCase() === this.weatherStations[j].id.toUpperCase()) {
-                    this._error = "Weather station names must be unique.";
-                    return false;
+                    let err = new psaasGlobals_1.ValidationError("id", "Duplicate weather station IDs.", this.weatherStations[i]);
+                    wsErr.addChild(err);
+                    break;
                 }
             }
-        }
-        for (let i = 0; i < this.ignitions.length - 1; i++) {
-            if (!this.ignitions[i].isValid()) {
-                this._error = `Invalid ignition ${this.ignitions[i].getId()}`;
-                return false;
+            this.weatherStations[i].checkValid().forEach(err => {
+                wsErr.addChild(err);
+            });
+            if (wsErr.children.length > 0) {
+                weatherStationErrors.push(wsErr);
             }
+        }
+        if (weatherStationErrors.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("weatherStations", "Errors found in weather stations.", this);
+            weatherStationErrors.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        let ignitionErrors = new Array();
+        for (let i = 0; i < this.ignitions.length; i++) {
+            let igErr = new psaasGlobals_1.ValidationError(i, `Errors found in ignition at index ${i}.`, this.ignitions);
             for (let j = i + 1; j < this.ignitions.length; j++) {
                 if (this.ignitions[i].id.toUpperCase() === this.ignitions[j].id.toUpperCase()) {
-                    this._error = "Ignition names must be unique.";
-                    return false;
+                    let err = new psaasGlobals_1.ValidationError("id", "Duplicate ignition IDs.", this.ignitions[i]);
+                    igErr.addChild(err);
+                    break;
                 }
             }
-        }
-        for (let i = 0; i < this.scenarios.length - 1; i++) {
-            if (!this.scenarios[i].isValid()) {
-                this._error = `Invalid scenario ${this.scenarios[i].getId()}`;
-                return false;
+            this.ignitions[i].checkValid().forEach(err => {
+                igErr.addChild(err);
+            });
+            if (igErr.children.length > 0) {
+                ignitionErrors.push(igErr);
             }
+        }
+        if (ignitionErrors.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("ignitions", "Errors found in ignitions.", this);
+            ignitionErrors.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        let scenarioErrors = new Array();
+        for (let i = 0; i < this.scenarios.length; i++) {
+            let scErr = new psaasGlobals_1.ValidationError(i, `Errors found in scenario at index ${i}.`, this.scenarios);
             for (let j = i + 1; j < this.scenarios.length; j++) {
                 if (this.scenarios[i].id.toUpperCase() === this.scenarios[j].id.toUpperCase()) {
-                    this._error = "Scenario names must be unique.";
-                    return false;
+                    let err = new psaasGlobals_1.ValidationError("id", "Duplicate scenario IDs.", this.scenarios[i]);
+                    scErr.addChild(err);
+                    break;
                 }
             }
-        }
-        for (let i = 0; i < this.assetFiles.length - 1; i++) {
-            if (!this.assetFiles[i].isValid()) {
-                this._error = `Invalid asset ${this.assetFiles[i].getId()}`;
-                return false;
+            this.scenarios[i].checkValid().forEach(err => {
+                scErr.addChild(err);
+            });
+            if (scErr.children.length > 0) {
+                scenarioErrors.push(scErr);
             }
+        }
+        if (scenarioErrors.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("scenarios", "Errors found in scenarios.", this);
+            scenarioErrors.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        let assetErrors = new Array();
+        for (let i = 0; i < this.assetFiles.length; i++) {
+            let asErr = new psaasGlobals_1.ValidationError(i, `Errors found in scenario at index ${i}.`, this.assetFiles);
             for (let j = i + 1; j < this.assetFiles.length; j++) {
                 if (this.assetFiles[i].getId().toUpperCase() === this.assetFiles[j].getId().toUpperCase()) {
-                    this._error = "Asset names must be unique.";
-                    return false;
+                    let err = new psaasGlobals_1.ValidationError("id", "Duplicate asset IDs.", this.assetFiles[i]);
+                    asErr.addChild(err);
+                    break;
                 }
             }
+            this.assetFiles[i].checkValid().forEach(err => {
+                asErr.addChild(err);
+            });
+            if (asErr.children.length > 0) {
+                scenarioErrors.push(asErr);
+            }
         }
-        return true;
+        if (assetErrors.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("assetFiles", "Errors found in assets.", this);
+            assetErrors.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        let fuelOptionErrors = new Array();
+        for (let i = 0; i < this.fuelOptions.length; i++) {
+            let foErrs = this.fuelOptions[i].checkValid();
+            if (foErrs.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError(i, `Errors found in fuel options at index ${i}.`, this.fuelOptions);
+                foErrs.forEach(err => {
+                    temp.addChild(err);
+                });
+                fuelOptionErrors.push(temp);
+            }
+        }
+        if (fuelOptionErrors.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("fuelOptions", "Errors found in fuel options.", this);
+            fuelOptionErrors.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        return errs;
     }
     /**
      * Streams the input settings to a socket.
@@ -2486,6 +3228,13 @@ class ExportTimeOverride {
          */
         this.exportTime = null;
     }
+    checkValid() {
+        const errs = new Array();
+        if (this.subScenarioName == null || this.subScenarioName.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("subScenarioName", "The sub-scenario that the override is for has not been set.", this));
+        }
+        return errs;
+    }
 }
 exports.ExportTimeOverride = ExportTimeOverride;
 class Output_GridFile {
@@ -2543,11 +3292,26 @@ class Output_GridFile {
      * Checks to see if all required values have been set.
      */
     isValid() {
-        if (this.filename.length == 0 || this.outputTime.length == 0 || this.statistic == null ||
-            this.scenarioName.length == 0 || this.interpMethod == null) {
-            return false;
+        return this.checkValid().length == 0;
+    }
+    checkValid() {
+        const errs = new Array();
+        if (this.filename.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("filename", "No output filename has been specified.", this));
         }
-        if (this.statistic != psaasGlobals_1.GlobalStatistics.TEMPERATURE && this.statistic != psaasGlobals_1.GlobalStatistics.DEW_POINT && this.statistic != psaasGlobals_1.GlobalStatistics.RELATIVE_HUMIDITY &&
+        if (this.outputTime.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("outputTime", "The simulation time to export at has not been specified.", this));
+        }
+        if (this.scenarioName.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("scenarioName", "The scenario that the output is for has not been specified.", this));
+        }
+        if (this.interpMethod == null) {
+            errs.push(new psaasGlobals_1.ValidationError("interpMethod", "The interpolation method has not been specified.", this));
+        }
+        if (this.statistic == null) {
+            errs.push(new psaasGlobals_1.ValidationError("statistic", "The statistic to export has not been specified.", this));
+        }
+        else if (this.statistic != psaasGlobals_1.GlobalStatistics.TEMPERATURE && this.statistic != psaasGlobals_1.GlobalStatistics.DEW_POINT && this.statistic != psaasGlobals_1.GlobalStatistics.RELATIVE_HUMIDITY &&
             this.statistic != psaasGlobals_1.GlobalStatistics.WIND_DIRECTION && this.statistic != psaasGlobals_1.GlobalStatistics.WIND_SPEED && this.statistic != psaasGlobals_1.GlobalStatistics.PRECIPITATION &&
             this.statistic != psaasGlobals_1.GlobalStatistics.FFMC && this.statistic != psaasGlobals_1.GlobalStatistics.ISI && this.statistic != psaasGlobals_1.GlobalStatistics.FWI &&
             this.statistic != psaasGlobals_1.GlobalStatistics.BUI && this.statistic != psaasGlobals_1.GlobalStatistics.MAX_FI && this.statistic != psaasGlobals_1.GlobalStatistics.MAX_FL &&
@@ -2559,9 +3323,27 @@ class Output_GridFile {
             this.statistic != psaasGlobals_1.GlobalStatistics.FIRE_ARRIVAL_TIME_MIN && this.statistic != psaasGlobals_1.GlobalStatistics.FIRE_ARRIVAL_TIME_MAX && this.statistic != psaasGlobals_1.GlobalStatistics.TOTAL_FUEL_CONSUMED &&
             this.statistic != psaasGlobals_1.GlobalStatistics.SURFACE_FUEL_CONSUMED && this.statistic != psaasGlobals_1.GlobalStatistics.CROWN_FUEL_CONSUMED && this.statistic != psaasGlobals_1.GlobalStatistics.RADIATIVE_POWER &&
             this.statistic != psaasGlobals_1.GlobalStatistics.HFI && this.statistic != psaasGlobals_1.GlobalStatistics.HCFB) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("statistic", "Invalid statistic specified for grid export.", this));
         }
-        return true;
+        let subscenarioErrs = new Array();
+        for (let i = 0; i < this.subScenarioOverrideTimes.length; i++) {
+            let subscenario = this.subScenarioOverrideTimes[i].checkValid();
+            if (subscenario.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError(i, `Errors found in sub-scenario override times at ${i}.`, this.subScenarioOverrideTimes);
+                subscenario.forEach(err => {
+                    temp.addChild(err);
+                });
+                subscenarioErrs.push(temp);
+            }
+        }
+        if (subscenarioErrs.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("subScenarioOverrideTimes", "Errors found in sub-scenario override times.", this);
+            subscenarioErrs.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        return errs;
     }
     static streamNullableString(value) {
         return value || "";
@@ -2580,8 +3362,8 @@ class Output_GridFile {
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
-Output_GridFile.PARAM_GRIDFILE = "gridfile";
 exports.Output_GridFile = Output_GridFile;
+Output_GridFile.PARAM_GRIDFILE = "gridfile";
 var VectorFileType;
 (function (VectorFileType) {
     VectorFileType["KML"] = "KML";
@@ -2591,6 +3373,13 @@ var VectorFileType;
  * An override start and end time for a specific sub-scenario.
  */
 class PerimeterTimeOverride {
+    checkValid() {
+        const errs = new Array();
+        if (this.subScenarioName == null) {
+            errs.push(new psaasGlobals_1.ValidationError("subScenarioName", "No sub-scenario has been set.", this));
+        }
+        return errs;
+    }
 }
 exports.PerimeterTimeOverride = PerimeterTimeOverride;
 class VectorFile {
@@ -2647,7 +3436,9 @@ class VectorFile {
         this.shouldStream = false;
     }
     add_subScenarioOverrides(add) {
-        this.subScenarioOverrides.push(add);
+        if (add != null) {
+            this.subScenarioOverrides.push(add);
+        }
     }
     remove_subScenarioOverrides(remove) {
         var ind = this.subScenarioOverrides.indexOf(remove);
@@ -2663,20 +3454,64 @@ class VectorFile {
      * Checks to see if all required values have been set.
      */
     isValid() {
-        if (this.filename.length == 0 || this.perimStartTime.length == 0 || this.perimEndTime.length == 0 || this.scenarioName.length == 0) {
-            return false;
+        return this.checkValid().length == 0;
+    }
+    checkValid() {
+        const errs = new Array();
+        if (this.filename.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("filename", "No output filename has been specified.", this));
+        }
+        if (this.perimStartTime.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("perimStartTime", "The simulation time to begin outputting the perimeter for has not been specified.", this));
+        }
+        if (this.perimEndTime.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("perimEndTime", "The simulation time to stop outputting the perimeter for has not been specified.", this));
+        }
+        if (this.scenarioName.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("scenarioName", "The scenario that the output is for has not been specified.", this));
         }
         if (this.type !== VectorFileType.KML && this.type !== VectorFileType.SHP) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("type", "Invalid output file type specified.", this));
         }
-        if (this.multPerim == null || this.removeIslands == null || this.mergeContact == null || this.perimActive == null) {
-            return false;
+        if (this.multPerim == null) {
+            errs.push(new psaasGlobals_1.ValidationError("multPerim", "The multiple perimeter setting is invalid.", this));
         }
-        if (!this.metadata.isValid()) {
-            this._error = this.metadata.err;
-            return false;
+        if (this.removeIslands == null) {
+            errs.push(new psaasGlobals_1.ValidationError("removeIslands", "The remove islands setting is invalid.", this));
         }
-        return true;
+        if (this.mergeContact == null) {
+            errs.push(new psaasGlobals_1.ValidationError("mergeContact", "The merge contacting perimeters setting is invalid.", this));
+        }
+        if (this.perimActive == null) {
+            errs.push(new psaasGlobals_1.ValidationError("perimActive", "The active perimeter setting is invalid.", this));
+        }
+        let metadataErrs = this.metadata.checkValid();
+        if (metadataErrs.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("metadata", "Errors in vector file metadata settings.", this);
+            metadataErrs.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        let subscenarioErrs = new Array();
+        for (let i = 0; i < this.subScenarioOverrides.length; i++) {
+            let subscenario = this.subScenarioOverrides[i].checkValid();
+            if (subscenario.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError(i, `Errors found in sub-scenario overrides at ${i}.`, this.subScenarioName);
+                subscenario.forEach(err => {
+                    temp.addChild(err);
+                });
+                subscenarioErrs.push(temp);
+            }
+        }
+        if (subscenarioErrs.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("subScenarioOverrides", "Errors in sub-scenario overrides.", this);
+            subscenarioErrs.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        return errs;
     }
     /**
      * Streams the vector file to a socket.
@@ -2699,8 +3534,8 @@ class VectorFile {
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
-VectorFile.PARAM_VECTORFILE = "vectorfile";
 exports.VectorFile = VectorFile;
+VectorFile.PARAM_VECTORFILE = "vectorfile";
 /**
  * Output a summary for the specified scenario.
  * @author "Travis Redpath"
@@ -2719,13 +3554,29 @@ class SummaryFile {
      * Determine if all of the required values have been set.
      */
     isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the summary file output.
+     * @returns A list of all errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
         if (this.filename.length == 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("filename", "The output filename was not specified.", this));
         }
         if (this.scenName.length == 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("scenName", "The scenario that the output is for has not been specified.", this));
         }
-        return this.outputs.isValid();
+        let outputsErrs = this.outputs.checkValid();
+        if (outputsErrs.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("outputs", "Errors found in the summary output settings.", this);
+            outputsErrs.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        return errs;
     }
     /**
      * Streams the summary options to a socket.
@@ -2855,8 +3706,8 @@ class SummaryFile {
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
-SummaryFile.PARAM_SUMMARYFILE = "summaryfile";
 exports.SummaryFile = SummaryFile;
+SummaryFile.PARAM_SUMMARYFILE = "summaryfile";
 /**
  * The filetype of the exported stats file.
  */
@@ -3000,18 +3851,34 @@ class StatsFile {
      * Determine if all of the required values have been set.
      */
     isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may be in the statistics file output.
+     * @returns A list of all errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
         if (this.filename.length == 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("filename", "The output filename was not specified.", this));
         }
         if (this.scenName.length == 0) {
-            return false;
+            errs.push(new psaasGlobals_1.ValidationError("scenName", "The scenario that the output is for has not been specified.", this));
         }
-        for (let col of this.columns) {
-            if (!this.validateColumn(col)) {
-                return false;
+        let columnErrs = new Array();
+        for (let i = 0; i < this.columns.length; i++) {
+            if (!this.validateColumn(this.columns[i])) {
+                columnErrs.push(new psaasGlobals_1.ValidationError(i, `Invalid statistics column at ${i}.`, this.columns));
             }
         }
-        return true;
+        if (columnErrs.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("columns", "Invalid statistics columns.", this);
+            columnErrs.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        return errs;
     }
     /**
      * Streams the stats options to a socket.
@@ -3033,8 +3900,8 @@ class StatsFile {
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
-StatsFile.PARAM_STATSFILE = "statsfile";
 exports.StatsFile = StatsFile;
+StatsFile.PARAM_STATSFILE = "statsfile";
 /**
  * Information about which files should be output from the job.
  * @author "Travis Redpath"
@@ -3159,27 +4026,87 @@ class PSaaSOutputs {
      * Checks to see if all of the required values have been set.
      */
     isValid() {
-        for (let s of this.summaryFiles) {
-            if (!s.isValid()) {
-                return false;
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the PSaaS outputs.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
+        let summaryErrs = new Array();
+        for (let i = 0; i < this.summaryFiles.length; i++) {
+            let summary = this.summaryFiles[i].checkValid();
+            if (summary.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError(i, `Errors found in summary file at ${i}.`, this.summaryFiles);
+                summary.forEach(err => {
+                    temp.addChild(err);
+                });
+                summaryErrs.push(temp);
             }
         }
-        for (let v of this.vectorFiles) {
-            if (!v.isValid()) {
-                return false;
+        if (summaryErrs.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("summaryFiles", "Errors found in summary file outputs.", this);
+            summaryErrs.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        let vectorErrs = new Array();
+        for (let i = 0; i < this.vectorFiles.length; i++) {
+            let vector = this.vectorFiles[i].checkValid();
+            if (vector.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError(i, `Errors found in vector file at ${i}.`, this.vectorFiles);
+                vector.forEach(err => {
+                    temp.addChild(err);
+                });
+                vectorErrs.push(temp);
             }
         }
-        for (let g of this.gridFiles) {
-            if (!g.isValid()) {
-                return false;
+        if (vectorErrs.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("vectorFiles", "Errors found in vector file outputs.", this);
+            vectorErrs.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        let gridErrs = new Array();
+        for (let i = 0; i < this.gridFiles.length; i++) {
+            let grid = this.gridFiles[i].checkValid();
+            if (grid.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError(i, `Errors found in grid file at ${i}.`, this.gridFiles);
+                grid.forEach(err => {
+                    temp.addChild(err);
+                });
+                gridErrs.push(temp);
             }
         }
-        for (let s of this.statsFiles) {
-            if (!s.isValid()) {
-                return false;
+        if (gridErrs.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("gridFiles", "Errors found in grid file outputs.", this);
+            gridErrs.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        let statErrs = new Array();
+        for (let i = 0; i < this.statsFiles.length; i++) {
+            let stats = this.statsFiles[i].checkValid();
+            if (stats.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError(i, `Errors found in statistics file at ${i}.`, this.statsFiles);
+                stats.forEach(err => {
+                    temp.addChild(err);
+                });
+                statErrs.push(temp);
             }
         }
-        return true;
+        if (statErrs.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("statsFiles", "Errors found in statistics file outputs.", this);
+            statErrs.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        return errs;
     }
     /**
      * Streams the output settings to a socket.
@@ -3209,9 +4136,15 @@ exports.PSaaSOutputs = PSaaSOutputs;
  */
 class OutputStreamInfo extends psaasGlobals_1.IPSaaSSerializable {
 }
-OutputStreamInfo.PARAM_URL = "output_stream";
 exports.OutputStreamInfo = OutputStreamInfo;
+OutputStreamInfo.PARAM_URL = "output_stream";
 class MqttOutputStreamInfo extends OutputStreamInfo {
+    /**
+     * @inheritdoc
+     */
+    checkValid() {
+        return [];
+    }
     /**
      * Streams the output stream information to a socket.
      * @param builder
@@ -3260,6 +4193,28 @@ class GeoServerOutputStreamInfo extends OutputStreamInfo {
          * enabled.
          */
         this.declaredSrs = null;
+    }
+    /**
+     * @inheritdoc
+     */
+    checkValid() {
+        const errs = new Array();
+        if (this.username == null || this.username.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("username", "No login username for the GeoServer instance was specified.", this));
+        }
+        if (this.password == null || this.password.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("password", "No login password for the GeoServer instance was specified.", this));
+        }
+        if (this.url == null || this.url.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("password", "No login password for the GeoServer instance was specified.", this));
+        }
+        if (this.workspace == null || this.workspace.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("password", "No GeoServer workspace to store the exported files in was specified.", this));
+        }
+        if (this.coverageStore == null || this.coverageStore.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("password", "No GeoServer coverage store inside the workspace to store the exported files in was specified.", this));
+        }
+        return errs;
     }
     /**
      * Streams the outptu stream information to a socket.
@@ -3531,6 +4486,13 @@ class UnitSettings {
         this.massAreaOutput = new MassAreaUnit();
     }
     /**
+     * Find all errors that may exist in the unit settings.
+     * @returns A list of all errors that were found.
+     */
+    checkValid() {
+        return [];
+    }
+    /**
      * Streams the attachment to a socket.
      * @param builder
      */
@@ -3544,8 +4506,88 @@ class UnitSettings {
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
-UnitSettings.PARAM_UNITS = "export_units";
 exports.UnitSettings = UnitSettings;
+UnitSettings.PARAM_UNITS = "export_units";
+/**
+ * The types of load balancing available in PSaaS.
+ */
+var LoadBalanceType;
+(function (LoadBalanceType) {
+    /**
+     * Don't use any load balancing. The generated FGM will be sent to
+     * a single instance of PSaaS Manager and it will run all scenarios.
+     */
+    LoadBalanceType[LoadBalanceType["NONE"] = 0] = "NONE";
+    /**
+     * Every instance of PSaaS Manager in the same cluster will receive
+     * the generated FGM. An external service will provide scenario
+     * indices to run so that each instance of PSaaS that is processing
+     * the FGM will run different scenarios. The indices will be
+     * communicated to the PSaaS instance over MQTT. See the
+     * [MQTT documentation](https://spydmobile.bitbucket.io/psaas_mqtt/#topic-psaas/{originator}/delegator/balance)
+     * for more information.
+     */
+    LoadBalanceType[LoadBalanceType["EXTERNAL_COUNTER"] = 1] = "EXTERNAL_COUNTER";
+    /**
+     * The generated FGM will be sent to a single instance of PSaaS
+     * Manager. A file that the user creates will provide scenario
+     * indices to the instance of PSaaS that runs the FGM. The file
+     * must be named balance.txt and each line must contian a valid
+     * scenario index that should be run. Typically used for debugging
+     * to force PSaaS to only process a single scenario when many
+     * are present in the FGM.
+     */
+    LoadBalanceType[LoadBalanceType["LOCAL_FILE"] = 2] = "LOCAL_FILE";
+})(LoadBalanceType = exports.LoadBalanceType || (exports.LoadBalanceType = {}));
+/**
+ * Options for running the job not related directly to
+ * scenarios or fire growth.
+ */
+class JobOptions extends psaasGlobals_1.IPSaaSSerializable {
+    constructor() {
+        super(...arguments);
+        /**
+         * The type of load balancing to use to run the job.
+         */
+        this.loadBalance = LoadBalanceType.NONE;
+        /**
+         * A priority to use to sort the job queue. When a
+         * job is recieved by an instance of PSaaS Manager
+         * it will be placed in the job queue immediately
+         * below the first job found with the same or higher
+         * priority that isn't already running starting from
+         * the bottom of the queue.
+         *
+         * The priority can be any valid integer value.
+         */
+        this.priority = 0;
+        /**
+         * Should the job be validated by PSaaS instead of
+         * being run. The user can redo the job if there
+         * is a validation error or restart the job so
+         * that it simulates in PSaaS using MQTT commands.
+         */
+        this.validate = false;
+    }
+    /**
+     * Find all errors that may exist in the job settings.
+     * @readonly A list of all errors that were found.
+     */
+    checkValid() {
+        return [];
+    }
+    /**
+     * Streams the options to a socket.
+     * @param builder
+     */
+    stream(builder) {
+        var tmp = `${this.loadBalance}|${this.priority}|${this.validate}`;
+        builder.write(JobOptions.PARAM_OPTIONS + psaasGlobals_1.SocketMsg.NEWLINE);
+        builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
+    }
+}
+exports.JobOptions = JobOptions;
+JobOptions.PARAM_OPTIONS = "fgm_settings";
 /**
  * The top level class where all information required to run a PSaaS job will be stored.
  * @author "Travis Redpath"
@@ -3557,7 +4599,6 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
          * Optional user comments about the job.
          */
         this.comments = "";
-        this._error = "";
         /**
          * An array of files that can be used in place of
          * regular files in the simulation. Stores both
@@ -3574,26 +4615,79 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         this.timestepSettings = new TimestepSettings();
         this.streamInfo = new Array();
         this.exportUnits = new UnitSettings();
-    }
-    /**
-     * Get an error message if one has been set.
-     */
-    error() {
-        return this._error;
+        this.jobOptions = new JobOptions();
     }
     /**
      * Are the input and output values for the job valid.
      */
     isValid() {
-        if (!this.inputs.isValid()) {
-            this._error = this.inputs.error();
-            return false;
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Get a list of errors that exist in the current PSaaS configuration.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        let errs = new Array();
+        let inputErrs = this.inputs.checkValid();
+        if (inputErrs.length > 0) {
+            let inErr = new psaasGlobals_1.ValidationError("inputs", "Errors in PSaaS input values.", this);
+            inputErrs.forEach(err => {
+                inErr.addChild(err);
+            });
+            errs.push(inErr);
         }
-        else if (!this.outputs.isValid()) {
-            this._error = "Outputs invalid";
-            return false;
+        let outputErrs = this.outputs.checkValid();
+        if (outputErrs.length > 0) {
+            let outErr = new psaasGlobals_1.ValidationError("outputs", "Errors in PSaaS output values.", this);
+            outputErrs.forEach(err => {
+                outErr.addChild(err);
+            });
+            errs.push(outErr);
         }
-        return true;
+        let timestepErrs = this.timestepSettings.checkValid();
+        if (timestepErrs.length > 0) {
+            let timeErr = new psaasGlobals_1.ValidationError("timestepSettings", "Errors found in timestep settings.", this);
+            timestepErrs.forEach(err => {
+                timeErr.addChild(err);
+            });
+            errs.push(timeErr);
+        }
+        let streamErrs = new Array();
+        for (let i = 0; i < this.streamInfo.length; i++) {
+            let stream = this.streamInfo[i].checkValid();
+            if (stream.length > 0) {
+                let temp = new psaasGlobals_1.ValidationError(i, `Errors found in stream info at ${i}.`, this.streamInfo);
+                stream.forEach(err => {
+                    temp.addChild(err);
+                });
+                streamErrs.push(temp);
+            }
+        }
+        if (streamErrs.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("streamInfo", "Errors in stream settings.", this);
+            streamErrs.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
+        let unitErrs = this.exportUnits.checkValid();
+        if (unitErrs.length > 0) {
+            let uErr = new psaasGlobals_1.ValidationError("exportUnits", "Errors found in unit settings.", this);
+            unitErrs.forEach(err => {
+                uErr.addChild(err);
+            });
+            errs.push(uErr);
+        }
+        let jobErrs = this.jobOptions.checkValid();
+        if (jobErrs.length > 0) {
+            let jErr = new psaasGlobals_1.ValidationError("jobOptions", "Errors found in job options.", this);
+            jobErrs.forEach(err => {
+                jErr.addChild(err);
+            });
+            errs.push(jErr);
+        }
+        return errs;
     }
     /**
      * Specify the timezone for all specified times.
@@ -3684,13 +4778,13 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * NZ-41, NZ-43, NZ-46, NZ-50, NZ-53, NZ-62, NZ-63, or NZ-65 fuel type. If unset, this also
      * sets the grass fuel load to 0.35kg/m^2.
      * @param fuel The fuel type to set the grass curing for.
-     * @param value The grass curing.
+     * @param value The grass curing (0 - 100%).
      */
     setGrassCuring(fuel, value) {
         let option = new FuelOption();
         option.fuelType = fuel;
         option.optionType = FuelOptionType.GRASS_CURING;
-        option.value = value;
+        option.value = value / 100.0;
         this.inputs.fuelOptions.push(option);
     }
     /**
@@ -3710,7 +4804,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     /**
      * Set the crown base height.
      * @param fuel The fuel type to set the grass fuel load for. Must be C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
-     * @param value The crown base height.
+     * @param value The crown base height (m).
      */
     setCrownBaseHeight(fuel, value) {
         let option = new FuelOption();
@@ -4531,6 +5625,34 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         })
             .catch(err => { throw err; });
     }
+    /**
+     * Sends the job to the job manager for validation.
+     * @throws This method can only be called once at a time per instance.
+     */
+    validateJob(callback) {
+        if (this.fetchState < 0) {
+            throw new Error("Multiple concurrent reqeusts");
+        }
+        this.jobOptions.validate = true;
+        this.beginJobInternal((wrapper) => callback(wrapper.job, wrapper.name));
+    }
+    /**
+     * Sends the job to the job manager for validation. The job won't run
+     * completely until the user issues the rerun command later.
+     * @returns A {@link StartJobWrapper} that contains the name of the newly
+     * 			started job as well as the current {@link PSaaS} object.
+     * @throws This method can only be called once at a time per instance.
+     */
+    async validateJobPromise() {
+        if (this.fetchState < 0) {
+            throw new Error("Multiple concurrent reqeusts");
+        }
+        this.jobOptions.validate = true;
+        return await new Promise((resolve, reject) => {
+            this.beginJobInternal(resolve, reject);
+        })
+            .catch(err => { throw err; });
+    }
     /*
      * This method connects to the builder and begins the job
      */
@@ -4556,6 +5678,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
                 str.stream(builder);
             }
             this.exportUnits.stream(builder);
+            this.jobOptions.stream(builder);
             builder.write(psaasGlobals_1.SocketMsg.ENDDATA + psaasGlobals_1.SocketMsg.NEWLINE);
             builder.write(psaasGlobals_1.SocketMsg.STARTJOB + psaasGlobals_1.SocketMsg.NEWLINE);
         });
@@ -4583,8 +5706,8 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         });
     }
 }
-PSaaS.PARAM_COMMENT = "GLOBALCOMMENTS";
 exports.PSaaS = PSaaS;
+PSaaS.PARAM_COMMENT = "GLOBALCOMMENTS";
 class StartJobWrapper {
     constructor(job, name) {
         this.job = job;
