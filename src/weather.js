@@ -24,6 +24,7 @@
  * ```
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.WeatherCalculator = void 0;
 /** ignore this comment */
 const net = require("net");
 const psaasGlobals_1 = require("./psaasGlobals");
@@ -115,8 +116,8 @@ class WeatherCalculator extends psaasGlobals_1.IPSaaSSerializable {
             .catch(err => { throw err; });
     }
 }
-WeatherCalculator.GET_WEATHER_KEY = "WEATHER_GET";
 exports.WeatherCalculator = WeatherCalculator;
+WeatherCalculator.GET_WEATHER_KEY = "WEATHER_GET";
 class CitiesGetter extends psaasGlobals_1.IPSaaSSerializable {
     /*
      * This method connects to the builder and retrieves the cities

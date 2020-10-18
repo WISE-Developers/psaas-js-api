@@ -32,6 +32,7 @@
  * ```
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.FbpCalculations = exports.FuelType = exports.FuelTypeDefaults = void 0;
 /** ignore this comment */
 const net = require("net");
 const psaasGlobals_1 = require("./psaasGlobals");
@@ -253,8 +254,8 @@ class FbpCalculations extends psaasGlobals_1.IPSaaSSerializable {
             .catch(err => { throw err; });
     }
 }
-FbpCalculations.CALCULATE_KEY = "FBP_CALCULATE";
 exports.FbpCalculations = FbpCalculations;
+FbpCalculations.CALCULATE_KEY = "FBP_CALCULATE";
 /*
  * This class contains methods used to connect to the
  * builder and retrieve fuel type information

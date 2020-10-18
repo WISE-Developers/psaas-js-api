@@ -22,6 +22,7 @@
  * ```
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ForecastCalculator = exports.ForecastDay = exports.ForecastHour = void 0;
 /** ignore this comment */
 const net = require("net");
 const psaasGlobals_1 = require("./psaasGlobals");
@@ -174,8 +175,8 @@ class ForecastCalculator extends psaasGlobals_1.IPSaaSSerializable {
             .catch(err => { throw err; });
     }
 }
-ForecastCalculator.GET_FORECAST = "FORECAST_GET";
 exports.ForecastCalculator = ForecastCalculator;
+ForecastCalculator.GET_FORECAST = "FORECAST_GET";
 class CityGetter extends psaasGlobals_1.IPSaaSSerializable {
     /*
      * This method connects to the builder and retrieves the forecast cities

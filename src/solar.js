@@ -20,6 +20,7 @@
  * ```
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.SolarCalculator = void 0;
 /** ignore this comment */
 const net = require("net");
 const psaasGlobals_1 = require("./psaasGlobals");
@@ -87,6 +88,6 @@ class SolarCalculator extends psaasGlobals_1.IPSaaSSerializable {
         });
     }
 }
-SolarCalculator.CALCULATE_SOLAR_KEY = "SOLAR_CALCULATOR";
 exports.SolarCalculator = SolarCalculator;
+SolarCalculator.CALCULATE_SOLAR_KEY = "SOLAR_CALCULATOR";
 //# sourceMappingURL=solar.js.map

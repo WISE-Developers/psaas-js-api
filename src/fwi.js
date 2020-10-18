@@ -30,6 +30,7 @@
  * ```
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.FwiCalculations = exports.FWICalculationMethod = void 0;
 /** ignore this comment */
 const net = require("net");
 const psaasGlobals_1 = require("./psaasGlobals");
@@ -570,6 +571,7 @@ class FwiCalculations {
             .catch(err => { throw err; });
     }
 }
+exports.FwiCalculations = FwiCalculations;
 FwiCalculations.KEY_HOURLY_FFMC_VAN_WAGNER = "HOURLY_FFMC_VAN_WAGNER";
 FwiCalculations.KEY_HOURLY_FFMC_EQUILIBRIUM = "HOURLY_FFMC_EQUILIBRIUM";
 FwiCalculations.KEY_HOURLY_FFMC_LAWSON = "HOURLY_FFMC_LAWSON";
@@ -585,7 +587,6 @@ FwiCalculations.KEY_ISI_FBP = "ISI_FBP";
 FwiCalculations.KEY_BUI = "BUI";
 FwiCalculations.KEY_FWI = "FWI";
 FwiCalculations.KEY_DSR = "DSR";
-exports.FwiCalculations = FwiCalculations;
 class ValueGetter extends psaasGlobals_1.IPSaaSSerializable {
     /*
      * This method connects to the builder and retrieves the specified value
