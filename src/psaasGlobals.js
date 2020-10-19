@@ -17,7 +17,8 @@ SocketMsg.STARTJOB = "STARTJOB";
 SocketMsg.GETDEFAULTS = "GETDEFAULTS";
 SocketMsg.GETTIMEZONES = "LIST_TIMEZONES";
 SocketMsg.NEWLINE = "\n";
-SocketMsg.DEBUG_NO_FILETEST = false;
+SocketMsg.skipFileTests = false;
+SocketMsg.inlineThrowOnError = false;
 class SocketHelper {
     constructor() {
         this.port = 80;
@@ -453,6 +454,15 @@ class Duration {
 }
 exports.Duration = Duration;
 /**
+ * An error type indicating that a {@link Duration} is not valid.
+ */
+class DurationError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "DurationError";
+    }
+}
+/**
  * A class to hold information about time zone names retrieved from Java.
  * The value is what will be passed back to the job builder.
  * @author "Travis Redpath"
@@ -485,8 +495,23 @@ class Timezone {
          * Is the timezone currently in daylight savings time.
          */
         this.dst = false;
-        this.offset = new Duration();
+        this._offset = new Duration();
         this.value = -1;
+    }
+    /**
+     * Get the offset from GMT.
+     */
+    get offset() {
+        return this._offset;
+    }
+    /**
+     * Set the offset from GMT.
+     */
+    set offset(value) {
+        if (SocketMsg.inlineThrowOnError && !value.isValid()) {
+            throw new DurationError("The timezone offset must be a valid Duration.");
+        }
+        this._offset = value;
     }
     /**
      * Is the timezone valid.
@@ -501,7 +526,7 @@ class Timezone {
     checkValid() {
         let errs = new Array();
         if (this.value < 0) {
-            if (!this.offset.isValid()) {
+            if (!this._offset.isValid()) {
                 errs.push(new ValidationError("offset", "The timezone offset is not valid.", this));
             }
         }
@@ -517,7 +542,7 @@ class Timezone {
             tmp = '' + this.value;
         }
         else {
-            tmp = this.offset + '|' + (+this.dst);
+            tmp = this._offset + '|' + (+this.dst);
         }
         builder.write(Timezone.PARAM_TIMEZONE + SocketMsg.NEWLINE);
         builder.write(tmp + SocketMsg.NEWLINE);
@@ -649,22 +674,22 @@ class FGMOptions {
          * The maximum time step during acceleration (optional). This value must be <= 5min.
          * Has a default value.
          */
-        this.maxAccTS = null;
+        this._maxAccTS = null;
         /**
          * The distance resolution (required). Must be between 0.2 and 10.0.
          * Has a default value.
          */
-        this.distRes = null;
+        this._distRes = null;
         /**
          * The perimeter resolution (required). Must be between 0.2 and 10.0.
          * Has a default value.
          */
-        this.perimRes = null;
+        this._perimRes = null;
         /**
          * Minimum Spreading ROS (optional). Must be between 0.0000001 and 1.0.
          * Has a default value.
          */
-        this.minimumSpreadingROS = null;
+        this._minimumSpreadingROS = null;
         /**
          * Whether to stop the fire spread when the simulated fire reaches the boundary of the grid data (required).
          * Has a default value.
@@ -696,20 +721,20 @@ class FGMOptions {
          * Must be between -250 and 250.
          * Has a default value.
          */
-        this.dx = null;
+        this._dx = null;
         /**
          * How much to nudge ignitions to perform probabilistic analyses on ignition location.
          * Primarily used when ignition information is not 100% reliable.
          * Must be between -250 and 250.
          * Has a default value.
          */
-        this.dy = null;
+        this._dy = null;
         /**
          * How much to nudge ignitions to perform probabilistic analyses on ignition location and start time.
          * Primarily used when ignition information is not 100% reliable.
          * Has a default value.
          */
-        this.dt = null;
+        this._dt = null;
         /**
          * How much to nudge wind direction to perform probabilistic analyses on weather.
          * Applied after all patches and grids, and does not recalculate any FWI calculations.
@@ -718,7 +743,7 @@ class FGMOptions {
          * Applied to both simulations, and to instantaneous calculations as shown on the map trace view query, for consistency.
          * Primarily used when weather information does not have the expected fidelity.
          */
-        this.dwd = null;
+        this._dwd = null;
         /**
          * Whether the growth percentile value is applied (optional).
          * Has a default value.
@@ -728,15 +753,35 @@ class FGMOptions {
          * Growth percentile, to apply to specific fuel types (optional).
          * Has a default value.
          */
-        this.growthPercentile = null;
+        this._growthPercentile = null;
+        /**
+         * Suppress adding new points to polygons in tight concave locations.
+         */
+        this.suppressTightConcave = null;
+        /**
+         * Should non-fuel locations be used as vector breaks.
+         */
+        this.nonFuelsAsVectorBreaks = null;
+        /**
+         * Should non-fuel locations be converted to vector breaks.
+         */
+        this.nonFuelsToVectorBreaks = null;
+        /**
+         * Should independent timesteps be used when running scenarios.
+         */
+        this.useIndependentTimesteps = null;
+        /**
+         * Value at which to enforce a minimum spacing of vertices on a fire perimeters, in metres.
+         */
+        this._perimeterSpacing = null;
         /**
          * The initial number of vertices used to create a polygon aroung point ignitions.
          */
-        this.initialVertexCount = 16;
+        this._initialVertexCount = 16;
         /**
          * The initial size of the polygon around point ignitions, in metres.
          */
-        this.ignitionSize = 0.5;
+        this._ignitionSize = 0.5;
         /**
          * A global asset operation that can be used to force an asset behaviour for all attached assets.
          */
@@ -746,6 +791,206 @@ class FGMOptions {
          * Only valid if globalAssetOperation in AssetOperation::STOP_AFTER_X.
          */
         this.assetCollisionCount = -1;
+    }
+    /**
+     * Get the maximum time step during acceleration.
+     */
+    get maxAccTS() {
+        return this._maxAccTS;
+    }
+    /**
+     * Set the maximum time step during acceleration.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link DurationError} will be thrown if value is not valid.
+     */
+    set maxAccTS(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && !value.isValid()) {
+            throw new DurationError("The maximum timestep during acceleration is not valid.");
+        }
+        this.distRes = null;
+        this._maxAccTS = value;
+    }
+    /**
+     * Get the distance resolution.
+     */
+    get distRes() {
+        return this._distRes;
+    }
+    /**
+     * Set the distance resolution in metres. Must be in [0.2, 10.0].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set distRes(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value < 0.2 || value > 10.0)) {
+            throw new RangeError("The distance resolution is not valid.");
+        }
+        this._distRes = value;
+    }
+    /**
+     * Get the perimeter resolution.
+     */
+    get perimRes() {
+        return this._perimRes;
+    }
+    /**
+     * Set the perimeter resolution in metres. Must be in [0.2, 10.0].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set perimRes(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value < 0.2 || value > 10.0)) {
+            throw new RangeError("The perimeter resolution is not valid.");
+        }
+        this._perimRes = value;
+    }
+    /**
+     * Get the minimum spreading ROS.
+     */
+    get minimumSpreadingROS() {
+        return this._minimumSpreadingROS;
+    }
+    /**
+     * Set the minimum spreading ROS. Must be in [0.0000001, 1].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set minimumSpreadingROS(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value < 0.0000001 || value > 1.0)) {
+            throw new RangeError("The minimum spreading ROS is not valid.");
+        }
+        this._minimumSpreadingROS = value;
+    }
+    /**
+     * Get the distance to nudge ignitions to perform probabilistic analyses on ignition location.
+     */
+    get dx() {
+        return this._dx;
+    }
+    /**
+     * Set the distance to nudge ignitions to perform probabilistic analyses on ignition location, in metres. Must be between in [-250m, 250m].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dx(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value < -250 || value > 250)) {
+            throw new RangeError("The x ignition nudge distance is not valid.");
+        }
+        this._dx = value;
+    }
+    /**
+     * Get the distance to nudge ignitions to perform probabilistic analyses on ignition location.
+     */
+    get dy() {
+        return this._dy;
+    }
+    /**
+     * Set the distance to nudge ignitions to perform probabilistic analyses on ignition location, in metres. Must be between in [-250m, 250m].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dy(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value < -250 || value > 250)) {
+            throw new RangeError("The y ignition nudge distance is not valid.");
+        }
+        this._dy = value;
+    }
+    /**
+     * Get the duration to nudge ignition start times to perform probabilistic analyses on ignition start time.
+     */
+    get dt() {
+        return this._dt;
+    }
+    /**
+     * Set the duration to nudge ignition start times to perform probabilistic analyses on ignition start times. Must be between in [-4h, 4h].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link DurationError} will be thrown if value is not valid.
+     */
+    set dt(value) {
+        if (SocketMsg.inlineThrowOnError && value != null) {
+            let testDuration = Duration.createTime(4, 0, 0, false);
+            if (testDuration.isLessThan(value)) {
+                throw new RangeError("The ignition start nudge duration is not valid.");
+            }
+            testDuration.isNegative = true;
+            if (value.isLessThan(testDuration)) {
+                throw new RangeError("The ignition start nudge duration is not valid.");
+            }
+        }
+        this._dt = value;
+    }
+    /**
+     * Get the distance to nudge wind directions to perform probabilistic analyses on weather.
+     */
+    get dwd() {
+        return this._dwd;
+    }
+    /**
+     * Set the distance to wind directions to perform probabilistic analyses on weather, in metres. Must be between in [-360, 360].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dwd(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value < -360 || value > 360)) {
+            throw new RangeError("The wind direction nudge distance is not valid.");
+        }
+        this._dwd = value;
+    }
+    /**
+     * Get the growth percentile.
+     */
+    get growthPercentile() {
+        return this._growthPercentile;
+    }
+    /**
+     * Set the growth percentile. Must be between in (0, 100).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set growthPercentile(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value <= 0 || value >= 100)) {
+            throw new RangeError("The growth percentile is not valid.");
+        }
+        this._growthPercentile = value;
+    }
+    /**
+     * Get the minimum enforced spacing of vertices on a fire perimeter.
+     */
+    get perimeterSpacing() {
+        return this._perimeterSpacing;
+    }
+    /**
+     * Set the minimum enforced spacing of vertices on a fire perimeter, in metres. Must be in [0.2, 10.0].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set perimeterSpacing(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value < 0.2 || value > 10.0)) {
+            throw new RangeError("The perimeter spacing is not valid.");
+        }
+        this._perimeterSpacing = value;
+    }
+    /**
+     * Get the number of vertices to use when creating a polygon around point ignitions.
+     */
+    get initialVertexCount() {
+        return this._initialVertexCount;
+    }
+    /**
+     * Set the number of vertices to use when creating a polygon around point ignitions. Must be between in [6, 64].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set initialVertexCount(value) {
+        if (SocketMsg.inlineThrowOnError && (value == null || value < 6 || value > 64)) {
+            throw new RangeError("The initial vertex count is not valid.");
+        }
+        this._initialVertexCount = value;
+    }
+    /**
+     * Get the initial size of the polygon around point ignitions.
+     */
+    get ignitionSize() {
+        return this._ignitionSize;
+    }
+    /**
+     * Set the initial size of the polygon around point ignition, in metres. Must be between in (0, 25].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set ignitionSize(value) {
+        if (SocketMsg.inlineThrowOnError && (value == null || value <= 0 || value > 25)) {
+            throw new RangeError("The ignition size is not valid.");
+        }
+        this._ignitionSize = value;
     }
     /**
      * Checks to see if all required values have been set.
@@ -765,63 +1010,66 @@ class FGMOptions {
         if (this.breaching == null) {
             errs.push(new ValidationError("breaching", "Whether breaching should be used is not set.", this));
         }
-        if (this.maxAccTS == null) {
+        if (this._maxAccTS == null) {
             errs.push(new ValidationError("maxAccTS", "The maximum timestep to use during acceleration is not set.", this));
         }
-        else if (!this.maxAccTS.isValid()) {
+        else if (!this._maxAccTS.isValid()) {
             errs.push(new ValidationError("maxAccTS", "The maximum timestep to use during acceleration is not valid.", this));
         }
         if (this.spotting == null) {
             errs.push(new ValidationError("spotting", "Whether spotting should be used is not set.", this));
         }
-        if (this.distRes == null) {
+        if (this._distRes == null) {
             errs.push(new ValidationError("distRes", "The distance resolution is not set.", this));
         }
-        else if (this.distRes < 0.2 || this.distRes > 10.0) {
+        else if (this._distRes < 0.2 || this._distRes > 10.0) {
             errs.push(new ValidationError("distRes", "The specified distance resolution is invalid.", this));
         }
-        if (this.perimRes == null) {
+        if (this._perimRes == null) {
             errs.push(new ValidationError("perimRes", "The perimeter resolution is not set.", this));
         }
-        else if (this.perimRes < 0.2 || this.perimRes > 10.0) {
+        else if (this._perimRes < 0.2 || this._perimRes > 10.0) {
             errs.push(new ValidationError("perimRes", "The perimeter resolution is not valid.", this));
         }
-        if (this.minimumSpreadingROS != null) {
-            if (this.minimumSpreadingROS < 0.0000001 || this.minimumSpreadingROS > 1.0) {
+        if (this._minimumSpreadingROS != null) {
+            if (this._minimumSpreadingROS < 0.0000001 || this._minimumSpreadingROS > 1.0) {
                 errs.push(new ValidationError("minimumSpreadingROS", "The minimum spreading ROS is set but is not valid.", this));
             }
         }
-        if (this.dx != null) {
-            if (this.dx < -250.0 || this.dx > 250.0) {
+        if (this._dx != null) {
+            if (this._dx < -250.0 || this._dx > 250.0) {
                 errs.push(new ValidationError("dx", "A delta value for the x direction of the ignition points is set but is not valid.", this));
             }
         }
-        if (this.dy != null) {
-            if (this.dy < -250.0 || this.dy > 250.0) {
+        if (this._dy != null) {
+            if (this._dy < -250.0 || this._dy > 250.0) {
                 errs.push(new ValidationError("dy", "A delta value for the y direction of the ignition points is set but is not valid.", this));
             }
         }
-        if (this.dt != null) {
-            if (this.dt.hours < -4.0 || this.dt.hours > 4.0) {
+        if (this._dt != null) {
+            if (this._dt.hours < -4.0 || this._dt.hours > 4.0) {
                 errs.push(new ValidationError("dt", "A delta value for the start time of the ignition points is set but is not valid.", this));
             }
         }
-        if (this.dwd != null) {
-            if (this.dwd < -360.0 || this.dwd > 360.0) {
+        if (this._dwd != null) {
+            if (this._dwd < -360.0 || this._dwd > 360.0) {
                 errs.push(new ValidationError("dwd", "A delta value for the wind direction is set but is not valid.", this));
             }
         }
         if (this.growthPercentileApplied != null && this.growthPercentileApplied) {
-            if (this.growthPercentile == null || this.growthPercentile <= 0.0 || this.growthPercentile >= 100.0) {
+            if (this._growthPercentile == null || this._growthPercentile <= 0.0 || this._growthPercentile >= 100.0) {
                 errs.push(new ValidationError("growthPercentile", "Growth percentile is enabled but the specified growth percentile is not valid.", this));
             }
         }
-        if (this.initialVertexCount < 6 || this.initialVertexCount > 64) {
+        if (this._perimeterSpacing != null && (this._perimeterSpacing < 0.0 || this._perimeterSpacing > 10.0)) {
+            errs.push(new ValidationError("perimeterSpacing", "The specified perimeter spacing is not valid.", this));
+        }
+        if (this._initialVertexCount < 6 || this._initialVertexCount > 64) {
             errs.push(new ValidationError("initialVertexCount", "The specified initial vertex count is not valid.", this));
         }
-        if (this.ignitionSize <= 0.0 || this.ignitionSize > 25.0) {
+        if (this._ignitionSize <= 0.0 || this._ignitionSize > 25.0) {
             errs.push(new ValidationError("ignitionSize", "The specified ignition size is not valid.", this));
-            }
+        }
         if (this.globalAssetOperation == AssetOperation.STOP_AFTER_X && this.assetCollisionCount < 0) {
             errs.push(new ValidationError("assetCollisionCount", "The number of assets to stop the simulation after reaching has not been set.", this));
         }
@@ -834,20 +1082,20 @@ class FGMOptions {
      */
     tryParse(type, data) {
         if (type === FGMOptions.DEFAULT_MAXACCTS) {
-            this.maxAccTS = new Duration();
-            this.maxAccTS.fromString(data);
+            this._maxAccTS = new Duration();
+            this._maxAccTS.fromString(data);
             return true;
         }
         else if (type === FGMOptions.DEFAULT_DISTRES) {
-            this.distRes = parseInt(data);
+            this._distRes = parseInt(data);
             return true;
         }
         else if (type === FGMOptions.DEFAULT_PERIMRES) {
-            this.perimRes = parseInt(data);
+            this._perimRes = parseInt(data);
             return true;
         }
         else if (type === FGMOptions.DEFAULT_MINSPREADROS) {
-            this.minimumSpreadingROS = parseFloat(data);
+            this._minimumSpreadingROS = parseFloat(data);
             return true;
         }
         else if (type === FGMOptions.DEFAULT_STOPGRIDEND) {
@@ -871,16 +1119,16 @@ class FGMOptions {
             return true;
         }
         else if (type === FGMOptions.DEFAULT_DX) {
-            this.dx = parseFloat(data);
+            this._dx = parseFloat(data);
             return true;
         }
         else if (type === FGMOptions.DEFAULT_DY) {
-            this.dy = parseFloat(data);
+            this._dy = parseFloat(data);
             return true;
         }
         else if (type === FGMOptions.DEFAULT_DT) {
-            this.dt = new Duration();
-            this.dt.fromString(data);
+            this._dt = new Duration();
+            this._dt.fromString(data);
             return true;
         }
         else if (type === FGMOptions.DEFAULT_GROWTHAPPLIED) {
@@ -888,7 +1136,7 @@ class FGMOptions {
             return true;
         }
         else if (type === FGMOptions.DEFAULT_GROWTHPERC) {
-            this.growthPercentile = parseFloat(data);
+            this._growthPercentile = parseFloat(data);
             return true;
         }
         return false;
@@ -898,17 +1146,17 @@ class FGMOptions {
      * @param builder
      */
     stream(builder) {
-        if (this.maxAccTS != null) {
+        if (this._maxAccTS != null) {
             builder.write(FGMOptions.PARAM_MAXACCTS + SocketMsg.NEWLINE);
-            builder.write(this.maxAccTS + SocketMsg.NEWLINE);
+            builder.write(this._maxAccTS + SocketMsg.NEWLINE);
         }
         builder.write(FGMOptions.PARAM_DISTRES + SocketMsg.NEWLINE);
-        builder.write(this.distRes + SocketMsg.NEWLINE);
+        builder.write(this._distRes + SocketMsg.NEWLINE);
         builder.write(FGMOptions.PARAM_PERIMRES + SocketMsg.NEWLINE);
-        builder.write(this.perimRes + SocketMsg.NEWLINE);
-        if (this.minimumSpreadingROS != null) {
+        builder.write(this._perimRes + SocketMsg.NEWLINE);
+        if (this._minimumSpreadingROS != null) {
             builder.write(FGMOptions.PARAM_MINSPREADROS + SocketMsg.NEWLINE);
-            builder.write(this.minimumSpreadingROS + SocketMsg.NEWLINE);
+            builder.write(this._minimumSpreadingROS + SocketMsg.NEWLINE);
         }
         builder.write(FGMOptions.PARAM_STOPGRIDEND + SocketMsg.NEWLINE);
         builder.write((+this.stopAtGridEnd) + SocketMsg.NEWLINE);
@@ -926,53 +1174,73 @@ class FGMOptions {
             builder.write(FGMOptions.PARAM_PURGENONDISPLAY + SocketMsg.NEWLINE);
             builder.write((+this.purgeNonDisplayable) + SocketMsg.NEWLINE);
         }
-        if (this.dx != null) {
+        if (this._dx != null) {
             builder.write(FGMOptions.PARAM_DX + SocketMsg.NEWLINE);
-            builder.write(this.dx + SocketMsg.NEWLINE);
+            builder.write(this._dx + SocketMsg.NEWLINE);
         }
-        if (this.dy != null) {
+        if (this._dy != null) {
             builder.write(FGMOptions.PARAM_DY + SocketMsg.NEWLINE);
-            builder.write(this.dy + SocketMsg.NEWLINE);
+            builder.write(this._dy + SocketMsg.NEWLINE);
         }
-        if (this.dt != null) {
+        if (this._dt != null) {
             builder.write(FGMOptions.PARAM_DT + SocketMsg.NEWLINE);
-            builder.write(this.dt + SocketMsg.NEWLINE);
+            builder.write(this._dt + SocketMsg.NEWLINE);
         }
-        if (this.dwd != null) {
+        if (this._dwd != null) {
             builder.write(FGMOptions.PARAM_DWD + SocketMsg.NEWLINE);
-            builder.write(this.dwd + SocketMsg.NEWLINE);
+            builder.write(this._dwd + SocketMsg.NEWLINE);
         }
         if (this.growthPercentileApplied != null) {
             builder.write(FGMOptions.PARAM_GROWTHAPPLIED + SocketMsg.NEWLINE);
             builder.write((+this.growthPercentileApplied) + SocketMsg.NEWLINE);
         }
-        if (this.growthPercentile != null) {
+        if (this._growthPercentile != null) {
             builder.write(FGMOptions.PARAM_GROWTHPERC + SocketMsg.NEWLINE);
-            builder.write(this.growthPercentile + SocketMsg.NEWLINE);
+            builder.write(this._growthPercentile + SocketMsg.NEWLINE);
+        }
+        if (this.suppressTightConcave != null) {
+            builder.write(FGMOptions.PARAM_SUPPRESS_TIGHT_CONCAVE + SocketMsg.NEWLINE);
+            builder.write((+this.suppressTightConcave) + SocketMsg.NEWLINE);
+        }
+        if (this.nonFuelsAsVectorBreaks != null) {
+            builder.write(FGMOptions.PARAM_NON_FUELS_AS_VECTOR_BREAKS + SocketMsg.NEWLINE);
+            builder.write((+this.nonFuelsAsVectorBreaks) + SocketMsg.NEWLINE);
+        }
+        if (this.nonFuelsToVectorBreaks != null) {
+            builder.write(FGMOptions.PARAM_NON_FUELS_TO_VECTOR_BREAKS + SocketMsg.NEWLINE);
+            builder.write((+this.nonFuelsToVectorBreaks) + SocketMsg.NEWLINE);
+        }
+        if (this.useIndependentTimesteps != null) {
+            builder.write(FGMOptions.PARAM_USE_INDEPENDENT_TIMESTEPS + SocketMsg.NEWLINE);
+            builder.write((+this.useIndependentTimesteps) + SocketMsg.NEWLINE);
+        }
+        if (this._perimeterSpacing != null) {
+            builder.write(FGMOptions.PARAM_PERIMETER_SPACING + SocketMsg.NEWLINE);
+            builder.write(this._perimeterSpacing + SocketMsg.NEWLINE);
         }
         builder.write(FGMOptions.PARAM_SIM_PROPS + SocketMsg.NEWLINE);
-        builder.write((+this.ignitionSize) + "|" + this.initialVertexCount.toFixed() + "|" + this.globalAssetOperation + "|" + this.assetCollisionCount + SocketMsg.NEWLINE);
+        builder.write((+this._ignitionSize) + "|" + this._initialVertexCount.toFixed() + "|" + this.globalAssetOperation + "|" + this.assetCollisionCount + SocketMsg.NEWLINE);
     }
     /**
      * Streams the FGM options to a socket.
      * @param builder
      */
     streamCopy(builder) {
-        if (this.maxAccTS != null) {
+        if (this._maxAccTS != null) {
             builder.write(FGMOptions.PARAM_MAXACCTS + SocketMsg.NEWLINE);
-            builder.write(this.maxAccTS + SocketMsg.NEWLINE);
+            builder.write(this._maxAccTS + SocketMsg.NEWLINE);
         }
-        if (this.distRes != -1) {
+        if (this._distRes != -1) {
             builder.write(FGMOptions.PARAM_DISTRES + SocketMsg.NEWLINE);
-            builder.write(this.distRes + SocketMsg.NEWLINE);
+            builder.write(this._distRes + SocketMsg.NEWLINE);
         }
-        if (this.perimRes != -1) {
+        if (this._perimRes != -1) {
             builder.write(FGMOptions.PARAM_PERIMRES + SocketMsg.NEWLINE);
-            builder.write(this.perimRes + SocketMsg.NEWLINE);
+            builder.write(this._perimRes + SocketMsg.NEWLINE);
         }
-        if (this.minimumSpreadingROS != null) {
+        if (this._minimumSpreadingROS != null) {
             builder.write(FGMOptions.PARAM_MINSPREADROS + SocketMsg.NEWLINE);
-            builder.write(this.minimumSpreadingROS + SocketMsg.NEWLINE);
+            builder.write(this._minimumSpreadingROS + SocketMsg.NEWLINE);
         }
         if (this.stopAtGridEnd != null) {
             builder.write(FGMOptions.PARAM_STOPGRIDEND + SocketMsg.NEWLINE);
@@ -994,28 +1262,52 @@ class FGMOptions {
             builder.write(FGMOptions.PARAM_PURGENONDISPLAY + SocketMsg.NEWLINE);
             builder.write((+this.purgeNonDisplayable) + SocketMsg.NEWLINE);
         }
-        if (this.dx != null) {
+        if (this._dx != null) {
             builder.write(FGMOptions.PARAM_DX + SocketMsg.NEWLINE);
-            builder.write(this.dx + SocketMsg.NEWLINE);
+            builder.write(this._dx + SocketMsg.NEWLINE);
         }
-        if (this.dy != null) {
+        if (this._dy != null) {
             builder.write(FGMOptions.PARAM_DY + SocketMsg.NEWLINE);
-            builder.write(this.dy + SocketMsg.NEWLINE);
+            builder.write(this._dy + SocketMsg.NEWLINE);
         }
-        if (this.dt != null) {
+        if (this._dt != null) {
             builder.write(FGMOptions.PARAM_DT + SocketMsg.NEWLINE);
-            builder.write(this.dt + SocketMsg.NEWLINE);
+            builder.write(this._dt + SocketMsg.NEWLINE);
+        }
+        if (this._dwd != null) {
+            builder.write(FGMOptions.PARAM_DWD + SocketMsg.NEWLINE);
+            builder.write(this._dwd + SocketMsg.NEWLINE);
         }
         if (this.growthPercentileApplied != null) {
             builder.write(FGMOptions.PARAM_GROWTHAPPLIED + SocketMsg.NEWLINE);
             builder.write((+this.growthPercentileApplied) + SocketMsg.NEWLINE);
         }
-        if (this.growthPercentile != null) {
+        if (this._growthPercentile != null) {
             builder.write(FGMOptions.PARAM_GROWTHPERC + SocketMsg.NEWLINE);
-            builder.write(this.growthPercentile + SocketMsg.NEWLINE);
+            builder.write(this._growthPercentile + SocketMsg.NEWLINE);
+        }
+        if (this.suppressTightConcave != null) {
+            builder.write(FGMOptions.PARAM_SUPPRESS_TIGHT_CONCAVE + SocketMsg.NEWLINE);
+            builder.write((+this.suppressTightConcave) + SocketMsg.NEWLINE);
+        }
+        if (this.nonFuelsAsVectorBreaks != null) {
+            builder.write(FGMOptions.PARAM_NON_FUELS_AS_VECTOR_BREAKS + SocketMsg.NEWLINE);
+            builder.write((+this.nonFuelsAsVectorBreaks) + SocketMsg.NEWLINE);
+        }
+        if (this.nonFuelsToVectorBreaks != null) {
+            builder.write(FGMOptions.PARAM_NON_FUELS_TO_VECTOR_BREAKS + SocketMsg.NEWLINE);
+            builder.write((+this.nonFuelsToVectorBreaks) + SocketMsg.NEWLINE);
+        }
+        if (this.useIndependentTimesteps != null) {
+            builder.write(FGMOptions.PARAM_USE_INDEPENDENT_TIMESTEPS + SocketMsg.NEWLINE);
+            builder.write((+this.useIndependentTimesteps) + SocketMsg.NEWLINE);
+        }
+        if (this._perimeterSpacing != null) {
+            builder.write(FGMOptions.PARAM_PERIMETER_SPACING + SocketMsg.NEWLINE);
+            builder.write(this._perimeterSpacing + SocketMsg.NEWLINE);
         }
         builder.write(FGMOptions.PARAM_SIM_PROPS + SocketMsg.NEWLINE);
-        builder.write((+this.ignitionSize) + "|" + this.initialVertexCount.toFixed() + "|" + this.globalAssetOperation + "|" + this.assetCollisionCount + SocketMsg.NEWLINE);
+        builder.write((+this._ignitionSize) + "|" + this._initialVertexCount.toFixed() + "|" + this.globalAssetOperation + "|" + this.assetCollisionCount + SocketMsg.NEWLINE);
         return "";
     }
 }
@@ -1035,6 +1327,11 @@ FGMOptions.PARAM_DT = "fgm_dt";
 FGMOptions.PARAM_DWD = "fgm_dwd";
 FGMOptions.PARAM_GROWTHAPPLIED = "fgm_growthPercApplied";
 FGMOptions.PARAM_GROWTHPERC = "fgm_growthPercentile";
+FGMOptions.PARAM_SUPPRESS_TIGHT_CONCAVE = "fgm_suppressTightConcave";
+FGMOptions.PARAM_NON_FUELS_AS_VECTOR_BREAKS = "fgm_nonFuelsAsVectorBreaks";
+FGMOptions.PARAM_NON_FUELS_TO_VECTOR_BREAKS = "fgm_nonFuelsToVectorBreaks";
+FGMOptions.PARAM_USE_INDEPENDENT_TIMESTEPS = "fgm_useIndependentTimesteps";
+FGMOptions.PARAM_PERIMETER_SPACING = "fgm_perimeterSpacing";
 FGMOptions.PARAM_SIM_PROPS = "simulation_properties";
 FGMOptions.DEFAULT_MAXACCTS = "MAXACCTS";
 FGMOptions.DEFAULT_DISTRES = "DISTRES";
@@ -1134,12 +1431,12 @@ class FMCOptions {
          * The value for the FMC (%) override (optional). Must be between 0 and 300.
          * Has a default value.
          */
-        this.perOverride = -1;
+        this._perOverride = -1;
         /**
          * The elevation where NODATA or no grid exists (required). Must be between 0 and 7000.
          * Has a default value.
          */
-        this.nodataElev = -9999;
+        this._nodataElev = -9999;
         /**
          * Optional.
          * Has a default value.
@@ -1153,6 +1450,38 @@ class FMCOptions {
         this.accurateLocation = null;
     }
     /**
+     * Get the value for the FMC (%) override.
+     */
+    get perOverride() {
+        return this._perOverride;
+    }
+    /**
+     * Set the percent override. Must be between in [0, 300]. Can also be -1 to indicate that the value shouldn't be used.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set perOverride(value) {
+        if (SocketMsg.inlineThrowOnError && (value == null || (value < 0 && value != -1) || value > 300)) {
+            throw new RangeError("The percent override is not valid.");
+        }
+        this._perOverride = value;
+    }
+    /**
+     * Get the elevation to use where NODATA or no grid exists.
+     */
+    get nodataElev() {
+        return this._nodataElev;
+    }
+    /**
+     * Set the elevation to use where NODATA or no grid exists, in metres. Must be between in [0, 7000]. Can also be -99 or -1 to indicate that the value shouldn't be used.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set nodataElev(value) {
+        if (SocketMsg.inlineThrowOnError && (value == null || (value < 0 && value != -1 && value != -99 && value != -9999) || value > 7000)) {
+            throw new RangeError("The ignition size is not valid.");
+        }
+        this._nodataElev = value;
+    }
+    /**
      * Checks to see if all required values have been set.
      */
     isValid() {
@@ -1164,14 +1493,14 @@ class FMCOptions {
      */
     checkValid() {
         const errs = new Array();
-        if (this.nodataElev == null) {
+        if (this._nodataElev == null) {
             errs.push(new ValidationError("nodataElev", "The elevation to use where NODATA exists was not set.", this));
         }
-        else if ((this.nodataElev < 0 && this.nodataElev != -9999) || this.nodataElev > 7000) {
+        else if ((this._nodataElev < 0 && this._nodataElev != -9999 && this._nodataElev != -1 && this._nodataElev != -99) || this._nodataElev > 7000) {
             errs.push(new ValidationError("nodataElev", "The elevation to use where NODATA exists is invalid.", this));
         }
-        if (this.perOverride != null && this.perOverride != -1) {
-            if (this.perOverride < 0.0 || this.perOverride > 300.0) {
+        if (this._perOverride != null && this._perOverride != -1) {
+            if (this._perOverride < 0.0 || this._perOverride > 300.0) {
                 errs.push(new ValidationError("perOverride", "The FMC percent override was set but is invalid.", this));
             }
         }
@@ -1179,11 +1508,11 @@ class FMCOptions {
     }
     tryParse(type, data) {
         if (type === FMCOptions.DEFAULT_PEROVER) {
-            this.perOverride = parseFloat(data);
+            this._perOverride = parseFloat(data);
             return true;
         }
         else if (type === FMCOptions.DEFAULT_NODATAELEV) {
-            this.nodataElev = parseFloat(data);
+            this._nodataElev = parseFloat(data);
             return true;
         }
         else if (type === FMCOptions.DEFAULT_TERRAIN) {
@@ -1201,12 +1530,12 @@ class FMCOptions {
      * @param builder
      */
     stream(builder) {
-        if (this.perOverride != null && this.perOverride >= 0) {
+        if (this._perOverride != null && this._perOverride >= 0) {
             builder.write(FMCOptions.PARAM_PEROVER + SocketMsg.NEWLINE);
-            builder.write(this.perOverride + SocketMsg.NEWLINE);
+            builder.write(this._perOverride + SocketMsg.NEWLINE);
         }
         builder.write(FMCOptions.PARAM_NODATAELEV + SocketMsg.NEWLINE);
-        builder.write(this.nodataElev + SocketMsg.NEWLINE);
+        builder.write(this._nodataElev + SocketMsg.NEWLINE);
         if (this.terrain != null) {
             builder.write(FMCOptions.PARAM_TERRAIN + SocketMsg.NEWLINE);
             builder.write((+this.terrain) + SocketMsg.NEWLINE);
@@ -1217,13 +1546,13 @@ class FMCOptions {
      * @param builder
      */
     streamCopy(builder) {
-        if (this.perOverride != null && this.perOverride >= 0) {
+        if (this._perOverride != null && this._perOverride >= 0) {
             builder.write(FMCOptions.PARAM_PEROVER + SocketMsg.NEWLINE);
             builder.write(this.perOverride + SocketMsg.NEWLINE);
         }
-        if (this.nodataElev != null && this.nodataElev != -9999) {
+        if (this._nodataElev != null && this._nodataElev != -9999) {
             builder.write(FMCOptions.PARAM_NODATAELEV + SocketMsg.NEWLINE);
-            builder.write(this.nodataElev + SocketMsg.NEWLINE);
+            builder.write(this._nodataElev + SocketMsg.NEWLINE);
         }
         if (this.terrain != null) {
             builder.write(FMCOptions.PARAM_TERRAIN + SocketMsg.NEWLINE);
@@ -1447,25 +1776,25 @@ class VectorMetadata {
             errs.push(new ValidationError("version", "Whether the Prometheus version metadata should be exported or not has not been set.", this));
         }
         if (this.scenName == null) {
-            errs.push(new ValidationError("version", "Whether the scenario name metadata should be exported or not has not been set.", this));
+            errs.push(new ValidationError("scenName", "Whether the scenario name metadata should be exported or not has not been set.", this));
         }
         if (this.jobName == null) {
-            errs.push(new ValidationError("version", "Whether the job name metadata should be exported or not has not been set.", this));
+            errs.push(new ValidationError("jobName", "Whether the job name metadata should be exported or not has not been set.", this));
         }
         if (this.igName == null) {
-            errs.push(new ValidationError("version", "Whether the ignition name metadata should be exported or not has not been set.", this));
+            errs.push(new ValidationError("igName", "Whether the ignition name metadata should be exported or not has not been set.", this));
         }
         if (this.simDate == null) {
-            errs.push(new ValidationError("version", "Whether the simulation date metadata should be exported or not has not been set.", this));
+            errs.push(new ValidationError("simDate", "Whether the simulation date metadata should be exported or not has not been set.", this));
         }
         if (this.fireSize == null) {
-            errs.push(new ValidationError("version", "Whether the fire area metadata should be exported or not has not been set.", this));
+            errs.push(new ValidationError("fireSize", "Whether the fire area metadata should be exported or not has not been set.", this));
         }
         if (this.perimTotal == null) {
-            errs.push(new ValidationError("version", "Whether the total perimeter size metadata should be exported or not has not been set.", this));
+            errs.push(new ValidationError("perimTotal", "Whether the total perimeter size metadata should be exported or not has not been set.", this));
         }
         if (this.perimActive == null) {
-            errs.push(new ValidationError("version", "Whether the active perimeter size metadata should be exported or not has not been set.", this));
+            errs.push(new ValidationError("perimActive", "Whether the active perimeter size metadata should be exported or not has not been set.", this));
         }
         if (this.areaUnit != Units.FT2 && this.areaUnit != Units.KM2 && this.areaUnit != Units.M2 && this.areaUnit != Units.MI2 &&
             this.areaUnit != Units.HA && this.areaUnit != Units.YD2 && this.areaUnit != Units.ACRE) {
@@ -1473,7 +1802,7 @@ class VectorMetadata {
         }
         if (this.perimUnit != Units.FT && this.perimUnit != Units.KM && this.perimUnit != Units.M && this.perimUnit != Units.MI &&
             this.perimUnit != Units.YARD && this.perimUnit != Units.CHAIN) {
-            errs.push(new ValidationError("areaUnit", "Invalid unit for perimeter size metadata.", this));
+            errs.push(new ValidationError("perimUnit", "Invalid unit for perimeter size metadata.", this));
         }
         return errs;
     }

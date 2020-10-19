@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Admin = exports.StopPriority = exports.StartJobWrapper = exports.PSaaS = exports.JobOptions = exports.LoadBalanceType = exports.UnitSettings = exports.MassAreaUnit = exports.IntensityUnit = exports.VelocityUnit = exports.CoordinateUnit = exports.AngleUnit = exports.PercentUnit = exports.EnergyUnit = exports.MassUnit = exports.PressureUnit = exports.TemperatureUnit = exports.VolumeUnit = exports.AreaUnit = exports.DistanceUnit = exports.TimeUnit = exports.GeoServerOutputStreamInfo = exports.MqttOutputStreamInfo = exports.OutputStreamInfo = exports.PSaaSOutputs = exports.StatsFile = exports.StatsFileType = exports.SummaryFile = exports.VectorFile = exports.PerimeterTimeOverride = exports.VectorFileType = exports.Output_GridFile = exports.ExportTimeOverride = exports.Output_GridFileCompression = exports.Output_GridFileInterpolation = exports.PSaaSInputs = exports.FuelOption = exports.FuelOptionType = exports.Scenario = exports.StationStream = exports.StreamOptions = exports.TimestepSettings = exports.AssetReference = exports.LayerInfo = exports.LayerInfoOptions = exports.BurningConditions = exports.SinglePointIgnitionOptions = exports.MultiPointIgnitionOptions = exports.PolylineIgnitionOptions = exports.IgnitionReference = exports.AssetFile = exports.AssetShapeType = exports.Ignition = exports.IgnitionType = exports.WeatherStation = exports.WeatherStream = exports.HFFMCMethod = exports.PSaaSInputsFiles = exports.FuelBreak = exports.FuelBreakType = exports.FuelPatch = exports.FromFuel = exports.FuelPatchType = exports.WeatherGrid = exports.WeatherGrid_GridFile = exports.WeatherGridType = exports.WeatherGridSector = exports.WeatherPatch = exports.WeatherPatch_WindDirection = exports.WeatherPatch_WindSpeed = exports.WeatherPatch_Precipitation = exports.WeatherPatch_RelativeHumidity = exports.WeatherPatch_Temperature = exports.WeatherPatchDetails = exports.WeatherPatchType = exports.WeatherPatchOperation = exports.GridFile = exports.GridFileType = exports.VersionInfo = void 0;
 /** ignore this comment */
 const fs = require("fs");
+const luxon_1 = require("luxon");
 const net = require("net");
 const psaasGlobals_1 = require("./psaasGlobals");
 class VersionInfo {
@@ -39,7 +40,7 @@ class GridFile {
         /**
          * Comment about the grid file (optional).
          */
-        this.comment = "";
+        this._comment = "";
         /**
          * The type of grid file (required).
          */
@@ -47,16 +48,81 @@ class GridFile {
         /**
          * The location of the file containing the grid data (required).
          */
-        this.filename = "";
+        this._filename = "";
         /**
          * The projection file for the grid file (required).
          */
-        this.projection = "";
-        this.id = "grdfl" + GridFile.counter;
+        this._projection = "";
+        this._id = "grdfl" + GridFile.counter;
         GridFile.counter += 1;
     }
+    /**
+     * Get the name of the grid file.
+     */
+    get id() {
+        return this._id;
+    }
+    /**
+     * Set the name of the grid file. Must be unique amongst the grid file collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The name of the grid file is not valid");
+        }
+        this.setName(value);
+    }
+    /**
+     * Get the comment about the grid file.
+     */
+    get comment() {
+        return this._comment;
+    }
+    /**
+     * Set the comment about the grid file.
+     */
+    set comment(value) {
+        if (value == null) {
+            this._comment = "";
+        }
+        else {
+            this._comment = value;
+        }
+    }
+    /**
+     * Get the location of the file containing the grid data.
+     */
+    get filename() {
+        return this._filename;
+    }
+    /**
+     * Set the location of the file containing the grid data. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The grid file does not exist.");
+        }
+        this._filename = value;
+    }
+    /**
+     * Get the location of the projection file for the grid file.
+     */
+    get projection() {
+        return this._projection;
+    }
+    /**
+     * Set the location of the projection file for the grid file. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set projection(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The grid file projection does not exist.");
+        }
+        this._projection = value;
+    }
     getId() {
-        return this.id;
+        return this._id;
     }
     /**
      * Set the name of the grid file. This name must be unique within
@@ -64,7 +130,7 @@ class GridFile {
      * grid file is constructed but can be overriden with this method.
      */
     setName(name) {
-        this.id = name.replace(/\|/g, "");
+        this._id = name.replace(/\|/g, "");
     }
     /**
      * Are all required values set.
@@ -78,19 +144,19 @@ class GridFile {
      */
     checkValid() {
         let errs = new Array();
-        if (!this.id || this.id.length === 0) {
+        if (!this._id || this._id.length === 0) {
             errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the grid file.", this));
         }
         if (this.type < GridFileType.FUEL_GRID && this.type > GridFileType.TREE_HEIGHT) {
             errs.push(new psaasGlobals_1.ValidationError("type", "An invalid type has been set on the grid file.", this));
         }
-        if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
+        if (!psaasGlobals_1.SocketMsg.skipFileTests) {
             //the filename must be either an attachment or a local file
-            if (!this.filename.startsWith("attachment:/") && !fs.existsSync(this.filename)) {
+            if (!this._filename.startsWith("attachment:/") && !fs.existsSync(this._filename)) {
                 errs.push(new psaasGlobals_1.ValidationError("filename", "The grid file file does not exist.", this));
             }
             //the projection must be either an attachment or a local file
-            if (!this.projection.startsWith("attachment:/") && !fs.existsSync(this.projection)) {
+            if (!this._projection.startsWith("attachment:/") && !fs.existsSync(this._projection)) {
                 errs.push(new psaasGlobals_1.ValidationError("projection", "The grid file projection does not exist.", this));
             }
         }
@@ -101,7 +167,7 @@ class GridFile {
      * @param builder
      */
     stream(builder) {
-        let tmp = this.id + '|' + this.comment + '|' + this.type + '|' + this.filename + '|' + this.projection;
+        let tmp = this._id + '|' + this._comment + '|' + this.type + '|' + this._filename + '|' + this._projection;
         builder.write(GridFile.PARAM_GRID_FILE + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
@@ -124,12 +190,28 @@ var WeatherPatchType;
     WeatherPatchType[WeatherPatchType["LANDSCAPE"] = 4] = "LANDSCAPE";
 })(WeatherPatchType = exports.WeatherPatchType || (exports.WeatherPatchType = {}));
 class WeatherPatchDetails {
+    /**
+     * Get the value to apply with this operation.
+     */
+    get value() {
+        return this._value;
+    }
+    /**
+     * Set the value to apply with this operation. Must be greater than 0.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set value(v) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && v <= 0) {
+            throw new RangeError("The value is not valid.");
+        }
+        this._value = v;
+    }
     checkValid() {
         let errs = new Array();
         if (this.operation < 0 || this.operation > WeatherPatchOperation.DIVIDE) {
             errs.push(new psaasGlobals_1.ValidationError("operation", "An invalid operation has been set on the weather patch details.", this));
         }
-        if (this.value <= 0) {
+        if (this._value <= 0) {
             errs.push(new psaasGlobals_1.ValidationError("value", "An invalid value has been set on the weather patch details.", this));
         }
         return errs;
@@ -181,21 +263,21 @@ exports.WeatherPatch_WindDirection = WeatherPatch_WindDirection;
 class WeatherPatch {
     constructor() {
         /**
-         * The patch start time (required). Must be formatted as "YYYY-MM-DDThh:mm:ss".
+         * The patch start time (required).
          */
-        this.startTime = "";
+        this._startTime = null;
         /**
-         * The patch end time (required). Must be formatted as "YYYY-MM-DDThh:mm:ss".
+         * The patch end time (required).
          */
-        this.endTime = "";
+        this._endTime = null;
         /**
-         * The patches start time of day (required). Must be formatted as "hh:mm:ss".
+         * The patches start time of day (required).
          */
-        this.startTimeOfDay = "";
+        this._startTimeOfDay = null;
         /**
          * The patches end time of day (required). Must be formatted as "hh:mm:ss".
          */
-        this.endTimeOfDay = "";
+        this._endTimeOfDay = null;
         /**
          * Any user comments about the weather patch (optional).
          */
@@ -203,7 +285,7 @@ class WeatherPatch {
         /**
          * The filename associated with this weather patch. Only valid if type is FILE.
          */
-        this.filename = "";
+        this._filename = "";
         /**
          * An array of LatLon describing the weather patch. Only valid if type is POLYGON.
          */
@@ -228,11 +310,181 @@ class WeatherPatch {
          * The wind direction to apply with this patch.
          */
         this.windDirection = null;
-        this.id = "wthrptch" + WeatherPatch.counter;
+        this._id = "wthrptch" + WeatherPatch.counter;
         WeatherPatch.counter += 1;
     }
+    /**
+     * Get the name of the weather patch.
+     */
+    get id() {
+        return this._id;
+    }
+    /**
+     * Set the name of the weather patch. Must be unique amongst the weather patch collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The name of the weather patch is not valid");
+        }
+        this.setName(value);
+    }
+    /**
+     * Get the weather patch start time as a Luxon DateTime.
+     */
+    get lStartTime() {
+        return this._startTime;
+    }
+    /**
+     * Get the weather patch start time as an ISO8601 string.
+     * @deprecated
+     */
+    get startTime() {
+        return this._startTime == null ? "" : this._startTime.toISO();
+    }
+    /**
+     * Set the weather patch start time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lStartTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The weather patch start time is not valid");
+        }
+        this._startTime = value;
+    }
+    /**
+     * Set the weather patch start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The weather patch start time is not valid");
+        }
+        this._startTime = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * Get the weather patch end time as a Luxon DateTime.
+     */
+    get lEndTime() {
+        return this._endTime;
+    }
+    /**
+     * Get the weather patch end time as an ISO8601 string.
+     * @deprecated
+     */
+    get endTime() {
+        return this._endTime == null ? "" : this._endTime.toISO();
+    }
+    /**
+     * Set the weather patch end time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lEndTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The weather patch end time is not valid");
+        }
+        this._endTime = value;
+    }
+    /**
+     * Set the weather patch end time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The weather patch end time is not valid");
+        }
+        this._endTime = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * Get the weather patch start time of day as a Duration.
+     */
+    get dStartTimeOfDay() {
+        return this._startTimeOfDay;
+    }
+    /**
+     * Get the weather patch start time of day as an ISO8601 string.
+     * @deprecated
+     */
+    get startTimeOfDay() {
+        return this._startTimeOfDay == null ? "" : this._startTimeOfDay.toString();
+    }
+    /**
+     * Set the weather patch start time of day using a Duration. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dStartTimeOfDay(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || !value.isValid())) {
+            throw new RangeError("The weather patch start time of dayis not valid");
+        }
+        this._startTimeOfDay = value;
+    }
+    /**
+     * Set the weather patch start time of day using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTimeOfDay(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The weather patch start time of day is not valid");
+        }
+        this._startTimeOfDay = new psaasGlobals_1.Duration();
+        this._startTimeOfDay.fromString(value);
+    }
+    /**
+     * Get the weather patch end time of day as a Duration.
+     */
+    get dEndTimeOfDay() {
+        return this._endTimeOfDay;
+    }
+    /**
+     * Get the weather patch end time of day as an ISO8601 string.
+     * @deprecated
+     */
+    get endTimeOfDay() {
+        return this._endTimeOfDay == null ? "" : this._endTimeOfDay.toString();
+    }
+    /**
+     * Set the weather patch end time of day using a Duration. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dEndTimeOfDay(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || !value.isValid())) {
+            throw new RangeError("The weather patch end time of dayis not valid");
+        }
+        this._endTimeOfDay = value;
+    }
+    /**
+     * Set the weather patch end time of day using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTimeOfDay(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The weather patch end time of day is not valid");
+        }
+        this._endTimeOfDay = new psaasGlobals_1.Duration();
+        this._endTimeOfDay.fromString(value);
+    }
+    /**
+     * Get the location of the file containing the weather patch.
+     */
+    get filename() {
+        return this._filename;
+    }
+    /**
+     * Set the location of the file containing the weather patch. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The grid file does not exist.");
+        }
+        this._filename = value;
+    }
     getId() {
-        return this.id;
+        return this._id;
     }
     /**
      * Set the name of the weather patch. This name must be unique within
@@ -240,7 +492,7 @@ class WeatherPatch {
      * weather patch is constructed but can be overriden with this method.
      */
     setName(name) {
-        this.id = name.replace(/\|/g, "");
+        this._id = name.replace(/\|/g, "");
     }
     /**
      * Set the temperature operation for the weather patch.
@@ -334,25 +586,25 @@ class WeatherPatch {
      */
     checkValid() {
         let errs = new Array();
-        if (!this.id || this.id.length === 0) {
+        if (!this._id || this._id.length === 0) {
             errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the weather patch.", this));
         }
-        if (this.startTimeOfDay.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("startTimeOfDay", "No start time of day has been set on the weather patch.", this));
+        if (this._startTimeOfDay == null) {
+            errs.push(new psaasGlobals_1.ValidationError("dStartTimeOfDay", "No start time of day has been set on the weather patch.", this));
         }
-        if (this.endTimeOfDay.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("endTimeOfDay", "No end time of day has been set on the weather patch.", this));
+        if (this._endTimeOfDay == null) {
+            errs.push(new psaasGlobals_1.ValidationError("dEndTimeOfDay", "No end time of day has been set on the weather patch.", this));
         }
-        if (this.startTime.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("startTime", "No start time has been set on the weather patch.", this));
+        if (this._startTime == null) {
+            errs.push(new psaasGlobals_1.ValidationError("lStartTime", "No start time has been set on the weather patch.", this));
         }
-        if (this.endTime.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("endTime", "No start time has been set on the weather patch.", this));
+        if (this._endTime == null) {
+            errs.push(new psaasGlobals_1.ValidationError("lEndTime", "No end time has been set on the weather patch.", this));
         }
         if (this.type == WeatherPatchType.FILE) {
-            if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
+            if (!psaasGlobals_1.SocketMsg.skipFileTests) {
                 //the filename must be an attachment or a local file
-                if (!this.filename.startsWith("attachment:/") && !fs.existsSync(this.filename)) {
+                if (!this._filename.startsWith("attachment:/") && !fs.existsSync(this._filename)) {
                     errs.push(new psaasGlobals_1.ValidationError("filename", "The weather patch file does not exist.", this));
                 }
             }
@@ -419,7 +671,7 @@ class WeatherPatch {
      * @param builder
      */
     stream(builder) {
-        let tmp = this.id + '|' + this.comments + '|' + this.startTime + '|' + this.endTime + '|' + this.startTimeOfDay + '|' + this.endTimeOfDay;
+        let tmp = this._id + '|' + this.comments + '|' + this._startTime.toISO() + '|' + this._endTime.toISO() + '|' + this._startTimeOfDay.toString() + '|' + this._endTimeOfDay.toString();
         if (this.temperature != null) {
             tmp = tmp + '|temperature|' + this.temperature.operation + '|' + this.temperature.value;
         }
@@ -436,7 +688,7 @@ class WeatherPatch {
             tmp = tmp + '|winddir|' + this.windDirection.operation + '|' + this.windDirection.value;
         }
         if (this.type == WeatherPatchType.FILE) {
-            tmp = tmp + '|file|' + this.filename;
+            tmp = tmp + '|file|' + this._filename;
         }
         else if (this.type == WeatherPatchType.LANDSCAPE) {
             tmp = tmp + '|landscape';
@@ -479,15 +731,47 @@ class WeatherGrid_GridFile {
         /**
          * The wind speed (required).
          */
-        this.speed = -1;
+        this._speed = -1;
         /**
          * The location of the grid file (required).
          */
-        this.filename = "";
+        this._filename = "";
         /**
          * The projection file for the grid file (required).
          */
         this.projection = "";
+    }
+    /**
+     * Get the wind speed.
+     */
+    get speed() {
+        return this._speed;
+    }
+    /**
+     * Set the wind speed (km/h).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set speed(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value < 0 || value > 250)) {
+            throw new RangeError("The wind speed is not valid.");
+        }
+        this._speed = value;
+    }
+    /**
+     * Get the location of the file containing the grid data.
+     */
+    get filename() {
+        return this._filename;
+    }
+    /**
+     * Set the location of the file containing the grid data. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The grid file does not exist.");
+        }
+        this._filename = value;
     }
     /**
      * Check to make sure all parameters have been set to valid values.
@@ -510,9 +794,9 @@ class WeatherGrid_GridFile {
             this.sector != WeatherGridSector.WEST && this.sector != WeatherGridSector.NORTHWEST) {
             errs.push(new psaasGlobals_1.ValidationError("sector", "The wind direction sector is not one of the valid values.", this));
         }
-        if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
+        if (!psaasGlobals_1.SocketMsg.skipFileTests) {
             //the filename must be an attachment or a local file
-            if (!this.filename.startsWith("attachment:/") && !fs.existsSync(this.filename)) {
+            if (!this._filename.startsWith("attachment:/") && !fs.existsSync(this._filename)) {
                 errs.push(new psaasGlobals_1.ValidationError("filename", "The weather grid data file does not exist.", this));
             }
             //the projection file must be an attachment or a local file
@@ -535,30 +819,184 @@ class WeatherGrid {
          */
         this.comments = "";
         /**
-         * The grid start time (required). Must be formatted as "YYYY-MM-DDThh:mm:ss".
+         * The grid start time (required).
          */
-        this.startTime = "";
+        this._startTime = null;
         /**
-         * The grid end time (required). Must be formatted as "YYYY-MM-DDThh:mm:ss".
+         * The grid end time (required).
          */
-        this.endTime = "";
+        this._endTime = null;
         /**
-         * The patches start time of day (required). Must be formatted as "hh:mm:ss".
+         * The patches start time of day (required).
          */
-        this.startTimeOfDay = "";
+        this._startTimeOfDay = null;
         /**
-         * The patches end time of day (required). Must be formatted as "hh:mm:ss".
+         * The patches end time of day (required).
          */
-        this.endTimeOfDay = "";
+        this._endTimeOfDay = null;
         /**
          * An array of WeatherGrid_GridFile. There can be one for each wind sector (North, Northeast, East, etc.).
          */
         this.gridData = new Array();
-        this.id = "wthrgrd" + WeatherGrid.counter;
+        this._id = "wthrgrd" + WeatherGrid.counter;
         WeatherGrid.counter += 1;
     }
+    /**
+     * Get the name of the weather grid.
+     */
+    get id() {
+        return this._id;
+    }
+    /**
+     * Set the name of the weather grid. Must be unique amongst the weather grid collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The name of the weather grid is not valid");
+        }
+        this.setName(value);
+    }
+    /**
+     * Get the weather grid start time as a Luxon DateTime.
+     */
+    get lStartTime() {
+        return this._startTime;
+    }
+    /**
+     * Get the weather grid start time as an ISO8601 string.
+     * @deprecated
+     */
+    get startTime() {
+        return this._startTime == null ? "" : this._startTime.toISO();
+    }
+    /**
+     * Set the weather grid start time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lStartTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The weather grid start time is not valid");
+        }
+        this._startTime = value;
+    }
+    /**
+     * Set the weather grid start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The weather patch start time is not valid");
+        }
+        this._startTime = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * Get the weather grid end time as a Luxon DateTime.
+     */
+    get lEndTime() {
+        return this._endTime;
+    }
+    /**
+     * Get the weather grid end time as an ISO8601 string.
+     * @deprecated
+     */
+    get endTime() {
+        return this._endTime == null ? "" : this._endTime.toISO();
+    }
+    /**
+     * Set the weather grid end time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lEndTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The weather grid end time is not valid");
+        }
+        this._endTime = value;
+    }
+    /**
+     * Set the weather grid end time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The weather grid end time is not valid");
+        }
+        this._endTime = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * Get the weather grid start time of day as a Duration.
+     */
+    get dStartTimeOfDay() {
+        return this._startTimeOfDay;
+    }
+    /**
+     * Get the weather grid start time of day as an ISO8601 string.
+     * @deprecated
+     */
+    get startTimeOfDay() {
+        return this._startTimeOfDay == null ? "" : this._startTimeOfDay.toString();
+    }
+    /**
+     * Set the weather grid start time of day using a Duration. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dStartTimeOfDay(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || !value.isValid())) {
+            throw new RangeError("The weather grid start time of dayis not valid");
+        }
+        this._startTimeOfDay = value;
+    }
+    /**
+     * Set the weather grid start time of day using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTimeOfDay(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The weather grid start time of day is not valid");
+        }
+        this._startTimeOfDay = new psaasGlobals_1.Duration();
+        this._startTimeOfDay.fromString(value);
+    }
+    /**
+     * Get the weather grid end time of day as a Duration.
+     */
+    get dEndTimeOfDay() {
+        return this._endTimeOfDay;
+    }
+    /**
+     * Get the weather grid end time of day as an ISO8601 string.
+     * @deprecated
+     */
+    get endTimeOfDay() {
+        return this._endTimeOfDay == null ? "" : this._endTimeOfDay.toString();
+    }
+    /**
+     * Set the weather grid end time of day using a Duration. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dEndTimeOfDay(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || !value.isValid())) {
+            throw new RangeError("The weather grid end time of dayis not valid");
+        }
+        this._endTimeOfDay = value;
+    }
+    /**
+     * Set the weather grid end time of day using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTimeOfDay(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The weather grid end time of day is not valid");
+        }
+        this._endTimeOfDay = new psaasGlobals_1.Duration();
+        this._endTimeOfDay.fromString(value);
+    }
     getId() {
-        return this.id;
+        return this._id;
     }
     /**
      * Set the name of the weather grid. This name must be unique within
@@ -566,7 +1004,7 @@ class WeatherGrid {
      * weather grid is constructed but can be overriden with this method.
      */
     setName(name) {
-        this.id = name.replace(/\|/g, "");
+        this._id = name.replace(/\|/g, "");
     }
     /**
      * Add a direction file to the weather grid.
@@ -576,6 +1014,7 @@ class WeatherGrid {
      * @param sector The sector (wind direction) to apply this grid file to. Only one of each sector is allowed per station.
      * @param speed The wind speed.
      * @throws Exception Throws an exception if a file for the same sector has already been added.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
     addDirectionFile(filename, projection, sector, speed) {
         for (let gd of this.gridData) {
@@ -616,20 +1055,20 @@ class WeatherGrid {
      */
     checkValid() {
         let errs = new Array();
-        if (!this.id || this.id.length === 0) {
+        if (!this._id || this._id.length === 0) {
             errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the weather grid.", this));
         }
-        if (this.startTimeOfDay.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("startTimeOfDay", "No start time of day has been set on the weather grid.", this));
+        if (this._startTimeOfDay == null) {
+            errs.push(new psaasGlobals_1.ValidationError("dStartTimeOfDay", "No start time of day has been set on the weather grid.", this));
         }
-        if (this.endTimeOfDay.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("endTimeOfDay", "No end time of day has been set on the weather grid.", this));
+        if (this._endTimeOfDay == null) {
+            errs.push(new psaasGlobals_1.ValidationError("dEndTimeOfDay", "No end time of day has been set on the weather grid.", this));
         }
-        if (this.startTime.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("startTime", "No start time has been set on the weather grid.", this));
+        if (this._startTime == null) {
+            errs.push(new psaasGlobals_1.ValidationError("lStartTime", "No start time has been set on the weather grid.", this));
         }
-        if (this.endTime.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("endTime", "No start time has been set on the weather grid.", this));
+        if (this._endTime == null) {
+            errs.push(new psaasGlobals_1.ValidationError("lEndTime", "No start time has been set on the weather grid.", this));
         }
         let dataErrs = new Array();
         for (let i = 0; i < this.gridData.length; i++) {
@@ -656,7 +1095,7 @@ class WeatherGrid {
      * @param builder
      */
     stream(builder) {
-        let tmp = this.id + '|' + this.comments + '|' + this.startTime + '|' + this.endTime + '|' + this.startTimeOfDay + '|' + this.endTimeOfDay + '|' + this.type;
+        let tmp = this._id + '|' + this.comments + '|' + this._startTime.toISO() + '|' + this._endTime.toISO() + '|' + this._startTimeOfDay.toString() + '|' + this._endTimeOfDay.toString() + '|' + this.type;
         for (let gd of this.gridData) {
             tmp = tmp + '|' + gd.speed + '|' + gd.sector + '|' + gd.filename + '|' + gd.projection;
         }
@@ -700,7 +1139,7 @@ class FuelPatch {
         /**
          * The filename associated with this fuel patch. Only valid if type is FILE.
          */
-        this.filename = "";
+        this._filename = "";
         /**
          * An array of LatLon describing the fuel patch. Only valid if type is POLYGON.
          */
@@ -722,11 +1161,43 @@ class FuelPatch {
          * Instead of using the name of a fuel, reference it by index.
          */
         this.fromFuelIndex = null;
-        this.id = "flptch" + FuelPatch.counter;
+        this._id = "flptch" + FuelPatch.counter;
         FuelPatch.counter += 1;
     }
+    /**
+     * Get the name of the fuel patch.
+     */
+    get id() {
+        return this._id;
+    }
+    /**
+     * Set the name of the fuel patch. Must be unique amongst the fuel patch collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The name of the fuel patch is not valid");
+        }
+        this.setName(value);
+    }
+    /**
+     * Get the location of the file containing the fuel patch.
+     */
+    get filename() {
+        return this._filename;
+    }
+    /**
+     * Set the location of the file containing the fuel patch. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The fuel patch file does not exist.");
+        }
+        this._filename = value;
+    }
     getId() {
-        return this.id;
+        return this._id;
     }
     /**
      * Set the name of the fuel patch. This name must be unique within
@@ -734,7 +1205,7 @@ class FuelPatch {
      * fuel patch is constructed but can be overriden with this method.
      */
     setName(name) {
-        this.id = name.replace(/\|/g, "");
+        this._id = name.replace(/\|/g, "");
     }
     /**
      * Are all required values set.
@@ -747,7 +1218,7 @@ class FuelPatch {
      */
     checkValid() {
         let errs = new Array();
-        if (!this.id || this.id.length === 0) {
+        if (!this._id || this._id.length === 0) {
             errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the fuel patch.", this));
         }
         if (this.type != FuelPatchType.FILE && this.type != FuelPatchType.LANDSCAPE && this.type != FuelPatchType.POLYGON) {
@@ -761,9 +1232,9 @@ class FuelPatch {
             errs.push(new psaasGlobals_1.ValidationError("toFuel", "No to fuel has been set on the fuel patch.", this));
         }
         if (this.type == FuelPatchType.FILE) {
-            if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
+            if (!psaasGlobals_1.SocketMsg.skipFileTests) {
                 //the file must be an attachment or a local file
-                if (!this.filename.startsWith("attachment:/") && !fs.existsSync(this.filename)) {
+                if (!this._filename.startsWith("attachment:/") && !fs.existsSync(this._filename)) {
                     errs.push(new psaasGlobals_1.ValidationError("filename", "The fuel patch file does not exist.", this));
                 }
             }
@@ -780,7 +1251,7 @@ class FuelPatch {
      * @param builder
      */
     stream(builder) {
-        let tmp = this.id + '|' + this.comments;
+        let tmp = this._id + '|' + this.comments;
         if (this.toFuelIndex == null) {
             tmp = tmp + '|' + this.toFuel;
         }
@@ -799,7 +1270,7 @@ class FuelPatch {
             tmp = tmp + '|rule|' + this.fromFuelRule;
         }
         if (this.type == FuelPatchType.FILE) {
-            tmp = tmp + '|file|' + this.filename;
+            tmp = tmp + '|file|' + this._filename;
         }
         else if (this.type == FuelPatchType.LANDSCAPE) {
             tmp = tmp + '|landscape';
@@ -832,7 +1303,7 @@ class FuelBreak {
         /**
          * The width of the fuel break (required if type is POLYLINE, otherwise ignored).
          */
-        this.width = -1;
+        this._width = -1;
         /**
          * Comments about the fuel break (optional).
          */
@@ -844,16 +1315,64 @@ class FuelBreak {
         /**
          * The filename associated with this fuel break. Only valid if type is FILE.
          */
-        this.filename = "";
+        this._filename = "";
         /**
          * An array of LatLon describing the fuel break. Only valid if type is POLYLINE or POLYGON.
          */
         this.feature = new Array();
-        this.id = "flbrk" + FuelBreak.counter;
+        this._id = "flbrk" + FuelBreak.counter;
         FuelBreak.counter += 1;
     }
+    /**
+     * Get the name of the fuel break.
+     */
+    get id() {
+        return this._id;
+    }
+    /**
+     * Set the name of the fuel break. Must be unique amongst the fuel break collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The name of the fuel break is not valid");
+        }
+        this.setName(value);
+    }
+    /**
+     * Get the width of the fuel break.
+     */
+    get width() {
+        return this._width;
+    }
+    /**
+     * Set the width of the fuel break (m).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set width(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value < 0 || value > 250)) {
+            throw new RangeError("The width of the fuel break is not valid.");
+        }
+        this._width = value;
+    }
+    /**
+     * Get the location of the file containing the fuel break.
+     */
+    get filename() {
+        return this._filename;
+    }
+    /**
+     * Set the location of the file containing the fuel break. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The fuel break file does not exist.");
+        }
+        this._filename = value;
+    }
     getId() {
-        return this.id;
+        return this._id;
     }
     /**
      * Set the name of the fuel break. This name must be unique within
@@ -861,7 +1380,7 @@ class FuelBreak {
      * fuel break is constructed but can be overriden with this method.
      */
     setName(name) {
-        this.id = name.replace(/\|/g, "");
+        this._id = name.replace(/\|/g, "");
     }
     /**
      * Are all required values set.
@@ -876,18 +1395,18 @@ class FuelBreak {
      */
     checkValid() {
         let errs = new Array();
-        if (!this.id || this.id.length === 0) {
+        if (!this._id || this._id.length === 0) {
             errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the fuelbreak.", this));
         }
         if (this.type == FuelBreakType.POLYLINE) {
-            if (this.width < 0 || this.width > 250.0) {
+            if (this._width < 0 || this._width > 250.0) {
                 errs.push(new psaasGlobals_1.ValidationError("width", "The fuelbreak width must be greater than 0m and less than 250m.", this));
             }
         }
         else if (this.type == FuelBreakType.FILE) {
-            if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
+            if (!psaasGlobals_1.SocketMsg.skipFileTests) {
                 //the file must be an attachment or a local file
-                if (!this.filename.startsWith("attachment:/") && !fs.existsSync(this.filename)) {
+                if (!this._filename.startsWith("attachment:/") && !fs.existsSync(this._filename)) {
                     errs.push(new psaasGlobals_1.ValidationError("filename", "The fuelbreak file does not exist.", this));
                 }
             }
@@ -907,9 +1426,9 @@ class FuelBreak {
      * @param builder
      */
     stream(builder) {
-        let tmp = this.id + '|' + this.width + '|' + this.comments;
+        let tmp = this._id + '|' + this.width + '|' + this.comments;
         if (this.type == FuelBreakType.FILE) {
-            tmp = tmp + '|file|' + this.filename;
+            tmp = tmp + '|file|' + this._filename;
         }
         else if (this.type == FuelBreakType.POLYLINE) {
             tmp = tmp + '|polyline';
@@ -939,19 +1458,19 @@ class PSaaSInputsFiles {
         /**The projection file (required).
          * The location of the projection file.
          */
-        this.projFile = "";
+        this._projFile = "";
         /**The LUT file (required).
          * The location of the LUT file.
          */
-        this.lutFile = "";
+        this._lutFile = "";
         /**The fuel map file (required).
          * The location of the fuel map file.
          */
-        this.fuelmapFile = "";
+        this._fuelmapFile = "";
         /**The elevation map file (optional).
          * The location of the elevation file.
          */
-        this.elevFile = "";
+        this._elevFile = "";
         /**
          * An array of fuel break files.
          */
@@ -974,6 +1493,75 @@ class PSaaSInputsFiles {
         this.gridFiles = new Array();
     }
     /**
+     * Get the location of the projection file.
+     */
+    get projFile() {
+        return this._projFile;
+    }
+    /**
+     * Set the location of the projection file. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set projFile(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The projection file does not exist.");
+        }
+        this._projFile = value;
+    }
+    /**
+     * Get the location of the lookup table file.
+     */
+    get lutFile() {
+        return this._lutFile;
+    }
+    /**
+     * Set the location of the lookup table file. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lutFile(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The lookup table file does not exist.");
+        }
+        this._lutFile = value;
+    }
+    /**
+     * Get the location of the fuel map file.
+     */
+    get fuelmapFile() {
+        return this._fuelmapFile;
+    }
+    /**
+     * Set the location of the fuel map file. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set fuelmapFile(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The fuel map file does not exist.");
+        }
+        this._fuelmapFile = value;
+    }
+    /**
+     * Get the location of the elevation file.
+     */
+    get elevFile() {
+        return this._elevFile;
+    }
+    /**
+     * Set the location of the elevation file. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set). Can be null to remove the elevation file.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set elevFile(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value != null && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The fuel break file does not exist.");
+        }
+        if (value == null) {
+            this._elevFile = "";
+        }
+        else {
+            this._elevFile = value;
+        }
+    }
+    /**
      * Are all required values specified.
      */
     isValid() {
@@ -989,25 +1577,25 @@ class PSaaSInputsFiles {
         if (this.projFile.length == 0) {
             _errors.push(new psaasGlobals_1.ValidationError("projFile", "No projection file has been specified.", this));
         }
-        else if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST && !this.projFile.startsWith("attachment:/") && !fs.existsSync(this.projFile)) {
+        else if (!psaasGlobals_1.SocketMsg.skipFileTests && !this._projFile.startsWith("attachment:/") && !fs.existsSync(this._projFile)) {
             _errors.push(new psaasGlobals_1.ValidationError("projFile", "The specified projection file does not exist.", this));
         }
         //check if the LUT file was specified
         if (this.lutFile.length == 0) {
             _errors.push(new psaasGlobals_1.ValidationError("lutFile", "No lookup table has been specified.", this));
         }
-        else if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST && !this.lutFile.startsWith("attachment:/") && !fs.existsSync(this.lutFile)) {
+        else if (!psaasGlobals_1.SocketMsg.skipFileTests && !this._lutFile.startsWith("attachment:/") && !fs.existsSync(this._lutFile)) {
             _errors.push(new psaasGlobals_1.ValidationError("lutFile", "The specified lookup table does not exist.", this));
         }
         //check if the fuelmap was specified
         if (this.fuelmapFile.length == 0) {
             _errors.push(new psaasGlobals_1.ValidationError("fuelmapFile", "No fuelmap file has been specified.", this));
         }
-        else if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST && !this.fuelmapFile.startsWith("attachment:/") && !fs.existsSync(this.fuelmapFile)) {
+        else if (!psaasGlobals_1.SocketMsg.skipFileTests && !this._fuelmapFile.startsWith("attachment:/") && !fs.existsSync(this._fuelmapFile)) {
             _errors.push(new psaasGlobals_1.ValidationError("fuelmapFile", "The specified fuelmap file does not exist.", this));
         }
         //the elevation file is optional but if it was set make sure it exists
-        if (this.elevFile.length > 0 && !psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST && !this.elevFile.startsWith("attachment:/") && !fs.existsSync(this.elevFile)) {
+        if (this._elevFile.length > 0 && !psaasGlobals_1.SocketMsg.skipFileTests && !this.elevFile.startsWith("attachment:/") && !fs.existsSync(this._elevFile)) {
             _errors.push(new psaasGlobals_1.ValidationError("elevFile", "The specified elevation file does not exist.", this));
         }
         let tempErrs = new Array();
@@ -1197,23 +1785,23 @@ class WeatherStream {
         /**
          * The location of the file containing the stream data (required).
          */
-        this.filename = "";
+        this._filename = "";
         /**
          * Yesterday's daily starting fine fuel moisture code (required).
          */
-        this.starting_ffmc = -1;
+        this._starting_ffmc = -1;
         /**
          * Yesterday's daily starting duff moisture code (required).
          */
-        this.starting_dmc = -1;
+        this._starting_dmc = -1;
         /**
          * Yesterday's daily starting drought code (required).
          */
-        this.starting_dc = -1;
+        this._starting_dc = -1;
         /**
          * Yesterday's daily starting precipitation (13:01-23:00 if daylight savings time, 12:01-23:00 otherwise) (required).
          */
-        this.starting_precip = -1;
+        this._starting_precip = -1;
         /**
          * The HFFMC calculation method (required).
          */
@@ -1243,26 +1831,206 @@ class WeatherStream {
          */
         this.diurnal_windspeed_gamma = 9999;
         /**
-         * The starting time of the weather stream (required). Must be formatted as 'YYYY-MM-DD'.
+         * The starting time of the weather stream (required).
          */
-        this.start_time = "";
+        this._start_time = null;
         /**
          * The ending time of the weather stream (required). Must be formatted as 'YYYY-MM-DD'.
          */
-        this.end_time = "";
+        this._end_time = null;
         /**
          * The ID of the weather station that this stream came from.
          */
         this.parentId = null;
-        this.id = "wthrstrm" + WeatherStream.counter;
+        this._id = "wthrstrm" + WeatherStream.counter;
         WeatherStream.counter += 1;
         this.parentId = parentId;
+    }
+    /**
+     * Get the name of the weather stream.
+     */
+    get id() {
+        return this._id;
+    }
+    /**
+     * Set the name of the weather stream. Must be unique amongst the weather stream collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The name of the weather stream is not valid");
+        }
+        this.setName(value);
+    }
+    /**
+     * Get the location of the file containing the weather stream.
+     */
+    get filename() {
+        return this._filename;
+    }
+    /**
+     * Set the location of the file containing the weather stream. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The weather stream file does not exist.");
+        }
+        this._filename = value;
+    }
+    /**
+     * Get yesterday's daily starting fine fuel moisture code.
+     */
+    get starting_ffmc() {
+        return this._starting_ffmc;
+    }
+    /**
+     * Set yesterday's daily starting fine fuel moisture code. Must be in [0, 101].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set starting_ffmc(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value < 0 || value > 101)) {
+            throw new RangeError("The start FFMC value is not valid.");
+        }
+        this._starting_ffmc = value;
+    }
+    /**
+     * Get yesterday's daily starting duff moisture code.
+     */
+    get starting_dmc() {
+        return this._starting_dmc;
+    }
+    /**
+     * Set yesterday's daily starting duff moisture code. Must be in [0, 500].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set starting_dmc(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value < 0 || value > 500)) {
+            throw new RangeError("The start DMC value is not valid.");
+        }
+        this._starting_dmc = value;
+    }
+    /**
+     * Get yesterday's daily starting drought code.
+     */
+    get starting_dc() {
+        return this._starting_dc;
+    }
+    /**
+     * Set yesterday's daily starting drought code. Must be in [0, 1500].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set starting_dc(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value < 0 || value > 1500)) {
+            throw new RangeError("The start DC value is not valid.");
+        }
+        this._starting_dc = value;
+    }
+    /**
+     * Get yesterday's daily starting precipitation.
+     */
+    get starting_precip() {
+        return this._starting_precip;
+    }
+    /**
+     * Set yesterday's daily starting precipitation. Must be greater than or equal to 0.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set starting_precip(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value < 0)) {
+            throw new RangeError("The start precipitation value is not valid.");
+        }
+        this._starting_precip = value;
+    }
+    /**
+     * Get the hour that the HFFMC value is for.
+     */
+    get hffmc_hour() {
+        return this._hffmc_hour;
+    }
+    /**
+     * Set the hour that the HFFMC value is for. Must be in [0,23]. Use -1 to use the default.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set hffmc_hour(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value < -1 || value > 23)) {
+            throw new RangeError("The HFFMC hour is not valid.");
+        }
+        this._hffmc_hour = value;
+    }
+    /**
+     * Get the weather stream starting date as a Luxon DateTime.
+     */
+    get lstart_time() {
+        return this._start_time;
+    }
+    /**
+     * Get the weather grid end time as an ISO8601 string.
+     * @deprecated
+     */
+    get start_time() {
+        return this._start_time == null ? "" : this._start_time.toISODate();
+    }
+    /**
+     * Set the weather grid end time using a Luxon DateTime. Cannot be null. Only the date component will be used.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lstart_time(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The weather stream start date is not valid");
+        }
+        this._start_time = value;
+    }
+    /**
+     * Set the weather grid end time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set start_time(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The weather stream start date is not valid");
+        }
+        this._start_time = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * Get the weather stream end time as a Luxon DateTime.
+     */
+    get lend_time() {
+        return this._end_time;
+    }
+    /**
+     * Get the weather stream end time as an ISO8601 string.
+     * @deprecated
+     */
+    get end_time() {
+        return this._end_time == null ? "" : this._end_time.toISODate();
+    }
+    /**
+     * Set the weather stream end date using a Luxon DateTime. Cannot be null. Only the date component will be used.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lend_time(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The weather stream end date is not valid");
+        }
+        this._end_time = value;
+    }
+    /**
+     * Set the weather stream end date using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set end_time(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The weather stream end date is not valid");
+        }
+        this._end_time = luxon_1.DateTime.fromISO(value);
     }
     /**
      * Get the unique ID of this weather stream.
      */
     getId() {
-        return this.id;
+        return this._id;
     }
     /**
      * Set the name of the weather stream. This name must be unique within
@@ -1270,7 +2038,7 @@ class WeatherStream {
      * weather stream is constructed but can be overriden with this method.
      */
     setName(name) {
-        this.id = name.replace(/\|/g, "");
+        this._id = name.replace(/\|/g, "");
     }
     /**
      * Get the unique ID of the weather station that this stream came from.
@@ -1290,38 +2058,38 @@ class WeatherStream {
      */
     checkValid() {
         let errs = new Array();
-        if (!this.id || this.id.length === 0) {
+        if (!this._id || this._id.length === 0) {
             errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the weather stream.", this));
         }
-        if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
+        if (!psaasGlobals_1.SocketMsg.skipFileTests) {
             //the file must be an attachment or a local file
-            if (!this.filename.startsWith("attachment:/") && !fs.existsSync(this.filename)) {
+            if (!this._filename.startsWith("attachment:/") && !fs.existsSync(this._filename)) {
                 errs.push(new psaasGlobals_1.ValidationError("filename", "The specified weather file does not exist.", this));
             }
         }
-        if (this.starting_ffmc < 0 || this.starting_ffmc > 101.0) {
+        if (this._starting_ffmc < 0 || this._starting_ffmc > 101.0) {
             errs.push(new psaasGlobals_1.ValidationError("starting_ffmc", "Invalid starting FFMC value for the weather stream.", this));
         }
-        if (this.starting_dmc < 0 || this.starting_dmc > 500.0) {
+        if (this._starting_dmc < 0 || this._starting_dmc > 500.0) {
             errs.push(new psaasGlobals_1.ValidationError("starting_dmc", "Invalid starting DMC value for the weather stream.", this));
         }
-        if (this.starting_dc < 0 || this.starting_dc > 1500.0) {
+        if (this._starting_dc < 0 || this._starting_dc > 1500.0) {
             errs.push(new psaasGlobals_1.ValidationError("starting_dc", "Invalid starting DC value for the weather stream.", this));
         }
-        if (this.starting_precip < 0) {
+        if (this._starting_precip < 0) {
             errs.push(new psaasGlobals_1.ValidationError("starting_precip", "Invalid starting precipitation value for the weather stream.", this));
         }
-        if (this.hffmc_hour < -1 || this.hffmc_hour > 23) {
+        if (this._hffmc_hour < -1 || this._hffmc_hour > 23) {
             errs.push(new psaasGlobals_1.ValidationError("hffmc_hour", "Invalid starting HFFMC hour for the weather stream.", this));
         }
         if (this.hffmc_method != HFFMCMethod.LAWSON && this.hffmc_method != HFFMCMethod.VAN_WAGNER) {
             errs.push(new psaasGlobals_1.ValidationError("hffmc_method", "Invalid HFFMC calculation method for the weather stream.", this));
         }
-        if (this.start_time.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("start_time", "No start time has been set for the weather stream.", this));
+        if (this._start_time == null) {
+            errs.push(new psaasGlobals_1.ValidationError("lstart_time", "No start time has been set for the weather stream.", this));
         }
-        if (this.end_time.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("end_time", "No end time has been set for the weather stream.", this));
+        if (this._end_time == null) {
+            errs.push(new psaasGlobals_1.ValidationError("lend_time", "No end time has been set for the weather stream.", this));
         }
         return errs;
     }
@@ -1330,9 +2098,9 @@ class WeatherStream {
      * @param builder
      */
     stream(builder) {
-        let tmp = this.id + '|' + this.filename + '|' + this.hffmc_value + '|' + this.hffmc_hour + '|' + this.hffmc_method;
+        let tmp = this._id + '|' + this._filename + '|' + this.hffmc_value + '|' + this.hffmc_hour + '|' + this.hffmc_method;
         tmp = tmp + '|' + this.starting_ffmc + '|' + this.starting_dmc + '|' + this.starting_dc + '|' + this.starting_precip;
-        tmp = tmp + '|' + this.start_time + '|' + this.end_time;
+        tmp = tmp + '|' + this._start_time.toISODate() + '|' + this._end_time.toISODate();
         tmp = tmp + '|' + this.parentId + '|' + this.comments;
         if (this.diurnal_temperature_alpha != 9999) {
             tmp = tmp + '|' + this.diurnal_temperature_alpha + '|' + this.diurnal_temperature_beta + '|' + this.diurnal_temperature_gamma;
@@ -1363,11 +2131,27 @@ class WeatherStation {
          * The elevation of the weather station (required).
          */
         this.elevation = 0;
-        this.id = "wthrstn" + WeatherStation.counter;
+        this._id = "wthrstn" + WeatherStation.counter;
         WeatherStation.counter += 1;
     }
+    /**
+     * Get the name of the weather station.
+     */
+    get id() {
+        return this._id;
+    }
+    /**
+     * Set the name of the weather station. Must be unique amongst the weather station collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The name of the weather station is not valid");
+        }
+        this.setName(value);
+    }
     getId() {
-        return this.id;
+        return this._id;
     }
     /**
      * Set the name of the weather station. This name must be unique within
@@ -1375,7 +2159,7 @@ class WeatherStation {
      * weather station is constructed but can be overriden with this method.
      */
     setName(name) {
-        this.id = name.replace(/\|/g, "");
+        this._id = name.replace(/\|/g, "");
     }
     /**
      * Checks to see if all required values are specified.
@@ -1389,7 +2173,7 @@ class WeatherStation {
      */
     checkValid() {
         let errs = new Array();
-        if (!this.id || this.id.length === 0) {
+        if (!this._id || this._id.length === 0) {
             errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the weather station.", this));
         }
         if (this.location == null) {
@@ -1432,9 +2216,10 @@ class WeatherStation {
      * @param starting_dmc The starting DMC value.
      * @param starting_dc The starting DC value.
      * @param starting_precip The starting amount of precipitation.
-     * @param start_time The starting time of the weather stream. Must be formatted as "YYYY-MM-DD"
-     * @param end_time The ending time of the weather stream. Must be formatted as "YYYY-MM-DD"
+     * @param start_time The starting time of the weather stream. If a string is used it must be formatted as "YYYY-MM-DD".
+     * @param end_time The ending time of the weather stream. If a string is used it must be formatted as "YYYY-MM-DD".
      * @param comments An optional user comment to attach to the weather stream.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      * @return WeatherStream
      */
     addWeatherStream(filename, hffmc_value, hffmc_hour, hffmc_method, starting_ffmc, starting_dmc, starting_dc, starting_precip, start_time, end_time, comments) {
@@ -1450,8 +2235,18 @@ class WeatherStation {
         ws.starting_dmc = starting_dmc;
         ws.starting_dc = starting_dc;
         ws.starting_precip = starting_precip;
-        ws.start_time = start_time;
-        ws.end_time = end_time;
+        if (typeof start_time === "string") {
+            ws.start_time = start_time;
+        }
+        else {
+            ws.lstart_time = start_time;
+        }
+        if (typeof end_time === "string") {
+            ws.end_time = end_time;
+        }
+        else {
+            ws.lend_time = end_time;
+        }
         this.streams.push(ws);
         return ws;
     }
@@ -1475,6 +2270,7 @@ class WeatherStation {
      * @param wsbeta The diurnal beta wind speed parameter.
      * @param wsgamma The diurnal gamma wind speed parameter.
      * @param comments An optional user comment to attach to the weather stream.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      * @return WeatherStream
      */
     addWeatherStreamWithDiurnalParameters(filename, hffmc_value, hffmc_hour, hffmc_method, starting_ffmc, starting_dmc, starting_dc, starting_precip, start_time, end_time, talpha, tbeta, tgamma, wsalpha, wsbeta, wsgamma, comments) {
@@ -1490,8 +2286,18 @@ class WeatherStation {
         ws.starting_dmc = starting_dmc;
         ws.starting_dc = starting_dc;
         ws.starting_precip = starting_precip;
-        ws.start_time = start_time;
-        ws.end_time = end_time;
+        if (typeof start_time === "string") {
+            ws.start_time = start_time;
+        }
+        else {
+            ws.lstart_time = start_time;
+        }
+        if (typeof end_time === "string") {
+            ws.end_time = end_time;
+        }
+        else {
+            ws.lend_time = end_time;
+        }
         ws.diurnal_temperature_alpha = talpha;
         ws.diurnal_temperature_beta = tbeta;
         ws.diurnal_temperature_gamma = tgamma;
@@ -1519,7 +2325,7 @@ class WeatherStation {
      * @param builder
      */
     stream(builder) {
-        let tmp = this.id + '|' + this.location.latitude + '|' + this.location.longitude + '|' + this.elevation + '|' + this.comments;
+        let tmp = this._id + '|' + this.location.latitude + '|' + this.location.longitude + '|' + this.elevation + '|' + this.comments;
         builder.write(WeatherStation.PARAM_WEATHERSTATION + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
         for (let stream of this.streams) {
@@ -1548,9 +2354,9 @@ class Ignition {
          */
         this.comments = "";
         /**
-         * The ignition start time (required). Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+         * The ignition start time (required).
          */
-        this.startTime = "";
+        this._startTime = null;
         /**
          * The type of ignition (required).
          */
@@ -1558,7 +2364,7 @@ class Ignition {
         /**
          * The filename associated with this ignition. Only valid if type is FILE.
          */
-        this.filename = "";
+        this._filename = "";
         /**
          * An array of LatLon describing the ignition. Only valid if type is POLYLINE, POLYGON, or POINT.
          */
@@ -1568,11 +2374,77 @@ class Ignition {
          * Valid types for the value are Integer, Long, Double, and String.
          */
         this.attributes = new Array();
-        this.id = "ign" + Ignition.counter;
+        this._id = "ign" + Ignition.counter;
         Ignition.counter += 1;
     }
+    /**
+     * Get the name of the ignition.
+     */
+    get id() {
+        return this._id;
+    }
+    /**
+     * Set the name of the ignition. Must be unique amongst the ignition collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The name of the ignition is not valid");
+        }
+        this.setName(value);
+    }
+    /**
+     * Get the ignition start time as a Luxon DateTime.
+     */
+    get lStartTime() {
+        return this._startTime;
+    }
+    /**
+     * Get the ignition start time as an ISO8601 string.
+     * @deprecated
+     */
+    get startTime() {
+        return this._startTime == null ? "" : this._startTime.toISO();
+    }
+    /**
+     * Set the ignition start time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lStartTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The ignition start time is not valid");
+        }
+        this._startTime = value;
+    }
+    /**
+     * Set the ignition start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The ignition start time is not valid");
+        }
+        this._startTime = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * Get the location of the file containing the ignition.
+     */
+    get filename() {
+        return this._filename;
+    }
+    /**
+     * Set the location of the file containing the ignition. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The ignition file does not exist.");
+        }
+        this._filename = value;
+    }
     getId() {
-        return this.id;
+        return this._id;
     }
     /**
      * Set the name of the ignition. This name must be unique within
@@ -1580,7 +2452,7 @@ class Ignition {
      * ignition is constructed but can be overriden with this method.
      */
     setName(name) {
-        this.id = name.replace(/\|/g, "");
+        this._id = name.replace(/\|/g, "");
     }
     /**
      * Add a new point to the ignition shape. Only valid for POLYLINE, POLYGON, or POINT.
@@ -1599,16 +2471,16 @@ class Ignition {
     }
     checkValid() {
         let errs = new Array();
-        if (!this.id || this.id.length === 0) {
+        if (!this._id || this._id.length === 0) {
             errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the ignition.", this));
         }
-        if (this.startTime.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("startTime", "No start time has been set for the ignition.", this));
+        if (this._startTime == null) {
+            errs.push(new psaasGlobals_1.ValidationError("lStartTime", "No start time has been set for the ignition.", this));
         }
         if (this.type == IgnitionType.FILE) {
-            if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
+            if (!psaasGlobals_1.SocketMsg.skipFileTests) {
                 //the file must be an attachment or a local file
-                if (!this.filename.startsWith("attachment:/") && fs.existsSync(this.filename)) {
+                if (!this._filename.startsWith("attachment:/") && fs.existsSync(this._filename)) {
                     errs.push(new psaasGlobals_1.ValidationError("filename", "The specified ignition file does not exist.", this));
                 }
             }
@@ -1628,9 +2500,9 @@ class Ignition {
      * @param builder
      */
     stream(builder) {
-        let tmp = this.id + '|' + this.startTime + '|' + this.comments;
+        let tmp = this._id + '|' + this._startTime.toISO() + '|' + this.comments;
         if (this.type == IgnitionType.FILE) {
-            tmp = tmp + '|file|' + this.filename;
+            tmp = tmp + '|file|' + this._filename;
         }
         else if (this.type == IgnitionType.POINT) {
             tmp = tmp + '|point';
@@ -1689,7 +2561,7 @@ class AssetFile {
         /**
          * The filename associated with this asset. Only valid if type is FILE.
          */
-        this.filename = "";
+        this._filename = "";
         /**
          * An array of LatLon describing the asset. Only valid if type is POLYLINE, POLYGON, or POINT.
          */
@@ -1698,11 +2570,43 @@ class AssetFile {
          * The buffer size to use for line or point assets. If negative, no buffer will be used.
          */
         this.buffer = -1.0;
-        this.id = "asset" + AssetFile.counter;
+        this._id = "asset" + AssetFile.counter;
         AssetFile.counter += 1;
     }
+    /**
+     * Get the name of the asset.
+     */
+    get id() {
+        return this._id;
+    }
+    /**
+     * Set the name of the asset. Must be unique amongst the asset collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The name of the asset is not valid");
+        }
+        this.setName(value);
+    }
+    /**
+     * Get the location of the file containing the asset.
+     */
+    get filename() {
+        return this._filename;
+    }
+    /**
+     * Set the location of the file containing the asset. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The asset file does not exist.");
+        }
+        this._filename = value;
+    }
     getId() {
-        return this.id;
+        return this._id;
     }
     /**
      * Set the name of the asset. This name must be unique within
@@ -1710,7 +2614,7 @@ class AssetFile {
      * asset is constructed but can be overriden with this method.
      */
     setName(name) {
-        this.id = name.replace(/\|/g, "");
+        this._id = name.replace(/\|/g, "");
     }
     /**
      * Checks to see if all required values have been set.
@@ -1724,13 +2628,13 @@ class AssetFile {
      */
     checkValid() {
         const errs = new Array();
-        if (!this.id || this.id.length === 0) {
+        if (!this._id || this._id.length === 0) {
             errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the asset.", this));
         }
         if (this.type == AssetShapeType.FILE) {
-            if (!psaasGlobals_1.SocketMsg.DEBUG_NO_FILETEST) {
+            if (!psaasGlobals_1.SocketMsg.skipFileTests) {
                 //the file must be an attachment or a local file
-                if (!this.filename.startsWith("attachment:/") && fs.existsSync(this.filename)) {
+                if (!this._filename.startsWith("attachment:/") && fs.existsSync(this._filename)) {
                     errs.push(new psaasGlobals_1.ValidationError("filename", "The specified asset file does not exist.", this));
                 }
             }
@@ -1748,9 +2652,9 @@ class AssetFile {
      * @param builder
      */
     stream(builder) {
-        let tmp = this.id + '|' + this.comments + '|' + (+this.type) + '|' + this.buffer;
+        let tmp = this._id + '|' + this.comments + '|' + (+this.type) + '|' + this.buffer;
         if (this.type == AssetShapeType.FILE) {
-            tmp = tmp + this.filename;
+            tmp = tmp + this._filename;
         }
         else {
             for (let p of this.feature) {
@@ -1878,9 +2782,9 @@ exports.SinglePointIgnitionOptions = SinglePointIgnitionOptions;
 class BurningConditions {
     constructor() {
         /**
-         * The date the burning condition is in effect on (required). Must be formatted as 'YYYY-MM-DD'.
+         * The date the burning condition is in effect on (required).
          */
-        this.date = "";
+        this._date = null;
         /**
          * The time of day that the burning condition starts to take effect (optional).
          */
@@ -1892,21 +2796,119 @@ class BurningConditions {
         /**
          * The minimum FWI value that will allow burning (optional).
          */
-        this.fwiGreater = 0;
+        this._fwiGreater = 0;
         /**
          * The minimum wind speed that will allow burning (optional).
          */
-        this.wsGreater = 0;
+        this._wsGreater = 0;
         /**
          * The maximum relative humidity that will allow burning (optional).
          */
-        this.rhLess = 100;
+        this._rhLess = 100;
         /**
          * The minimum ISI that will allow burning (optional).
          */
-        this.isiGreater = 0;
+        this._isiGreater = 0;
         this.startTime = psaasGlobals_1.Duration.createTime(0, 0, 0, false);
         this.endTime = psaasGlobals_1.Duration.createTime(23, 59, 59, false);
+    }
+    /**
+     * Get the burning condition date as a Luxon DateTime.
+     */
+    get lDate() {
+        return this._date;
+    }
+    /**
+     * Get the burning condition date as an ISO8601 string.
+     * @deprecated
+     */
+    get date() {
+        return this._date == null ? "" : this._date.toISODate();
+    }
+    /**
+     * Set the burning condition date using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lDate(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The ignition start time is not valid");
+        }
+        this._date = value;
+    }
+    /**
+     * Set the burning condition date using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set date(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The burning condition date is not valid");
+        }
+        this._date = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * Get the minimum FWI value that will allow burning.
+     */
+    get fwiGreater() {
+        return this._fwiGreater;
+    }
+    /**
+     * Set the minimum FWI value that will allow burning. Must be greater than or equal to 0.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set fwiGreater(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value != null && value < 0) {
+            throw new RangeError("The minimum FWI value that will allow burning is not valid.");
+        }
+        this._fwiGreater = value;
+    }
+    /**
+     * Get the minimum wind speed that will allow burning.
+     */
+    get wsGreater() {
+        return this._wsGreater;
+    }
+    /**
+     * Set the minimum wind speed that will allow burning. Must be in [0, 200].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set wsGreater(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value != null && (value < 0 || value > 200)) {
+            throw new RangeError("The minimum wind speed that will allow burning is not valid.");
+        }
+        this._wsGreater = value;
+    }
+    /**
+     * Get the maximum relative humidity that will allow burning.
+     */
+    get rhLess() {
+        return this._rhLess;
+    }
+    /**
+     * Set the maximum relative humidity that will allow burning. Must be in [0, 100].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set rhLess(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value != null && (value < 0 || value > 100)) {
+            throw new RangeError("The maximum relative humidity that will allow burning is not valid.");
+        }
+        this._rhLess = value;
+    }
+    /**
+     * Get the minimum ISI that will allow burning.
+     */
+    get isiGreater() {
+        return this._isiGreater;
+    }
+    /**
+     * Set the minimum ISI that will allow burning. Must be greater than or equal to 0.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set isiGreater(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value != null && value < 0) {
+            throw new RangeError("The minimum ISI that will allow burning is not valid.");
+        }
+        this._isiGreater = value;
     }
     /**
      * Checks to see if all required values have been set.
@@ -1920,7 +2922,7 @@ class BurningConditions {
      */
     checkValid() {
         const errs = new Array();
-        if (this.date.length == 0) {
+        if (this._date == null) {
             errs.push(new psaasGlobals_1.ValidationError("date", "No date was set to apply the burn conditions to.", this));
         }
         let startReady = true;
@@ -1941,16 +2943,16 @@ class BurningConditions {
         else if (startReady && this.endTime.isLessThan(this.startTime)) {
             errs.push(new psaasGlobals_1.ValidationError("endTime", "The end time of day for the burn condition is before the start time of day.", this));
         }
-        if (this.fwiGreater < 0) {
+        if (this._fwiGreater < 0) {
             errs.push(new psaasGlobals_1.ValidationError("fwiGreater", "The specified minimum FWI required for burning is invalid.", this));
         }
-        if (this.wsGreater < 0 || this.wsGreater > 200) {
+        if (this._wsGreater < 0 || this._wsGreater > 200) {
             errs.push(new psaasGlobals_1.ValidationError("wsGreater", "The specified minimum wind speed required for burning is invalid.", this));
         }
-        if (this.rhLess < 0 || this.rhLess > 100) {
+        if (this._rhLess < 0 || this._rhLess > 100) {
             errs.push(new psaasGlobals_1.ValidationError("rhLess", "The specified maximum relative humidity required for burning is invalid.", this));
         }
-        if (this.isiGreater < 0) {
+        if (this._isiGreater < 0) {
             errs.push(new psaasGlobals_1.ValidationError("isiGreater", "The specified minimum ISI required for burning is invalid.", this));
         }
         return errs;
@@ -2134,18 +3136,120 @@ class StreamOptions {
          */
         this.name = "";
         /**
-         * An override for the scenario start time. Must be formatted as ISO-8601.
+         * An override for the scenario start time.
          */
-        this.startTime = "";
+        this._startTime = null;
         /**
-         * An override for the scenario end time. Must be formatted as ISO-8601.
+         * An override for the scenario end time.
          */
-        this.endTime = "";
+        this._endTime = null;
         /**
          * An override for the ignition start time for any ignitions attached
          * to this sub-scnario. Must be formatted as ISO-8601.
          */
-        this.ignitionTime = "";
+        this._ignitionTime = null;
+    }
+    /**
+     * Get the override for the weather stream start time as a Luxon DateTime.
+     */
+    get lStartTime() {
+        return this._startTime;
+    }
+    /**
+     * Get the override for the weather stream start time as an ISO8601 string.
+     * @deprecated
+     */
+    get startTime() {
+        return this._startTime == null ? "" : this._startTime.toISODate();
+    }
+    /**
+     * Set the override for the weather stream start date using a Luxon DateTime. Cannot be null. Only the date component will be used.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lStartTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The override for the weather stream start date is not valid");
+        }
+        this._startTime = value;
+    }
+    /**
+     * Set the override for the weather stream start date using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The override for the weather stream start date is not valid");
+        }
+        this._startTime = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * Get the override for the weather stream end time as a Luxon DateTime.
+     */
+    get lEndTime() {
+        return this._endTime;
+    }
+    /**
+     * Get the override for the weather stream end time as an ISO8601 string.
+     * @deprecated
+     */
+    get endTime() {
+        return this._endTime == null ? "" : this._endTime.toISODate();
+    }
+    /**
+     * Set the override for the weather stream end date using a Luxon DateTime. Cannot be null. Only the date component will be used.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lEndTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The override for the weather stream end date is not valid");
+        }
+        this._endTime = value;
+    }
+    /**
+     * Set the override for the weather stream end date using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The override for the weather stream end date is not valid");
+        }
+        this._endTime = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * Get the override for the ignition start time as a Luxon DateTime.
+     */
+    get lIgnitionTime() {
+        return this._ignitionTime;
+    }
+    /**
+     * Get the override for the ignition start time as an ISO8601 string.
+     * @deprecated
+     */
+    get ignitionTime() {
+        return this._ignitionTime == null ? "" : this._ignitionTime.toISO();
+    }
+    /**
+     * Set the override for the ignition start date using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lIgnitionTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The override for the ignition start time is not valid");
+        }
+        this._ignitionTime = value;
+    }
+    /**
+     * Set the override for the ignition start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set ignitionTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The override for the ignition start time is not valid");
+        }
+        this._ignitionTime = luxon_1.DateTime.fromISO(value);
     }
     isValid() {
         return this.checkValid().length == 0;
@@ -2158,15 +3262,6 @@ class StreamOptions {
         const errs = new Array();
         if (this.name == null) {
             errs.push(new psaasGlobals_1.ValidationError("name", "The sub-scenario name cannot be null.", this));
-        }
-        if (this.startTime == null) {
-            errs.push(new psaasGlobals_1.ValidationError("startTime", "The start time cannot be null.", this));
-        }
-        if (this.endTime == null) {
-            errs.push(new psaasGlobals_1.ValidationError("endTime", "The end time cannot be null.", this));
-        }
-        if (this.ignitionTime == null) {
-            errs.push(new psaasGlobals_1.ValidationError("ignitionTime", "The ignition time cannot be null.", this));
         }
         return errs;
     }
@@ -2222,11 +3317,11 @@ class Scenario {
         /**
          * The scenario start time (required). Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
          */
-        this.startTime = "";
+        this._startTime = null;
         /**
-         * The scenario end time (required). Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+         * The scenario end time (required).
          */
-        this.endTime = "";
+        this._endTime = null;
         /**
          * User comments about the scenario (optional).
          */
@@ -2260,7 +3355,7 @@ class Scenario {
          * The name of the scenario that will be copied.
          */
         this.scenToCopy = "";
-        this.id = "scen" + Scenario.counter;
+        this._id = "scen" + Scenario.counter;
         Scenario.counter += 1;
         this.displayInterval = psaasGlobals_1.Duration.createTime(1, 0, 0, false);
         this.fgmOptions = new psaasGlobals_1.FGMOptions();
@@ -2268,8 +3363,92 @@ class Scenario {
         this.fmcOptions = new psaasGlobals_1.FMCOptions();
         this.fwiOptions = new psaasGlobals_1.FWIOptions();
     }
+    /**
+     * Get the name of the scenario.
+     */
+    get id() {
+        return this._id;
+    }
+    /**
+     * Set the name of the scenario. Must be unique amongst the scenario collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The name of the scenario is not valid");
+        }
+        this.setName(value);
+    }
+    /**
+     * Get the scenario start time as a Luxon DateTime.
+     */
+    get lStartTime() {
+        return this._startTime;
+    }
+    /**
+     * Get the scenario start time as an ISO8601 string.
+     * @deprecated
+     */
+    get startTime() {
+        return this._startTime == null ? "" : this._startTime.toISO();
+    }
+    /**
+     * Set the scenario start time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lStartTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The scenario start time is not valid");
+        }
+        this._startTime = value;
+    }
+    /**
+     * Set the scenario start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The scenario start time is not valid");
+        }
+        this._startTime = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * Get the scenario end time as a Luxon DateTime.
+     */
+    get lEndTime() {
+        return this._endTime;
+    }
+    /**
+     * Get the scenario end time as an ISO8601 string.
+     * @deprecated
+     */
+    get endTime() {
+        return this._endTime == null ? "" : this._endTime.toISO();
+    }
+    /**
+     * Set the scenario end time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lEndTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The scenario end time is not valid");
+        }
+        this._endTime = value;
+    }
+    /**
+     * Set the scenario end time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The scenario end time is not valid");
+        }
+        this._endTime = luxon_1.DateTime.fromISO(value);
+    }
     getId() {
-        return this.id;
+        return this._id;
     }
     /**
      * Set the name of the scenario. This name must be unique within
@@ -2277,7 +3456,7 @@ class Scenario {
      * scenario is constructed but can be overriden with this method.
      */
     setName(name) {
-        this.id = name.replace(/\|/g, "");
+        this._id = name.replace(/\|/g, "");
     }
     makeCopy(toCopy) {
         this.isCopy = true;
@@ -2295,7 +3474,12 @@ class Scenario {
      */
     addBurningCondition(date, startTime, endTime, fwiGreater, wsGreater, rhLess, isiGreater) {
         let bc = new BurningConditions();
-        bc.date = date;
+        if (typeof date === "string") {
+            bc.date = date;
+        }
+        else {
+            bc.lDate = date;
+        }
         bc.startTime = psaasGlobals_1.Duration.createTime(startTime, 0, 0, false);
         if (endTime > 23) {
             bc.endTime = psaasGlobals_1.Duration.createDateTime(0, 0, 1, endTime - 24, 0, 0, false);
@@ -2634,7 +3818,7 @@ class Scenario {
      */
     checkValid() {
         const errs = new Array();
-        if (!this.id || this.id.length === 0) {
+        if (!this._id || this._id.length === 0) {
             errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the scenario.", this));
         }
         if (this.isCopy) {
@@ -2643,10 +3827,10 @@ class Scenario {
             }
         }
         else {
-            if (this.startTime.length == 0) {
+            if (this._startTime == null) {
                 errs.push(new psaasGlobals_1.ValidationError("startTime", "The start time for the scenario has not been set.", this));
             }
-            if (this.endTime.length == 0) {
+            if (this._endTime == null) {
                 errs.push(new psaasGlobals_1.ValidationError("endTime", "The end time for the scenario has not been set.", this));
             }
             if (this.displayInterval == null || this.displayInterval.toSeconds() == 0) {
@@ -2790,20 +3974,20 @@ class Scenario {
     stream(builder) {
         builder.write(Scenario.PARAM_SCENARIO_BEGIN + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(Scenario.PARAM_SCENARIONAME + psaasGlobals_1.SocketMsg.NEWLINE);
-        builder.write(this.id + psaasGlobals_1.SocketMsg.NEWLINE);
+        builder.write(this._id + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(Scenario.PARAM_DISPLAY_INTERVAL + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(this.displayInterval + psaasGlobals_1.SocketMsg.NEWLINE);
         if (this.isCopy) {
             builder.write(Scenario.PARAM_SCENARIO_TO_COPY + psaasGlobals_1.SocketMsg.NEWLINE);
             builder.write(this.scenToCopy + psaasGlobals_1.SocketMsg.NEWLINE);
         }
-        if (!this.isCopy || this.startTime.length > 0) {
+        if (!this.isCopy || this._startTime != null) {
             builder.write(Scenario.PARAM_STARTTIME + psaasGlobals_1.SocketMsg.NEWLINE);
-            builder.write(this.startTime + psaasGlobals_1.SocketMsg.NEWLINE);
+            builder.write(this._startTime.toISO() + psaasGlobals_1.SocketMsg.NEWLINE);
         }
-        if (!this.isCopy || this.endTime.length > 0) {
+        if (!this.isCopy || this._endTime != null) {
             builder.write(Scenario.PARAM_ENDTIME + psaasGlobals_1.SocketMsg.NEWLINE);
-            builder.write(this.endTime + psaasGlobals_1.SocketMsg.NEWLINE);
+            builder.write(this._endTime.toISO() + psaasGlobals_1.SocketMsg.NEWLINE);
         }
         if (this.comments.length > 0) {
             builder.write(Scenario.PARAM_COMMENTS + psaasGlobals_1.SocketMsg.NEWLINE);
@@ -3226,7 +4410,44 @@ class ExportTimeOverride {
         /**
          * The export time to use instead of the one defined in the {@link Output_GridFile} class.
          */
-        this.exportTime = null;
+        this._exportTime = null;
+    }
+    /**
+     * Get the override for the export time as a Luxon DateTime.
+     */
+    get lExportTime() {
+        return this._exportTime;
+    }
+    /**
+     * Get the override for the export time as an ISO8601 string.
+     * @deprecated
+     */
+    get exportTime() {
+        return this.getExportOverrideTime();
+    }
+    /**
+     * Set the override for the export time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lExportTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The override for the export time is not valid");
+        }
+        this._exportTime = value;
+    }
+    /**
+     * Set the override for the export time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set exportTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The override for the export time is not valid");
+        }
+        this._exportTime = luxon_1.DateTime.fromISO(value);
+    }
+    getExportOverrideTime() {
+        return this._exportTime == null ? "" : this._exportTime.toISO();
     }
     checkValid() {
         const errs = new Array();
@@ -3247,9 +4468,9 @@ class Output_GridFile {
          */
         this.filename = "";
         /**
-         * Output time (required). Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+         * Output time (required).
          */
-        this.outputTime = "";
+        this._outputTime = null;
         /**
          * The name of the scenario that this output is for (required).
          */
@@ -3281,6 +4502,40 @@ class Output_GridFile {
          */
         this.subScenarioOverrideTimes = new Array();
     }
+    /**
+     * Get the export time as a Luxon DateTime.
+     */
+    get lOutputTime() {
+        return this._outputTime;
+    }
+    /**
+     * Get the export time as an ISO8601 string.
+     * @deprecated
+     */
+    get outputTime() {
+        return this._outputTime == null ? "" : this._outputTime.toISO();
+    }
+    /**
+     * Set the export time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lOutputTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The export time is not valid");
+        }
+        this._outputTime = value;
+    }
+    /**
+     * Set the export time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set outputTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The export time is not valid");
+        }
+        this._outputTime = luxon_1.DateTime.fromISO(value);
+    }
     add_subScenarioOverrideTimes(add) {
         this.subScenarioOverrideTimes.push(add);
     }
@@ -3299,8 +4554,8 @@ class Output_GridFile {
         if (this.filename.length == 0) {
             errs.push(new psaasGlobals_1.ValidationError("filename", "No output filename has been specified.", this));
         }
-        if (this.outputTime.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("outputTime", "The simulation time to export at has not been specified.", this));
+        if (this._outputTime == null) {
+            errs.push(new psaasGlobals_1.ValidationError("lOutputTime", "The simulation time to export at has not been specified.", this));
         }
         if (this.scenarioName.length == 0) {
             errs.push(new psaasGlobals_1.ValidationError("scenarioName", "The scenario that the output is for has not been specified.", this));
@@ -3353,10 +4608,10 @@ class Output_GridFile {
      * @param builder
      */
     stream(builder) {
-        let tmp = this.scenarioName + '|' + this.filename + '|' + this.outputTime + '|' + this.statistic + '|' + this.interpMethod + '|' + (+this.shouldStream) + '|' + this.compression;
+        let tmp = this.scenarioName + '|' + this.filename + '|' + this._outputTime.toISO() + '|' + this.statistic + '|' + this.interpMethod + '|' + (+this.shouldStream) + '|' + this.compression;
         tmp = tmp + '|' + this.shouldMinimize + '|' + Output_GridFile.streamNullableString(this.subScenarioName) + '|' + this.subScenarioOverrideTimes.length;
         for (let e of this.subScenarioOverrideTimes) {
-            tmp = tmp + '|' + e.subScenarioName + '|' + e.exportTime;
+            tmp = tmp + '|' + e.subScenarioName + '|' + e.getExportOverrideTime();
         }
         builder.write(Output_GridFile.PARAM_GRIDFILE + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
@@ -3373,6 +4628,90 @@ var VectorFileType;
  * An override start and end time for a specific sub-scenario.
  */
 class PerimeterTimeOverride {
+    constructor() {
+        /**
+         * The time to use instead of {@link VectorFile#perimStartTime}.
+         */
+        this._startTime = null;
+        /**
+         * The time to use instead of {@link VectorFile#perimEndTime}.
+         */
+        this._endTime = null;
+    }
+    /**
+     * Get the override for the export start time as a Luxon DateTime.
+     */
+    get lStartTime() {
+        return this._startTime;
+    }
+    /**
+     * Get the override for the export start time as an ISO8601 string.
+     * @deprecated
+     */
+    get startTime() {
+        return this.getExportStartTime();
+    }
+    /**
+     * Set the override for the export start time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lStartTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The override for the export start time is not valid");
+        }
+        this._startTime = value;
+    }
+    /**
+     * Set the override for the export start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The override for the export start time is not valid");
+        }
+        this._startTime = luxon_1.DateTime.fromISO(value);
+    }
+    getExportStartTime() {
+        return this._startTime == null ? "" : this._startTime.toISO();
+    }
+    /**
+     * Get the override for the export end time as a Luxon DateTime.
+     */
+    get lEndTime() {
+        return this._endTime;
+    }
+    /**
+     * Get the override for the export end time as an ISO8601 string.
+     * @deprecated
+     */
+    get endTime() {
+        return this.getExportEndTime();
+    }
+    /**
+     * Set the override for the export end time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lEndTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The override for the export end time is not valid");
+        }
+        this._endTime = value;
+    }
+    /**
+     * Set the override for the export end time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The override for the export end time is not valid");
+        }
+        this._endTime = luxon_1.DateTime.fromISO(value);
+    }
+    getExportEndTime() {
+        return this._endTime == null ? "" : this._endTime.toISO();
+    }
     checkValid() {
         const errs = new Array();
         if (this.subScenarioName == null) {
@@ -3399,13 +4738,13 @@ class VectorFile {
          */
         this.multPerim = null;
         /**
-         * Start output perimeter time (required). Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+         * Start output perimeter time (required).
          */
-        this.perimStartTime = "";
+        this._perimStartTime = null;
         /**
-         * End output perimeter time (required). Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+         * End output perimeter time (required).
          */
-        this.perimEndTime = "";
+        this._perimEndTime = null;
         /**
          * Remove unburned islands (holes) inside of the perimeter (required).
          */
@@ -3435,6 +4774,74 @@ class VectorFile {
         this.metadata = new psaasGlobals_1.VectorMetadata();
         this.shouldStream = false;
     }
+    /**
+     * Get the perimeter export start time as a Luxon DateTime.
+     */
+    get lPerimStartTime() {
+        return this._perimStartTime;
+    }
+    /**
+     * Get the perimeter export start time as an ISO8601 string.
+     * @deprecated
+     */
+    get perimStartTime() {
+        return this._perimStartTime == null ? "" : this._perimStartTime.toISO();
+    }
+    /**
+     * Set the perimeter export start time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lPerimStartTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The perimeter export start time is not valid");
+        }
+        this._perimStartTime = value;
+    }
+    /**
+     * Set the perimeter export start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set perimStartTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The perimeter export start time is not valid");
+        }
+        this._perimStartTime = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * Get the override for the export end time as a Luxon DateTime.
+     */
+    get lPerimEndTime() {
+        return this._perimEndTime;
+    }
+    /**
+     * Get the override for the export end time as an ISO8601 string.
+     * @deprecated
+     */
+    get perimEndTime() {
+        return this._perimEndTime == null ? "" : this._perimEndTime.toISO();
+    }
+    /**
+     * Set the override for the export end time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lPerimEndTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && value == null) {
+            throw new RangeError("The override for the export end time is not valid");
+        }
+        this._perimEndTime = value;
+    }
+    /**
+     * Set the override for the export end time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set perimEndTime(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The override for the export end time is not valid");
+        }
+        this._perimEndTime = luxon_1.DateTime.fromISO(value);
+    }
     add_subScenarioOverrides(add) {
         if (add != null) {
             this.subScenarioOverrides.push(add);
@@ -3461,11 +4868,11 @@ class VectorFile {
         if (this.filename.length == 0) {
             errs.push(new psaasGlobals_1.ValidationError("filename", "No output filename has been specified.", this));
         }
-        if (this.perimStartTime.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("perimStartTime", "The simulation time to begin outputting the perimeter for has not been specified.", this));
+        if (this._perimStartTime == null) {
+            errs.push(new psaasGlobals_1.ValidationError("lPerimStartTime", "The simulation time to begin outputting the perimeter for has not been specified.", this));
         }
-        if (this.perimEndTime.length == 0) {
-            errs.push(new psaasGlobals_1.ValidationError("perimEndTime", "The simulation time to stop outputting the perimeter for has not been specified.", this));
+        if (this._perimEndTime == null) {
+            errs.push(new psaasGlobals_1.ValidationError("lPerimEndTime", "The simulation time to stop outputting the perimeter for has not been specified.", this));
         }
         if (this.scenarioName.length == 0) {
             errs.push(new psaasGlobals_1.ValidationError("scenarioName", "The scenario that the output is for has not been specified.", this));
@@ -3518,7 +4925,7 @@ class VectorFile {
      * @param builder
      */
     stream(builder) {
-        let tmp = this.scenarioName + '|' + this.filename + '|' + (+this.multPerim) + '|' + this.perimStartTime + '|' + this.perimEndTime + '|' + (+this.removeIslands) + '|' + (+this.mergeContact) + '|' + (+this.perimActive);
+        let tmp = this.scenarioName + '|' + this.filename + '|' + (+this.multPerim) + '|' + this._perimStartTime.toISO() + '|' + this._perimEndTime.toISO() + '|' + (+this.removeIslands) + '|' + (+this.mergeContact) + '|' + (+this.perimActive);
         tmp = tmp + '|' + this.metadata.version + '|' + this.metadata.scenName + '|' + this.metadata.jobName + '|' + this.metadata.igName + '|' + this.metadata.simDate;
         tmp = tmp + '|' + this.metadata.fireSize + '|' + this.metadata.perimTotal + '|' + this.metadata.perimActive + '|' + this.metadata.perimUnit + '|' + this.metadata.areaUnit + '|' + (+this.shouldStream);
         tmp = tmp + '|' + VectorFile.streamNullableBoolean(this.metadata.wxValues) + '|' + VectorFile.streamNullableBoolean(this.metadata.fwiValues);
@@ -3526,7 +4933,7 @@ class VectorFile {
         tmp = tmp + '|' + VectorFile.streamNullableBoolean(this.metadata.ignitionAttributes) + '|' + VectorFile.streamNullableString(this.subScenarioName);
         tmp = tmp + '|' + this.subScenarioOverrides.length;
         for (let s of this.subScenarioOverrides) {
-            tmp = tmp + '|' + s.subScenarioName + '|' + s.startTime + '|' + s.endTime;
+            tmp = tmp + '|' + s.subScenarioName + '|' + s.getExportStartTime() + '|' + s.getExportEndTime();
         }
         tmp = tmp + '|' + VectorFile.streamNullableBoolean(this.metadata.assetArrivalTime) + '|' + VectorFile.streamNullableBoolean(this.metadata.assetArrivalCount);
         tmp = tmp + '|' + VectorFile.streamNullableBoolean(this.metadata.identifyFinalPerimeter);
@@ -4872,6 +6279,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
     addGridFile(type, file, proj) {
         let gf = new GridFile();
@@ -4889,6 +6297,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
      * @param comment A user comment to add to the grid file.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
     addGridFileWithComment(type, file, proj, comment) {
         let gf = new GridFile();
@@ -4940,6 +6349,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * @param toFuel The name of the fuel to change to.
      * @param file The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
      * @param comment An optional user created comment to attach to the fuel patch.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
     addFileFuelPatch(fromFuel, toFuel, file, comment) {
         let fp = new FuelPatch();
@@ -4996,7 +6406,8 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * Add a fuel break to the project.
      * @param file The file location of the fuel break. Can either be the actual file
      * 			   path or the attachment URL returned from {@link addAttachment}
-     * @param comments An optional user created comment to attach to the fuel break;
+     * @param comments An optional user created comment to attach to the fuel break.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
     addFileFuelBreak(file, comments) {
         let fb = new FuelBreak();
@@ -5088,11 +6499,12 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * @param filename The location of the file containing the patches location. Can
      * 				   either be the actual file path or the attachment URL returned
      *                 from {@link addAttachment}
-     * @param startTime The patch start time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param startTimeOfDay The patches start time of day. Must be formatted as "hh:mm:ss".
-     * @param endTime The patch end time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param endTimeOfDay The patches end time of day. Must be formatted as "hh:mm:ss".
+     * @param startTime The patch start time. If a string is used must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param startTimeOfDay The patches start time of day. If a string is used it must be formatted as "hh:mm:ss".
+     * @param endTime The patch end time. If a string is used must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param endTimeOfDay The patches end time of day. If a string is used it must be formatted as "hh:mm:ss".
      * @param comments An optional user created comment to attach to the weather patch.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      * @return WeatherPatch
      */
     addFileWeatherPatch(filename, startTime, startTimeOfDay, endTime, endTimeOfDay, comments) {
@@ -5100,22 +6512,42 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         if (comments != null) {
             wp.comments = comments;
         }
-        wp.endTime = endTime;
-        wp.endTimeOfDay = endTimeOfDay;
+        if (typeof endTime === "string") {
+            wp.endTime = endTime;
+        }
+        else {
+            wp.lEndTime = endTime;
+        }
+        if (typeof endTimeOfDay === "string") {
+            wp.endTimeOfDay = endTimeOfDay;
+        }
+        else {
+            wp.dEndTimeOfDay = endTimeOfDay;
+        }
         wp.type = WeatherPatchType.FILE;
         wp.filename = filename;
-        wp.startTime = startTime;
-        wp.startTimeOfDay = startTimeOfDay;
+        if (typeof startTime === "string") {
+            wp.startTime = startTime;
+        }
+        else {
+            wp.lStartTime = startTime;
+        }
+        if (typeof startTimeOfDay === "string") {
+            wp.startTimeOfDay = startTimeOfDay;
+        }
+        else {
+            wp.dStartTimeOfDay = startTimeOfDay;
+        }
         this.inputs.files.weatherPatchFiles.push(wp);
         return wp;
     }
     /**
      * Add a weather patch from an array of vertices of a polygon.
      * @param vertices The vertices of the polygon.
-     * @param startTime The patch start time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param startTimeOfDay The patches start time of day. Must be formatted as "hh:mm:ss".
-     * @param endTime The patch end time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param endTimeOfDay The patches end time of day. Must be formatted as "hh:mm:ss".
+     * @param startTime The patch start time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param startTimeOfDay The patches start time of day. If a string is used it must be formatted as "hh:mm:ss".
+     * @param endTime The patch end time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param endTimeOfDay The patches end time of day. If a string is used it must be formatted as "hh:mm:ss".
      * @param comments An optional user created comment to attach to the weather patch.
      * @return WeatherPatch
      */
@@ -5124,21 +6556,41 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         if (comments != null) {
             wp.comments = comments;
         }
-        wp.endTime = endTime;
-        wp.endTimeOfDay = endTimeOfDay;
+        if (typeof endTime === "string") {
+            wp.endTime = endTime;
+        }
+        else {
+            wp.lEndTime = endTime;
+        }
+        if (typeof endTimeOfDay === "string") {
+            wp.endTimeOfDay = endTimeOfDay;
+        }
+        else {
+            wp.dEndTimeOfDay = endTimeOfDay;
+        }
         wp.type = WeatherPatchType.POLYGON;
         wp.feature = vertices;
-        wp.startTime = startTime;
-        wp.startTimeOfDay = startTimeOfDay;
+        if (typeof startTime === "string") {
+            wp.startTime = startTime;
+        }
+        else {
+            wp.lStartTime = startTime;
+        }
+        if (typeof startTimeOfDay === "string") {
+            wp.startTimeOfDay = startTimeOfDay;
+        }
+        else {
+            wp.dStartTimeOfDay = startTimeOfDay;
+        }
         this.inputs.files.weatherPatchFiles.push(wp);
         return wp;
     }
     /**
      * Add a landscape weather patch.
-     * @param startTime The patch start time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param startTimeOfDay The patches start time of day. Must be formatted as "hh:mm:ss".
-     * @param endTime The patch end time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param endTimeOfDay The patches end time of day. Must be formatted as "hh:mm:ss".
+     * @param startTime The patch start time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param startTimeOfDay The patches start time of day. If a string is used it must be formatted as "hh:mm:ss".
+     * @param endTime The patch end time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param endTimeOfDay The patches end time of day. If a string is used it must be formatted as "hh:mm:ss".
      * @param comments An optional user created comment to attach to the weather patch.
      * @return WeatherPatch
      */
@@ -5147,11 +6599,31 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         if (comments != null) {
             wp.comments = comments;
         }
-        wp.endTime = endTime;
-        wp.endTimeOfDay = endTimeOfDay;
+        if (typeof endTime === "string") {
+            wp.endTime = endTime;
+        }
+        else {
+            wp.lEndTime = endTime;
+        }
+        if (typeof endTimeOfDay === "string") {
+            wp.endTimeOfDay = endTimeOfDay;
+        }
+        else {
+            wp.dEndTimeOfDay = endTimeOfDay;
+        }
         wp.type = WeatherPatchType.LANDSCAPE;
-        wp.startTime = startTime;
-        wp.startTimeOfDay = startTimeOfDay;
+        if (typeof startTime === "string") {
+            wp.startTime = startTime;
+        }
+        else {
+            wp.lStartTime = startTime;
+        }
+        if (typeof startTimeOfDay === "string") {
+            wp.startTimeOfDay = startTimeOfDay;
+        }
+        else {
+            wp.dStartTimeOfDay = startTimeOfDay;
+        }
         this.inputs.files.weatherPatchFiles.push(wp);
         return wp;
     }
@@ -5170,10 +6642,10 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a weather grid for wind directions to the project.
-     * @param startTime The grids start time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param startTimeOfDay The grids start time of day. Must be formatted as "hh:mm:ss".
-     * @param endTime The grids end time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param endTimeOfDay The grids end time of day. Must be formatted as "hh:mm:ss".
+     * @param startTime The grids start time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param startTimeOfDay The grids start time of day. If a string is used it must be formatted as "hh:mm:ss".
+     * @param endTime The grids end time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param endTimeOfDay The grids end time of day. If a string is used it must be formatted as "hh:mm:ss".
      * @param comments An optional user created comment to attach to the weather grid.
      * @return WeatherGrid
      */
@@ -5182,19 +6654,39 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         if (comments != null) {
             wg.comments = comments;
         }
-        wg.endTime = endTime;
-        wg.endTimeOfDay = endTimeOfDay;
-        wg.startTime = startTime;
-        wg.startTimeOfDay = startTimeOfDay;
+        if (typeof endTime === "string") {
+            wg.endTime = endTime;
+        }
+        else {
+            wg.lEndTime = endTime;
+        }
+        if (typeof endTimeOfDay === "string") {
+            wg.endTimeOfDay = endTimeOfDay;
+        }
+        else {
+            wg.dEndTimeOfDay = endTimeOfDay;
+        }
+        if (typeof startTime === "string") {
+            wg.startTime = startTime;
+        }
+        else {
+            wg.lStartTime = startTime;
+        }
+        if (typeof startTimeOfDay === "string") {
+            wg.startTimeOfDay = startTimeOfDay;
+        }
+        else {
+            wg.dStartTimeOfDay = startTimeOfDay;
+        }
         wg.type = WeatherGridType.DIRECTION;
         this.inputs.files.weatherGridFiles.push(wg);
         return wg;
     }
     /**
      * Add a weather grid for wind speeds to the project.
-     * @param startTime The grids start time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param startTime The grids start time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
      * @param startTimeOfDay The grids start time of day. Must be formatted as "hh:mm:ss".
-     * @param endTime The grids end time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param endTime The grids end time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
      * @param endTimeOfDay The grids end time of day. Must be formatted as "hh:mm:ss".
      * @param comments An optional user created comment to attach to the weather grid.
      * @return WeatherGrid
@@ -5204,10 +6696,30 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         if (comments != null) {
             wg.comments = comments;
         }
-        wg.endTime = endTime;
-        wg.endTimeOfDay = endTimeOfDay;
-        wg.startTime = startTime;
-        wg.startTimeOfDay = startTimeOfDay;
+        if (typeof endTime === "string") {
+            wg.endTime = endTime;
+        }
+        else {
+            wg.lEndTime = endTime;
+        }
+        if (typeof endTimeOfDay === "string") {
+            wg.endTimeOfDay = endTimeOfDay;
+        }
+        else {
+            wg.dEndTimeOfDay = endTimeOfDay;
+        }
+        if (typeof startTime === "string") {
+            wg.startTime = startTime;
+        }
+        else {
+            wg.lStartTime = startTime;
+        }
+        if (typeof startTimeOfDay === "string") {
+            wg.startTimeOfDay = startTimeOfDay;
+        }
+        else {
+            wg.dStartTimeOfDay = startTimeOfDay;
+        }
         wg.type = WeatherGridType.SPEED;
         this.inputs.files.weatherGridFiles.push(wg);
         return wg;
@@ -5231,11 +6743,17 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * @param filename The location of the ignitions file. Can either be the actual file path
      * 				   or the attachment URL returned from {@link addAttachment}
      * @param comments An optional user created comment to attach to the ignition.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      * @return Ignition
      */
     addFileIgnition(startTime, filename, comments) {
         let ig = new Ignition();
-        ig.startTime = startTime;
+        if (typeof startTime === "string") {
+            ig.startTime = startTime;
+        }
+        else {
+            ig.lStartTime = startTime;
+        }
         if (comments != null) {
             ig.comments = comments;
         }
@@ -5254,7 +6772,12 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      */
     addPointIgnition(startTime, point, comments) {
         let ig = new Ignition();
-        ig.startTime = startTime;
+        if (typeof startTime === "string") {
+            ig.startTime = startTime;
+        }
+        else {
+            ig.lStartTime = startTime;
+        }
         if (comments != null) {
             ig.comments = comments;
         }
@@ -5272,7 +6795,12 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      */
     addMultiPointIgnition(startTime, points, comments) {
         let ig = new Ignition();
-        ig.startTime = startTime;
+        if (typeof startTime === "string") {
+            ig.startTime = startTime;
+        }
+        else {
+            ig.lStartTime = startTime;
+        }
         if (comments != null) {
             ig.comments = comments;
         }
@@ -5290,7 +6818,12 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      */
     addPolygonIgnition(startTime, vertices, comments) {
         let ig = new Ignition();
-        ig.startTime = startTime;
+        if (typeof startTime === "string") {
+            ig.startTime = startTime;
+        }
+        else {
+            ig.lStartTime = startTime;
+        }
         if (comments != null) {
             ig.comments = comments;
         }
@@ -5308,7 +6841,12 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      */
     addPolylineIgnition(startTime, vertices, comments) {
         let ig = new Ignition();
-        ig.startTime = startTime;
+        if (typeof startTime === "string") {
+            ig.startTime = startTime;
+        }
+        else {
+            ig.lStartTime = startTime;
+        }
         if (comments != null) {
             ig.comments = comments;
         }
@@ -5334,6 +6872,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * Add a new asset using a shapefile.
      * @param filename The location of the shapefile to use as the shape of the asset.
      * @param comments Any user defined comments for the asset. Can be null if there are no comments.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
     addFileAsset(filename, comments) {
         var asset = new AssetFile();
@@ -5407,14 +6946,24 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a scenario to the job.
-     * @param startTime The start time of the scenario. Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
-     * @param endTime The end time of the scenario. Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+     * @param startTime The start time of the scenario. If a string is used it must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+     * @param endTime The end time of the scenario. If a string is used it must be formatted as 'YYYY-MM-DDThh:mm:ss'.
      * @param comments An optional user created comment to attach to the scenario.
      */
     addScenario(startTime, endTime, comments) {
         let scen = new Scenario();
-        scen.startTime = startTime;
-        scen.endTime = endTime;
+        if (typeof startTime === "string") {
+            scen.startTime = startTime;
+        }
+        else {
+            scen.lStartTime = startTime;
+        }
+        if (typeof endTime === "string") {
+            scen.endTime = endTime;
+        }
+        else {
+            scen.lEndTime = endTime;
+        }
         if (comments != null) {
             scen.comments = comments;
         }
@@ -5448,7 +6997,12 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     addOutputGridFileToScenario(stat, filename, time, interpMethod, scen) {
         let ogf = this.outputs.newGridFile(scen);
         ogf.filename = filename;
-        ogf.outputTime = time;
+        if (typeof time === "string") {
+            ogf.outputTime = time;
+        }
+        else {
+            ogf.lOutputTime = time;
+        }
         ogf.scenarioName = scen.getId();
         ogf.statistic = stat;
         ogf.interpMethod = interpMethod;
@@ -5476,8 +7030,18 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         ovf.type = type;
         ovf.multPerim = false;
         ovf.perimActive = false;
-        ovf.perimStartTime = perimStartTime;
-        ovf.perimEndTime = perimEndTime;
+        if (typeof perimStartTime === "string") {
+            ovf.perimStartTime = perimStartTime;
+        }
+        else {
+            ovf.lPerimStartTime = perimStartTime;
+        }
+        if (typeof perimEndTime === "string") {
+            ovf.perimEndTime = perimEndTime;
+        }
+        else {
+            ovf.lPerimEndTime = perimEndTime;
+        }
         return ovf;
     }
     /**

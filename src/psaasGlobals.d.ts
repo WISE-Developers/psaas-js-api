@@ -13,7 +13,8 @@ export declare class SocketMsg {
     static readonly GETDEFAULTS: string;
     static readonly GETTIMEZONES: string;
     static readonly NEWLINE: string;
-    static readonly DEBUG_NO_FILETEST: boolean;
+    static skipFileTests: boolean;
+    static inlineThrowOnError: boolean;
 }
 export declare class SocketHelper {
     private port;
@@ -266,7 +267,15 @@ export declare class Timezone {
     /**
      * The offset from GMT.
      */
-    offset: Duration;
+    private _offset;
+    /**
+     * Get the offset from GMT.
+     */
+    get offset(): Duration;
+    /**
+     * Set the offset from GMT.
+     */
+    set offset(value: Duration);
     /**
      * Optional value of the timezone. If set to a valid value, the offset will be
      * looked up once the job is submitted so {@link Timezone#offset} and {@link Timezone#dst}
@@ -353,6 +362,11 @@ export declare class FGMOptions {
     static readonly PARAM_DWD = "fgm_dwd";
     static readonly PARAM_GROWTHAPPLIED = "fgm_growthPercApplied";
     static readonly PARAM_GROWTHPERC = "fgm_growthPercentile";
+    static readonly PARAM_SUPPRESS_TIGHT_CONCAVE = "fgm_suppressTightConcave";
+    static readonly PARAM_NON_FUELS_AS_VECTOR_BREAKS = "fgm_nonFuelsAsVectorBreaks";
+    static readonly PARAM_NON_FUELS_TO_VECTOR_BREAKS = "fgm_nonFuelsToVectorBreaks";
+    static readonly PARAM_USE_INDEPENDENT_TIMESTEPS = "fgm_useIndependentTimesteps";
+    static readonly PARAM_PERIMETER_SPACING = "fgm_perimeterSpacing";
     static readonly PARAM_SIM_PROPS = "simulation_properties";
     static readonly DEFAULT_MAXACCTS = "MAXACCTS";
     static readonly DEFAULT_DISTRES = "DISTRES";
@@ -372,22 +386,58 @@ export declare class FGMOptions {
      * The maximum time step during acceleration (optional). This value must be <= 5min.
      * Has a default value.
      */
-    maxAccTS: Duration;
+    private _maxAccTS;
+    /**
+     * Get the maximum time step during acceleration.
+     */
+    get maxAccTS(): Duration;
+    /**
+     * Set the maximum time step during acceleration.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link DurationError} will be thrown if value is not valid.
+     */
+    set maxAccTS(value: Duration);
     /**
      * The distance resolution (required). Must be between 0.2 and 10.0.
      * Has a default value.
      */
-    distRes: number;
+    private _distRes;
+    /**
+     * Get the distance resolution.
+     */
+    get distRes(): number;
+    /**
+     * Set the distance resolution in metres. Must be in [0.2, 10.0].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set distRes(value: number);
     /**
      * The perimeter resolution (required). Must be between 0.2 and 10.0.
      * Has a default value.
      */
-    perimRes: number;
+    private _perimRes;
+    /**
+     * Get the perimeter resolution.
+     */
+    get perimRes(): number;
+    /**
+     * Set the perimeter resolution in metres. Must be in [0.2, 10.0].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set perimRes(value: number);
     /**
      * Minimum Spreading ROS (optional). Must be between 0.0000001 and 1.0.
      * Has a default value.
      */
-    minimumSpreadingROS: number;
+    private _minimumSpreadingROS;
+    /**
+     * Get the minimum spreading ROS.
+     */
+    get minimumSpreadingROS(): number;
+    /**
+     * Set the minimum spreading ROS. Must be in [0.0000001, 1].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set minimumSpreadingROS(value: number);
     /**
      * Whether to stop the fire spread when the simulated fire reaches the boundary of the grid data (required).
      * Has a default value.
@@ -419,20 +469,47 @@ export declare class FGMOptions {
      * Must be between -250 and 250.
      * Has a default value.
      */
-    dx: number;
+    private _dx;
+    /**
+     * Get the distance to nudge ignitions to perform probabilistic analyses on ignition location.
+     */
+    get dx(): number;
+    /**
+     * Set the distance to nudge ignitions to perform probabilistic analyses on ignition location, in metres. Must be between in [-250m, 250m].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dx(value: number);
     /**
      * How much to nudge ignitions to perform probabilistic analyses on ignition location.
      * Primarily used when ignition information is not 100% reliable.
      * Must be between -250 and 250.
      * Has a default value.
      */
-    dy: number;
+    private _dy;
+    /**
+     * Get the distance to nudge ignitions to perform probabilistic analyses on ignition location.
+     */
+    get dy(): number;
+    /**
+     * Set the distance to nudge ignitions to perform probabilistic analyses on ignition location, in metres. Must be between in [-250m, 250m].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dy(value: number);
     /**
      * How much to nudge ignitions to perform probabilistic analyses on ignition location and start time.
      * Primarily used when ignition information is not 100% reliable.
      * Has a default value.
      */
-    dt: Duration;
+    private _dt;
+    /**
+     * Get the duration to nudge ignition start times to perform probabilistic analyses on ignition start time.
+     */
+    get dt(): Duration;
+    /**
+     * Set the duration to nudge ignition start times to perform probabilistic analyses on ignition start times. Must be between in [-4h, 4h].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link DurationError} will be thrown if value is not valid.
+     */
+    set dt(value: Duration);
     /**
      * How much to nudge wind direction to perform probabilistic analyses on weather.
      * Applied after all patches and grids, and does not recalculate any FWI calculations.
@@ -441,7 +518,16 @@ export declare class FGMOptions {
      * Applied to both simulations, and to instantaneous calculations as shown on the map trace view query, for consistency.
      * Primarily used when weather information does not have the expected fidelity.
      */
-    dwd: number;
+    private _dwd;
+    /**
+     * Get the distance to nudge wind directions to perform probabilistic analyses on weather.
+     */
+    get dwd(): number;
+    /**
+     * Set the distance to wind directions to perform probabilistic analyses on weather, in metres. Must be between in [-360, 360].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dwd(value: number);
     /**
      * Whether the growth percentile value is applied (optional).
      * Has a default value.
@@ -451,15 +537,71 @@ export declare class FGMOptions {
      * Growth percentile, to apply to specific fuel types (optional).
      * Has a default value.
      */
-    growthPercentile: number;
+    private _growthPercentile;
+    /**
+     * Get the growth percentile.
+     */
+    get growthPercentile(): number;
+    /**
+     * Set the growth percentile. Must be between in (0, 100).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set growthPercentile(value: number);
+    /**
+     * Suppress adding new points to polygons in tight concave locations.
+     */
+    suppressTightConcave: boolean;
+    /**
+     * Should non-fuel locations be used as vector breaks.
+     */
+    nonFuelsAsVectorBreaks: boolean;
+    /**
+     * Should non-fuel locations be converted to vector breaks.
+     */
+    nonFuelsToVectorBreaks: boolean;
+    /**
+     * Should independent timesteps be used when running scenarios.
+     */
+    useIndependentTimesteps: boolean;
+    /**
+     * Value at which to enforce a minimum spacing of vertices on a fire perimeters, in metres.
+     */
+    private _perimeterSpacing;
+    /**
+     * Get the minimum enforced spacing of vertices on a fire perimeter.
+     */
+    get perimeterSpacing(): number;
+    /**
+     * Set the minimum enforced spacing of vertices on a fire perimeter, in metres. Must be in [0.2, 10.0].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set perimeterSpacing(value: number);
     /**
      * The initial number of vertices used to create a polygon aroung point ignitions.
      */
-    initialVertexCount: number;
+    private _initialVertexCount;
+    /**
+     * Get the number of vertices to use when creating a polygon around point ignitions.
+     */
+    get initialVertexCount(): number;
+    /**
+     * Set the number of vertices to use when creating a polygon around point ignitions. Must be between in [6, 64].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set initialVertexCount(value: number);
     /**
      * The initial size of the polygon around point ignitions, in metres.
      */
-    ignitionSize: number;
+    private _ignitionSize;
+    /**
+     * Get the initial size of the polygon around point ignitions.
+     */
+    get ignitionSize(): number;
+    /**
+     * Set the initial size of the polygon around point ignition, in metres. Must be between in (0, 25].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set ignitionSize(value: number);
     /**
      * A global asset operation that can be used to force an asset behaviour for all attached assets.
      */
@@ -550,12 +692,30 @@ export declare class FMCOptions {
      * The value for the FMC (%) override (optional). Must be between 0 and 300.
      * Has a default value.
      */
-    perOverride: number;
+    private _perOverride;
+    /**
+     * Get the value for the FMC (%) override.
+     */
+    get perOverride(): number;
+    /**
+     * Set the percent override. Must be between in [0, 300]. Can also be -1 to indicate that the value shouldn't be used.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set perOverride(value: number);
     /**
      * The elevation where NODATA or no grid exists (required). Must be between 0 and 7000.
      * Has a default value.
      */
-    nodataElev: number;
+    private _nodataElev;
+    /**
+     * Get the elevation to use where NODATA or no grid exists.
+     */
+    get nodataElev(): number;
+    /**
+     * Set the elevation to use where NODATA or no grid exists, in metres. Must be between in [0, 7000]. Can also be -99 or -1 to indicate that the value shouldn't be used.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set nodataElev(value: number);
     /**
      * Optional.
      * Has a default value.

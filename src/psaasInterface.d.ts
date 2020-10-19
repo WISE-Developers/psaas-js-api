@@ -8,6 +8,7 @@
  * For an example see index.js.
  */
 /// <reference types="node" />
+import { DateTime } from "luxon";
 import * as net from "net";
 import { LatLon, Duration, FGMOptions, FBPOptions, FMCOptions, FWIOptions, Timezone, VectorMetadata, SummaryOutputs, IPSaaSSerializable, AssetOperation, GlobalStatistics, ValidationError } from "./psaasGlobals";
 export declare class VersionInfo {
@@ -34,11 +35,28 @@ export declare class GridFile {
     /**
      * The name of the grid file. Must be unique amongst the grid file collection.
      */
-    id: string;
+    private _id;
+    /**
+     * Get the name of the grid file.
+     */
+    get id(): string;
+    /**
+     * Set the name of the grid file. Must be unique amongst the grid file collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value: string);
     /**
      * Comment about the grid file (optional).
      */
-    comment: string;
+    private _comment;
+    /**
+     * Get the comment about the grid file.
+     */
+    get comment(): string;
+    /**
+     * Set the comment about the grid file.
+     */
+    set comment(value: string);
     /**
      * The type of grid file (required).
      */
@@ -46,11 +64,29 @@ export declare class GridFile {
     /**
      * The location of the file containing the grid data (required).
      */
-    filename: string;
+    private _filename;
+    /**
+     * Get the location of the file containing the grid data.
+     */
+    get filename(): string;
+    /**
+     * Set the location of the file containing the grid data. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value: string);
     /**
      * The projection file for the grid file (required).
      */
-    projection: string;
+    private _projection;
+    /**
+     * Get the location of the projection file for the grid file.
+     */
+    get projection(): string;
+    /**
+     * Set the location of the projection file for the grid file. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set projection(value: string);
     constructor();
     getId(): string;
     /**
@@ -94,7 +130,16 @@ export declare class WeatherPatchDetails {
     /**
      * The value to apply with this operation.
      */
-    value: number;
+    private _value;
+    /**
+     * Get the value to apply with this operation.
+     */
+    get value(): number;
+    /**
+     * Set the value to apply with this operation. Must be greater than 0.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set value(v: number);
     checkValid(): Array<ValidationError>;
 }
 export declare class WeatherPatch_Temperature extends WeatherPatchDetails {
@@ -127,23 +172,112 @@ export declare class WeatherPatch {
     /**
      * The name of the weather patch. The name must be unique amongst the weather patch collection.
      */
-    id: string;
+    private _id;
     /**
-     * The patch start time (required). Must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * Get the name of the weather patch.
      */
-    startTime: string;
+    get id(): string;
     /**
-     * The patch end time (required). Must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * Set the name of the weather patch. Must be unique amongst the weather patch collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
      */
-    endTime: string;
+    set id(value: string);
     /**
-     * The patches start time of day (required). Must be formatted as "hh:mm:ss".
+     * The patch start time (required).
      */
-    startTimeOfDay: string;
+    private _startTime;
+    /**
+     * Get the weather patch start time as a Luxon DateTime.
+     */
+    get lStartTime(): DateTime;
+    /**
+     * Get the weather patch start time as an ISO8601 string.
+     * @deprecated
+     */
+    get startTime(): string;
+    /**
+     * Set the weather patch start time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lStartTime(value: DateTime);
+    /**
+     * Set the weather patch start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTime(value: string);
+    /**
+     * The patch end time (required).
+     */
+    private _endTime;
+    /**
+     * Get the weather patch end time as a Luxon DateTime.
+     */
+    get lEndTime(): DateTime;
+    /**
+     * Get the weather patch end time as an ISO8601 string.
+     * @deprecated
+     */
+    get endTime(): string;
+    /**
+     * Set the weather patch end time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lEndTime(value: DateTime);
+    /**
+     * Set the weather patch end time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTime(value: string);
+    /**
+     * The patches start time of day (required).
+     */
+    private _startTimeOfDay;
+    /**
+     * Get the weather patch start time of day as a Duration.
+     */
+    get dStartTimeOfDay(): Duration;
+    /**
+     * Get the weather patch start time of day as an ISO8601 string.
+     * @deprecated
+     */
+    get startTimeOfDay(): string;
+    /**
+     * Set the weather patch start time of day using a Duration. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dStartTimeOfDay(value: Duration);
+    /**
+     * Set the weather patch start time of day using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTimeOfDay(value: string);
     /**
      * The patches end time of day (required). Must be formatted as "hh:mm:ss".
      */
-    endTimeOfDay: string;
+    private _endTimeOfDay;
+    /**
+     * Get the weather patch end time of day as a Duration.
+     */
+    get dEndTimeOfDay(): Duration;
+    /**
+     * Get the weather patch end time of day as an ISO8601 string.
+     * @deprecated
+     */
+    get endTimeOfDay(): string;
+    /**
+     * Set the weather patch end time of day using a Duration. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dEndTimeOfDay(value: Duration);
+    /**
+     * Set the weather patch end time of day using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTimeOfDay(value: string);
     /**
      * Any user comments about the weather patch (optional).
      */
@@ -155,7 +289,16 @@ export declare class WeatherPatch {
     /**
      * The filename associated with this weather patch. Only valid if type is FILE.
      */
-    filename: string;
+    private _filename;
+    /**
+     * Get the location of the file containing the weather patch.
+     */
+    get filename(): string;
+    /**
+     * Set the location of the file containing the weather patch. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value: string);
     /**
      * An array of LatLon describing the weather patch. Only valid if type is POLYGON.
      */
@@ -275,7 +418,16 @@ export declare class WeatherGrid_GridFile {
     /**
      * The wind speed (required).
      */
-    speed: number;
+    private _speed;
+    /**
+     * Get the wind speed.
+     */
+    get speed(): number;
+    /**
+     * Set the wind speed (km/h).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set speed(value: number);
     /**
      * The sector to apply this grid file to (required).
      */
@@ -283,7 +435,16 @@ export declare class WeatherGrid_GridFile {
     /**
      * The location of the grid file (required).
      */
-    filename: string;
+    private _filename;
+    /**
+     * Get the location of the file containing the grid data.
+     */
+    get filename(): string;
+    /**
+     * Set the location of the file containing the grid data. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value: string);
     /**
      * The projection file for the grid file (required).
      */
@@ -308,27 +469,116 @@ export declare class WeatherGrid {
     /**
      * The name of the weather grid. The name must be unique amongst the weather grid collection.
      */
-    id: string;
+    private _id;
+    /**
+     * Get the name of the weather grid.
+     */
+    get id(): string;
+    /**
+     * Set the name of the weather grid. Must be unique amongst the weather grid collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value: string);
     /**
      * Any comments about the weather grid (optional).
      */
     comments: string;
     /**
-     * The grid start time (required). Must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * The grid start time (required).
      */
-    startTime: string;
+    private _startTime;
     /**
-     * The grid end time (required). Must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * Get the weather grid start time as a Luxon DateTime.
      */
-    endTime: string;
+    get lStartTime(): DateTime;
     /**
-     * The patches start time of day (required). Must be formatted as "hh:mm:ss".
+     * Get the weather grid start time as an ISO8601 string.
+     * @deprecated
      */
-    startTimeOfDay: string;
+    get startTime(): string;
     /**
-     * The patches end time of day (required). Must be formatted as "hh:mm:ss".
+     * Set the weather grid start time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
      */
-    endTimeOfDay: string;
+    set lStartTime(value: DateTime);
+    /**
+     * Set the weather grid start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTime(value: string);
+    /**
+     * The grid end time (required).
+     */
+    private _endTime;
+    /**
+     * Get the weather grid end time as a Luxon DateTime.
+     */
+    get lEndTime(): DateTime;
+    /**
+     * Get the weather grid end time as an ISO8601 string.
+     * @deprecated
+     */
+    get endTime(): string;
+    /**
+     * Set the weather grid end time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lEndTime(value: DateTime);
+    /**
+     * Set the weather grid end time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTime(value: string);
+    /**
+     * The patches start time of day (required).
+     */
+    private _startTimeOfDay;
+    /**
+     * Get the weather grid start time of day as a Duration.
+     */
+    get dStartTimeOfDay(): Duration;
+    /**
+     * Get the weather grid start time of day as an ISO8601 string.
+     * @deprecated
+     */
+    get startTimeOfDay(): string;
+    /**
+     * Set the weather grid start time of day using a Duration. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dStartTimeOfDay(value: Duration);
+    /**
+     * Set the weather grid start time of day using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTimeOfDay(value: string);
+    /**
+     * The patches end time of day (required).
+     */
+    private _endTimeOfDay;
+    /**
+     * Get the weather grid end time of day as a Duration.
+     */
+    get dEndTimeOfDay(): Duration;
+    /**
+     * Get the weather grid end time of day as an ISO8601 string.
+     * @deprecated
+     */
+    get endTimeOfDay(): string;
+    /**
+     * Set the weather grid end time of day using a Duration. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dEndTimeOfDay(value: Duration);
+    /**
+     * Set the weather grid end time of day using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTimeOfDay(value: string);
     /**
      * An array of WeatherGrid_GridFile. There can be one for each wind sector (North, Northeast, East, etc.).
      */
@@ -353,6 +603,7 @@ export declare class WeatherGrid {
      * @param sector The sector (wind direction) to apply this grid file to. Only one of each sector is allowed per station.
      * @param speed The wind speed.
      * @throws Exception Throws an exception if a file for the same sector has already been added.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
     addDirectionFile(filename: string, projection: string, sector: WeatherGridSector, speed: number): WeatherGrid_GridFile;
     /**
@@ -396,7 +647,16 @@ export declare class FuelPatch {
     /**
      * The name of the fuel patch. The name must be unique amongst the fuel patch collection.
      */
-    id: string;
+    private _id;
+    /**
+     * Get the name of the fuel patch.
+     */
+    get id(): string;
+    /**
+     * Set the name of the fuel patch. Must be unique amongst the fuel patch collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value: string);
     /**
      * The fuel the patch changes to.
      */
@@ -412,7 +672,16 @@ export declare class FuelPatch {
     /**
      * The filename associated with this fuel patch. Only valid if type is FILE.
      */
-    filename: string;
+    private _filename;
+    /**
+     * Get the location of the file containing the fuel patch.
+     */
+    get filename(): string;
+    /**
+     * Set the location of the file containing the fuel patch. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value: string);
     /**
      * An array of LatLon describing the fuel patch. Only valid if type is POLYGON.
      */
@@ -471,11 +740,29 @@ export declare class FuelBreak {
     /**
      * The name of the fuel break. The name must be unique amongst fuel break collections.
      */
-    id: string;
+    private _id;
+    /**
+     * Get the name of the fuel break.
+     */
+    get id(): string;
+    /**
+     * Set the name of the fuel break. Must be unique amongst the fuel break collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value: string);
     /**
      * The width of the fuel break (required if type is POLYLINE, otherwise ignored).
      */
-    width: number;
+    private _width;
+    /**
+     * Get the width of the fuel break.
+     */
+    get width(): number;
+    /**
+     * Set the width of the fuel break (m).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set width(value: number);
     /**
      * Comments about the fuel break (optional).
      */
@@ -487,7 +774,16 @@ export declare class FuelBreak {
     /**
      * The filename associated with this fuel break. Only valid if type is FILE.
      */
-    filename: string;
+    private _filename;
+    /**
+     * Get the location of the file containing the fuel break.
+     */
+    get filename(): string;
+    /**
+     * Set the location of the file containing the fuel break. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value: string);
     /**
      * An array of LatLon describing the fuel break. Only valid if type is POLYLINE or POLYGON.
      */
@@ -528,19 +824,55 @@ export declare class PSaaSInputsFiles {
     /**The projection file (required).
      * The location of the projection file.
      */
-    projFile: string;
+    private _projFile;
+    /**
+     * Get the location of the projection file.
+     */
+    get projFile(): string;
+    /**
+     * Set the location of the projection file. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set projFile(value: string);
     /**The LUT file (required).
      * The location of the LUT file.
      */
-    lutFile: string;
+    private _lutFile;
+    /**
+     * Get the location of the lookup table file.
+     */
+    get lutFile(): string;
+    /**
+     * Set the location of the lookup table file. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lutFile(value: string);
     /**The fuel map file (required).
      * The location of the fuel map file.
      */
-    fuelmapFile: string;
+    private _fuelmapFile;
+    /**
+     * Get the location of the fuel map file.
+     */
+    get fuelmapFile(): string;
+    /**
+     * Set the location of the fuel map file. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set fuelmapFile(value: string);
     /**The elevation map file (optional).
      * The location of the elevation file.
      */
-    elevFile: string;
+    private _elevFile;
+    /**
+     * Get the location of the elevation file.
+     */
+    get elevFile(): string;
+    /**
+     * Set the location of the elevation file. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set). Can be null to remove the elevation file.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set elevFile(value: string);
     /**
      * An array of fuel break files.
      */
@@ -590,7 +922,16 @@ export declare class WeatherStream {
     /**
      * The name of the weather stream. The name must be unique amongst a weather stream collection.
      */
-    id: string;
+    private _id;
+    /**
+     * Get the name of the weather stream.
+     */
+    get id(): string;
+    /**
+     * Set the name of the weather stream. Must be unique amongst the weather stream collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value: string);
     /**
      * User comments about the weather stream (optional).
      */
@@ -598,27 +939,81 @@ export declare class WeatherStream {
     /**
      * The location of the file containing the stream data (required).
      */
-    filename: string;
+    private _filename;
+    /**
+     * Get the location of the file containing the weather stream.
+     */
+    get filename(): string;
+    /**
+     * Set the location of the file containing the weather stream. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value: string);
     /**
      * Yesterday's daily starting fine fuel moisture code (required).
      */
-    starting_ffmc: number;
+    private _starting_ffmc;
+    /**
+     * Get yesterday's daily starting fine fuel moisture code.
+     */
+    get starting_ffmc(): number;
+    /**
+     * Set yesterday's daily starting fine fuel moisture code. Must be in [0, 101].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set starting_ffmc(value: number);
     /**
      * Yesterday's daily starting duff moisture code (required).
      */
-    starting_dmc: number;
+    private _starting_dmc;
+    /**
+     * Get yesterday's daily starting duff moisture code.
+     */
+    get starting_dmc(): number;
+    /**
+     * Set yesterday's daily starting duff moisture code. Must be in [0, 500].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set starting_dmc(value: number);
     /**
      * Yesterday's daily starting drought code (required).
      */
-    starting_dc: number;
+    private _starting_dc;
+    /**
+     * Get yesterday's daily starting drought code.
+     */
+    get starting_dc(): number;
+    /**
+     * Set yesterday's daily starting drought code. Must be in [0, 1500].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set starting_dc(value: number);
     /**
      * Yesterday's daily starting precipitation (13:01-23:00 if daylight savings time, 12:01-23:00 otherwise) (required).
      */
-    starting_precip: number;
+    private _starting_precip;
+    /**
+     * Get yesterday's daily starting precipitation.
+     */
+    get starting_precip(): number;
+    /**
+     * Set yesterday's daily starting precipitation. Must be greater than or equal to 0.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set starting_precip(value: number);
     /**
      * The hour that the HFFMC value is for (required). Must be between -1 and 23 inclusive.
      */
-    hffmc_hour: number;
+    private _hffmc_hour;
+    /**
+     * Get the hour that the HFFMC value is for.
+     */
+    get hffmc_hour(): number;
+    /**
+     * Set the hour that the HFFMC value is for. Must be in [0,23]. Use -1 to use the default.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set hffmc_hour(value: number);
     /**
      * The HFFMC value (required).
      */
@@ -652,13 +1047,53 @@ export declare class WeatherStream {
      */
     diurnal_windspeed_gamma: number;
     /**
-     * The starting time of the weather stream (required). Must be formatted as 'YYYY-MM-DD'.
+     * The starting time of the weather stream (required).
      */
-    start_time: string;
+    private _start_time;
+    /**
+     * Get the weather stream starting date as a Luxon DateTime.
+     */
+    get lstart_time(): DateTime;
+    /**
+     * Get the weather grid end time as an ISO8601 string.
+     * @deprecated
+     */
+    get start_time(): string;
+    /**
+     * Set the weather grid end time using a Luxon DateTime. Cannot be null. Only the date component will be used.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lstart_time(value: DateTime);
+    /**
+     * Set the weather grid end time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set start_time(value: string);
     /**
      * The ending time of the weather stream (required). Must be formatted as 'YYYY-MM-DD'.
      */
-    end_time: string;
+    private _end_time;
+    /**
+     * Get the weather stream end time as a Luxon DateTime.
+     */
+    get lend_time(): DateTime;
+    /**
+     * Get the weather stream end time as an ISO8601 string.
+     * @deprecated
+     */
+    get end_time(): string;
+    /**
+     * Set the weather stream end date using a Luxon DateTime. Cannot be null. Only the date component will be used.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lend_time(value: DateTime);
+    /**
+     * Set the weather stream end date using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set end_time(value: string);
     /**
      * The ID of the weather station that this stream came from.
      */
@@ -703,7 +1138,16 @@ export declare class WeatherStation {
     /**
      * The name of the weather station. The name must be unique amongst a weather station collection.
      */
-    id: string;
+    private _id;
+    /**
+     * Get the name of the weather station.
+     */
+    get id(): string;
+    /**
+     * Set the name of the weather station. Must be unique amongst the weather station collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value: string);
     /**
      * The location of the weather station (required).
      */
@@ -748,12 +1192,13 @@ export declare class WeatherStation {
      * @param starting_dmc The starting DMC value.
      * @param starting_dc The starting DC value.
      * @param starting_precip The starting amount of precipitation.
-     * @param start_time The starting time of the weather stream. Must be formatted as "YYYY-MM-DD"
-     * @param end_time The ending time of the weather stream. Must be formatted as "YYYY-MM-DD"
+     * @param start_time The starting time of the weather stream. If a string is used it must be formatted as "YYYY-MM-DD".
+     * @param end_time The ending time of the weather stream. If a string is used it must be formatted as "YYYY-MM-DD".
      * @param comments An optional user comment to attach to the weather stream.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      * @return WeatherStream
      */
-    addWeatherStream(filename: string, hffmc_value: number, hffmc_hour: number, hffmc_method: HFFMCMethod, starting_ffmc: number, starting_dmc: number, starting_dc: number, starting_precip: number, start_time: string, end_time: string, comments?: string): WeatherStream;
+    addWeatherStream(filename: string, hffmc_value: number, hffmc_hour: number, hffmc_method: HFFMCMethod, starting_ffmc: number, starting_dmc: number, starting_dc: number, starting_precip: number, start_time: string | DateTime, end_time: string | DateTime, comments?: string): WeatherStream;
     /**
      * Add a weather stream to the station with specified diurnal parameters.
      * @param filename The file location for the streams data. Can either be the actual file path
@@ -774,9 +1219,10 @@ export declare class WeatherStation {
      * @param wsbeta The diurnal beta wind speed parameter.
      * @param wsgamma The diurnal gamma wind speed parameter.
      * @param comments An optional user comment to attach to the weather stream.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      * @return WeatherStream
      */
-    addWeatherStreamWithDiurnalParameters(filename: string, hffmc_value: number, hffmc_hour: number, hffmc_method: HFFMCMethod, starting_ffmc: number, starting_dmc: number, starting_dc: number, starting_precip: number, start_time: string, end_time: string, talpha: number, tbeta: number, tgamma: number, wsalpha: number, wsbeta: number, wsgamma: number, comments?: string): WeatherStream;
+    addWeatherStreamWithDiurnalParameters(filename: string, hffmc_value: number, hffmc_hour: number, hffmc_method: HFFMCMethod, starting_ffmc: number, starting_dmc: number, starting_dc: number, starting_precip: number, start_time: string | DateTime, end_time: string | DateTime, talpha: number, tbeta: number, tgamma: number, wsalpha: number, wsbeta: number, wsgamma: number, comments?: string): WeatherStream;
     /**
      * Remove a WeatherStream object from the weather grid.
      * @param weatherStream The WeatherStream object to remove
@@ -809,15 +1255,44 @@ export declare class Ignition {
     /**
      * The name of the ignition. The name must be unique amongst ignition collections.
      */
-    id: string;
+    private _id;
+    /**
+     * Get the name of the ignition.
+     */
+    get id(): string;
+    /**
+     * Set the name of the ignition. Must be unique amongst the ignition collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value: string);
     /**
      * User comments about the ignition (optional).
      */
     comments: string;
     /**
-     * The ignition start time (required). Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+     * The ignition start time (required).
      */
-    startTime: string;
+    private _startTime;
+    /**
+     * Get the ignition start time as a Luxon DateTime.
+     */
+    get lStartTime(): DateTime;
+    /**
+     * Get the ignition start time as an ISO8601 string.
+     * @deprecated
+     */
+    get startTime(): string;
+    /**
+     * Set the ignition start time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lStartTime(value: DateTime);
+    /**
+     * Set the ignition start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTime(value: string);
     /**
      * The type of ignition (required).
      */
@@ -825,7 +1300,16 @@ export declare class Ignition {
     /**
      * The filename associated with this ignition. Only valid if type is FILE.
      */
-    filename: string;
+    private _filename;
+    /**
+     * Get the location of the file containing the ignition.
+     */
+    get filename(): string;
+    /**
+     * Set the location of the file containing the ignition. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value: string);
     /**
      * An array of LatLon describing the ignition. Only valid if type is POLYLINE, POLYGON, or POINT.
      */
@@ -880,7 +1364,16 @@ export declare class AssetFile {
     /**
      * The name of the asset. The name must be unique amongst asset file collections.
      */
-    private id;
+    private _id;
+    /**
+     * Get the name of the asset.
+     */
+    get id(): string;
+    /**
+     * Set the name of the asset. Must be unique amongst the asset collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value: string);
     /**
      * User comments about the asset (optional).
      */
@@ -892,7 +1385,16 @@ export declare class AssetFile {
     /**
      * The filename associated with this asset. Only valid if type is FILE.
      */
-    filename: string;
+    private _filename;
+    /**
+     * Get the location of the file containing the asset.
+     */
+    get filename(): string;
+    /**
+     * Set the location of the file containing the asset. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value: string);
     /**
      * An array of LatLon describing the asset. Only valid if type is POLYLINE, POLYGON, or POINT.
      */
@@ -994,9 +1496,29 @@ export declare class SinglePointIgnitionOptions {
  */
 export declare class BurningConditions {
     /**
-     * The date the burning condition is in effect on (required). Must be formatted as 'YYYY-MM-DD'.
+     * The date the burning condition is in effect on (required).
      */
-    date: string;
+    private _date;
+    /**
+     * Get the burning condition date as a Luxon DateTime.
+     */
+    get lDate(): DateTime;
+    /**
+     * Get the burning condition date as an ISO8601 string.
+     * @deprecated
+     */
+    get date(): string;
+    /**
+     * Set the burning condition date using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lDate(value: DateTime);
+    /**
+     * Set the burning condition date using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set date(value: string);
     /**
      * The time of day that the burning condition starts to take effect (optional).
      */
@@ -1008,19 +1530,55 @@ export declare class BurningConditions {
     /**
      * The minimum FWI value that will allow burning (optional).
      */
-    fwiGreater: number;
+    private _fwiGreater;
+    /**
+     * Get the minimum FWI value that will allow burning.
+     */
+    get fwiGreater(): number;
+    /**
+     * Set the minimum FWI value that will allow burning. Must be greater than or equal to 0.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set fwiGreater(value: number);
     /**
      * The minimum wind speed that will allow burning (optional).
      */
-    wsGreater: number;
+    private _wsGreater;
+    /**
+     * Get the minimum wind speed that will allow burning.
+     */
+    get wsGreater(): number;
+    /**
+     * Set the minimum wind speed that will allow burning. Must be in [0, 200].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set wsGreater(value: number);
     /**
      * The maximum relative humidity that will allow burning (optional).
      */
-    rhLess: number;
+    private _rhLess;
+    /**
+     * Get the maximum relative humidity that will allow burning.
+     */
+    get rhLess(): number;
+    /**
+     * Set the maximum relative humidity that will allow burning. Must be in [0, 100].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set rhLess(value: number);
     /**
      * The minimum ISI that will allow burning (optional).
      */
-    isiGreater: number;
+    private _isiGreater;
+    /**
+     * Get the minimum ISI that will allow burning.
+     */
+    get isiGreater(): number;
+    /**
+     * Set the minimum ISI that will allow burning. Must be greater than or equal to 0.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set isiGreater(value: number);
     constructor();
     /**
      * Checks to see if all required values have been set.
@@ -1123,18 +1681,78 @@ export declare class StreamOptions {
      */
     name: string;
     /**
-     * An override for the scenario start time. Must be formatted as ISO-8601.
+     * An override for the scenario start time.
      */
-    startTime: string;
+    private _startTime;
     /**
-     * An override for the scenario end time. Must be formatted as ISO-8601.
+     * Get the override for the weather stream start time as a Luxon DateTime.
      */
-    endTime: string;
+    get lStartTime(): DateTime;
+    /**
+     * Get the override for the weather stream start time as an ISO8601 string.
+     * @deprecated
+     */
+    get startTime(): string;
+    /**
+     * Set the override for the weather stream start date using a Luxon DateTime. Cannot be null. Only the date component will be used.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lStartTime(value: DateTime);
+    /**
+     * Set the override for the weather stream start date using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTime(value: string);
+    /**
+     * An override for the scenario end time.
+     */
+    private _endTime;
+    /**
+     * Get the override for the weather stream end time as a Luxon DateTime.
+     */
+    get lEndTime(): DateTime;
+    /**
+     * Get the override for the weather stream end time as an ISO8601 string.
+     * @deprecated
+     */
+    get endTime(): string;
+    /**
+     * Set the override for the weather stream end date using a Luxon DateTime. Cannot be null. Only the date component will be used.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lEndTime(value: DateTime);
+    /**
+     * Set the override for the weather stream end date using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTime(value: string);
     /**
      * An override for the ignition start time for any ignitions attached
      * to this sub-scnario. Must be formatted as ISO-8601.
      */
-    ignitionTime: string;
+    private _ignitionTime;
+    /**
+     * Get the override for the ignition start time as a Luxon DateTime.
+     */
+    get lIgnitionTime(): DateTime;
+    /**
+     * Get the override for the ignition start time as an ISO8601 string.
+     * @deprecated
+     */
+    get ignitionTime(): string;
+    /**
+     * Set the override for the ignition start date using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lIgnitionTime(value: DateTime);
+    /**
+     * Set the override for the ignition start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set ignitionTime(value: string);
     isValid(): boolean;
     /**
      * Find all errors that may exist in the stream sub-scenario options.
@@ -1195,15 +1813,64 @@ export declare class Scenario {
     /**
      * The name of the scenario. The name must be unique amongst the scenarios.
      */
-    id: string;
+    private _id;
+    /**
+     * Get the name of the scenario.
+     */
+    get id(): string;
+    /**
+     * Set the name of the scenario. Must be unique amongst the scenario collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value: string);
     /**
      * The scenario start time (required). Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
      */
-    startTime: string;
+    private _startTime;
     /**
-     * The scenario end time (required). Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+     * Get the scenario start time as a Luxon DateTime.
      */
-    endTime: string;
+    get lStartTime(): DateTime;
+    /**
+     * Get the scenario start time as an ISO8601 string.
+     * @deprecated
+     */
+    get startTime(): string;
+    /**
+     * Set the scenario start time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lStartTime(value: DateTime);
+    /**
+     * Set the scenario start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTime(value: string);
+    /**
+     * The scenario end time (required).
+     */
+    private _endTime;
+    /**
+     * Get the scenario end time as a Luxon DateTime.
+     */
+    get lEndTime(): DateTime;
+    /**
+     * Get the scenario end time as an ISO8601 string.
+     * @deprecated
+     */
+    get endTime(): string;
+    /**
+     * Set the scenario end time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lEndTime(value: DateTime);
+    /**
+     * Set the scenario end time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTime(value: string);
     /**
      * The scenarios display interval (required).
      */
@@ -1276,7 +1943,7 @@ export declare class Scenario {
      * @param rhLess The maximum relative humidity that will allow burning (as a percent [0-100]).
      * @param isiGreater The minimum ISI that will allow burning.
      */
-    addBurningCondition(date: string, startTime: number, endTime: number, fwiGreater: number, wsGreater: number, rhLess: number, isiGreater: number): BurningConditions;
+    addBurningCondition(date: string | DateTime, startTime: number, endTime: number, fwiGreater: number, wsGreater: number, rhLess: number, isiGreater: number): BurningConditions;
     /**
      * Remove a BurningConditions object from the burning conditions.
      * @param burningCondition The BurningConditions object to remove
@@ -1601,7 +2268,28 @@ export declare class ExportTimeOverride {
     /**
      * The export time to use instead of the one defined in the {@link Output_GridFile} class.
      */
-    exportTime: string;
+    private _exportTime;
+    /**
+     * Get the override for the export time as a Luxon DateTime.
+     */
+    get lExportTime(): DateTime;
+    /**
+     * Get the override for the export time as an ISO8601 string.
+     * @deprecated
+     */
+    get exportTime(): string;
+    /**
+     * Set the override for the export time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lExportTime(value: DateTime);
+    /**
+     * Set the override for the export time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set exportTime(value: string);
+    getExportOverrideTime(): string;
     checkValid(): Array<ValidationError>;
 }
 export declare class Output_GridFile {
@@ -1614,9 +2302,29 @@ export declare class Output_GridFile {
      */
     filename: string;
     /**
-     * Output time (required). Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+     * Output time (required).
      */
-    outputTime: string;
+    private _outputTime;
+    /**
+     * Get the export time as a Luxon DateTime.
+     */
+    get lOutputTime(): DateTime;
+    /**
+     * Get the export time as an ISO8601 string.
+     * @deprecated
+     */
+    get outputTime(): string;
+    /**
+     * Set the export time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lOutputTime(value: DateTime);
+    /**
+     * Set the export time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set outputTime(value: string);
     /**
      * The statistic that should be output (required).
      */
@@ -1684,11 +2392,53 @@ export declare class PerimeterTimeOverride {
     /**
      * The time to use instead of {@link VectorFile#perimStartTime}.
      */
-    startTime: string;
+    private _startTime;
+    /**
+     * Get the override for the export start time as a Luxon DateTime.
+     */
+    get lStartTime(): DateTime;
+    /**
+     * Get the override for the export start time as an ISO8601 string.
+     * @deprecated
+     */
+    get startTime(): string;
+    /**
+     * Set the override for the export start time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lStartTime(value: DateTime);
+    /**
+     * Set the override for the export start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set startTime(value: string);
+    getExportStartTime(): string;
     /**
      * The time to use instead of {@link VectorFile#perimEndTime}.
      */
-    endTime: string;
+    private _endTime;
+    /**
+     * Get the override for the export end time as a Luxon DateTime.
+     */
+    get lEndTime(): DateTime;
+    /**
+     * Get the override for the export end time as an ISO8601 string.
+     * @deprecated
+     */
+    get endTime(): string;
+    /**
+     * Set the override for the export end time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lEndTime(value: DateTime);
+    /**
+     * Set the override for the export end time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set endTime(value: string);
+    getExportEndTime(): string;
     checkValid(): Array<ValidationError>;
 }
 export declare class VectorFile {
@@ -1708,13 +2458,53 @@ export declare class VectorFile {
      */
     multPerim: boolean;
     /**
-     * Start output perimeter time (required). Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+     * Start output perimeter time (required).
      */
-    perimStartTime: string;
+    private _perimStartTime;
     /**
-     * End output perimeter time (required). Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+     * Get the perimeter export start time as a Luxon DateTime.
      */
-    perimEndTime: string;
+    get lPerimStartTime(): DateTime;
+    /**
+     * Get the perimeter export start time as an ISO8601 string.
+     * @deprecated
+     */
+    get perimStartTime(): string;
+    /**
+     * Set the perimeter export start time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lPerimStartTime(value: DateTime);
+    /**
+     * Set the perimeter export start time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set perimStartTime(value: string);
+    /**
+     * End output perimeter time (required).
+     */
+    private _perimEndTime;
+    /**
+     * Get the override for the export end time as a Luxon DateTime.
+     */
+    get lPerimEndTime(): DateTime;
+    /**
+     * Get the override for the export end time as an ISO8601 string.
+     * @deprecated
+     */
+    get perimEndTime(): string;
+    /**
+     * Set the override for the export end time using a Luxon DateTime. Cannot be null.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set lPerimEndTime(value: DateTime);
+    /**
+     * Set the override for the export end time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     * @deprecated
+     */
+    set perimEndTime(value: string);
     /**
      * Remove unburned islands (holes) inside of the perimeter (required).
      */
@@ -2531,6 +3321,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
     addGridFile(type: GridFileType, file: string, proj: string): GridFile;
     /**
@@ -2541,6 +3332,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
      * @param comment A user comment to add to the grid file.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
     addGridFileWithComment(type: GridFileType, file: string, proj: string, comment: string): GridFile;
     /**
@@ -2562,6 +3354,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param toFuel The name of the fuel to change to.
      * @param file The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
      * @param comment An optional user created comment to attach to the fuel patch.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
     addFileFuelPatch(fromFuel: FromFuel | string, toFuel: string, file: string, comment?: string): FuelPatch;
     /**
@@ -2582,7 +3375,8 @@ export declare class PSaaS extends IPSaaSSerializable {
      * Add a fuel break to the project.
      * @param file The file location of the fuel break. Can either be the actual file
      * 			   path or the attachment URL returned from {@link addAttachment}
-     * @param comments An optional user created comment to attach to the fuel break;
+     * @param comments An optional user created comment to attach to the fuel break.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
     addFileFuelBreak(file: string, comments?: string): FuelBreak;
     /**
@@ -2623,35 +3417,36 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param filename The location of the file containing the patches location. Can
      * 				   either be the actual file path or the attachment URL returned
      *                 from {@link addAttachment}
-     * @param startTime The patch start time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param startTimeOfDay The patches start time of day. Must be formatted as "hh:mm:ss".
-     * @param endTime The patch end time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param endTimeOfDay The patches end time of day. Must be formatted as "hh:mm:ss".
+     * @param startTime The patch start time. If a string is used must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param startTimeOfDay The patches start time of day. If a string is used it must be formatted as "hh:mm:ss".
+     * @param endTime The patch end time. If a string is used must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param endTimeOfDay The patches end time of day. If a string is used it must be formatted as "hh:mm:ss".
      * @param comments An optional user created comment to attach to the weather patch.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      * @return WeatherPatch
      */
-    addFileWeatherPatch(filename: string, startTime: string, startTimeOfDay: string, endTime: string, endTimeOfDay: string, comments?: string): WeatherPatch;
+    addFileWeatherPatch(filename: string, startTime: string | DateTime, startTimeOfDay: string | Duration, endTime: string | DateTime, endTimeOfDay: string | Duration, comments?: string): WeatherPatch;
     /**
      * Add a weather patch from an array of vertices of a polygon.
      * @param vertices The vertices of the polygon.
-     * @param startTime The patch start time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param startTimeOfDay The patches start time of day. Must be formatted as "hh:mm:ss".
-     * @param endTime The patch end time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param endTimeOfDay The patches end time of day. Must be formatted as "hh:mm:ss".
+     * @param startTime The patch start time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param startTimeOfDay The patches start time of day. If a string is used it must be formatted as "hh:mm:ss".
+     * @param endTime The patch end time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param endTimeOfDay The patches end time of day. If a string is used it must be formatted as "hh:mm:ss".
      * @param comments An optional user created comment to attach to the weather patch.
      * @return WeatherPatch
      */
-    addPolygonWeatherPatch(vertices: Array<LatLon>, startTime: string, startTimeOfDay: string, endTime: string, endTimeOfDay: string, comments?: string): WeatherPatch;
+    addPolygonWeatherPatch(vertices: Array<LatLon>, startTime: string | DateTime, startTimeOfDay: string | Duration, endTime: string | DateTime, endTimeOfDay: string | Duration, comments?: string): WeatherPatch;
     /**
      * Add a landscape weather patch.
-     * @param startTime The patch start time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param startTimeOfDay The patches start time of day. Must be formatted as "hh:mm:ss".
-     * @param endTime The patch end time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param endTimeOfDay The patches end time of day. Must be formatted as "hh:mm:ss".
+     * @param startTime The patch start time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param startTimeOfDay The patches start time of day. If a string is used it must be formatted as "hh:mm:ss".
+     * @param endTime The patch end time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param endTimeOfDay The patches end time of day. If a string is used it must be formatted as "hh:mm:ss".
      * @param comments An optional user created comment to attach to the weather patch.
      * @return WeatherPatch
      */
-    addLandscapeWeatherPatch(startTime: string, startTimeOfDay: string, endTime: string, endTimeOfDay: string, comments?: string): WeatherPatch;
+    addLandscapeWeatherPatch(startTime: string | DateTime, startTimeOfDay: string | Duration, endTime: string | DateTime, endTimeOfDay: string | Duration, comments?: string): WeatherPatch;
     /**
      * Remove a WeatherPatch object from the weather patch files.
      * @param weatherPatch The WeatherPatch object to remove
@@ -2660,24 +3455,24 @@ export declare class PSaaS extends IPSaaSSerializable {
     removeWeatherPatch(weatherPatch: WeatherPatch): boolean;
     /**
      * Add a weather grid for wind directions to the project.
-     * @param startTime The grids start time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param startTimeOfDay The grids start time of day. Must be formatted as "hh:mm:ss".
-     * @param endTime The grids end time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
-     * @param endTimeOfDay The grids end time of day. Must be formatted as "hh:mm:ss".
+     * @param startTime The grids start time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param startTimeOfDay The grids start time of day. If a string is used it must be formatted as "hh:mm:ss".
+     * @param endTime The grids end time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param endTimeOfDay The grids end time of day. If a string is used it must be formatted as "hh:mm:ss".
      * @param comments An optional user created comment to attach to the weather grid.
      * @return WeatherGrid
      */
-    addDirectionWeatherGrid(startTime: string, startTimeOfDay: string, endTime: string, endTimeOfDay: string, comments?: string): WeatherGrid;
+    addDirectionWeatherGrid(startTime: string | DateTime, startTimeOfDay: string | Duration, endTime: string | DateTime, endTimeOfDay: string | Duration, comments?: string): WeatherGrid;
     /**
      * Add a weather grid for wind speeds to the project.
-     * @param startTime The grids start time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param startTime The grids start time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
      * @param startTimeOfDay The grids start time of day. Must be formatted as "hh:mm:ss".
-     * @param endTime The grids end time. Must be formatted as "YYYY-MM-DDThh:mm:ss".
+     * @param endTime The grids end time. If a string is used it must be formatted as "YYYY-MM-DDThh:mm:ss".
      * @param endTimeOfDay The grids end time of day. Must be formatted as "hh:mm:ss".
      * @param comments An optional user created comment to attach to the weather grid.
      * @return WeatherGrid
      */
-    addSpeedWeatherGrid(startTime: string, startTimeOfDay: string, endTime: string, endTimeOfDay: string, comments?: string): WeatherGrid;
+    addSpeedWeatherGrid(startTime: string | DateTime, startTimeOfDay: string | Duration, endTime: string | DateTime, endTimeOfDay: string | Duration, comments?: string): WeatherGrid;
     /**
      * Remove a WeatherGrid object from the weather grid files.
      * @param weatherGrid The WeatherGrid object to remove
@@ -2690,9 +3485,10 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param filename The location of the ignitions file. Can either be the actual file path
      * 				   or the attachment URL returned from {@link addAttachment}
      * @param comments An optional user created comment to attach to the ignition.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      * @return Ignition
      */
-    addFileIgnition(startTime: string, filename: string, comments?: string): Ignition;
+    addFileIgnition(startTime: string | DateTime, filename: string, comments?: string): Ignition;
     /**
      * Add an ignition from a single point. If this is to be a multipoint more points can be added
      * to the returned object using {@link Ignition#addPoint}.
@@ -2701,7 +3497,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param comments An optional user created comment to attach to the ignition.
      * @return Ignition
      */
-    addPointIgnition(startTime: string, point: LatLon, comments?: string): Ignition;
+    addPointIgnition(startTime: string | DateTime, point: LatLon, comments?: string): Ignition;
     /**
      * Add an ignition with multiple points.
      * @param startTime The ignitions start time.
@@ -2709,7 +3505,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param comments An optional user created comment to attach to the ignition.
      * @return Ignition
      */
-    addMultiPointIgnition(startTime: string, points: Array<LatLon>, comments?: string): Ignition;
+    addMultiPointIgnition(startTime: string | DateTime, points: Array<LatLon>, comments?: string): Ignition;
     /**
      * Add an ignition from a set of vertices.
      * @param startTime The ignitions start time.
@@ -2717,7 +3513,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param comments An optional user created comment to attach to the ignition.
      * @return Ignition
      */
-    addPolygonIgnition(startTime: string, vertices: Array<LatLon>, comments?: string): Ignition;
+    addPolygonIgnition(startTime: string | DateTime, vertices: Array<LatLon>, comments?: string): Ignition;
     /**
      * Add an ignition from a set of vertices.
      * @param startTime The ignitions start time.
@@ -2725,7 +3521,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param comments An optional user created comment to attach to the ignition.
      * @return Ignition
      */
-    addPolylineIgnition(startTime: string, vertices: Array<LatLon>, comments?: string): Ignition;
+    addPolylineIgnition(startTime: string | DateTime, vertices: Array<LatLon>, comments?: string): Ignition;
     /**
      * Remove an Ignition object from the ignitions.
      * @param ignition The Ignition object to remove
@@ -2736,6 +3532,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * Add a new asset using a shapefile.
      * @param filename The location of the shapefile to use as the shape of the asset.
      * @param comments Any user defined comments for the asset. Can be null if there are no comments.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
     addFileAsset(filename: string, comments?: string): AssetFile;
     /**
@@ -2766,11 +3563,11 @@ export declare class PSaaS extends IPSaaSSerializable {
     removeAsset(asset: AssetFile): boolean;
     /**
      * Add a scenario to the job.
-     * @param startTime The start time of the scenario. Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
-     * @param endTime The end time of the scenario. Must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+     * @param startTime The start time of the scenario. If a string is used it must be formatted as 'YYYY-MM-DDThh:mm:ss'.
+     * @param endTime The end time of the scenario. If a string is used it must be formatted as 'YYYY-MM-DDThh:mm:ss'.
      * @param comments An optional user created comment to attach to the scenario.
      */
-    addScenario(startTime: string, endTime: string, comments?: string): Scenario;
+    addScenario(startTime: string | DateTime, endTime: string | DateTime, comments?: string): Scenario;
     /**
      * Remove a Scenario object from the scenarios.
      * @param scenario The Scenario object to remove
@@ -2788,7 +3585,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param scen The scenario to output the data for.
      * @return Output_GridFile
      */
-    addOutputGridFileToScenario(stat: GlobalStatistics.TEMPERATURE | GlobalStatistics.DEW_POINT | GlobalStatistics.RELATIVE_HUMIDITY | GlobalStatistics.WIND_DIRECTION | GlobalStatistics.WIND_SPEED | GlobalStatistics.PRECIPITATION | GlobalStatistics.FFMC | GlobalStatistics.ISI | GlobalStatistics.FWI | GlobalStatistics.BUI | GlobalStatistics.MAX_FI | GlobalStatistics.MAX_FL | GlobalStatistics.MAX_ROS | GlobalStatistics.MAX_SFC | GlobalStatistics.MAX_CFC | GlobalStatistics.MAX_TFC | GlobalStatistics.MAX_CFB | GlobalStatistics.RAZ | GlobalStatistics.BURN_GRID | GlobalStatistics.FIRE_ARRIVAL_TIME | GlobalStatistics.HROS | GlobalStatistics.FROS | GlobalStatistics.BROS | GlobalStatistics.RSS | GlobalStatistics.ACTIVE_PERIMETER | GlobalStatistics.BURN | GlobalStatistics.BURN_PERCENTAGE | GlobalStatistics.FIRE_ARRIVAL_TIME_MIN | GlobalStatistics.FIRE_ARRIVAL_TIME_MAX | GlobalStatistics.TOTAL_FUEL_CONSUMED | GlobalStatistics.SURFACE_FUEL_CONSUMED | GlobalStatistics.CROWN_FUEL_CONSUMED | GlobalStatistics.RADIATIVE_POWER | GlobalStatistics.HFI | GlobalStatistics.HCFB, filename: string, time: string, interpMethod: Output_GridFileInterpolation, scen: Scenario): Output_GridFile;
+    addOutputGridFileToScenario(stat: GlobalStatistics.TEMPERATURE | GlobalStatistics.DEW_POINT | GlobalStatistics.RELATIVE_HUMIDITY | GlobalStatistics.WIND_DIRECTION | GlobalStatistics.WIND_SPEED | GlobalStatistics.PRECIPITATION | GlobalStatistics.FFMC | GlobalStatistics.ISI | GlobalStatistics.FWI | GlobalStatistics.BUI | GlobalStatistics.MAX_FI | GlobalStatistics.MAX_FL | GlobalStatistics.MAX_ROS | GlobalStatistics.MAX_SFC | GlobalStatistics.MAX_CFC | GlobalStatistics.MAX_TFC | GlobalStatistics.MAX_CFB | GlobalStatistics.RAZ | GlobalStatistics.BURN_GRID | GlobalStatistics.FIRE_ARRIVAL_TIME | GlobalStatistics.HROS | GlobalStatistics.FROS | GlobalStatistics.BROS | GlobalStatistics.RSS | GlobalStatistics.ACTIVE_PERIMETER | GlobalStatistics.BURN | GlobalStatistics.BURN_PERCENTAGE | GlobalStatistics.FIRE_ARRIVAL_TIME_MIN | GlobalStatistics.FIRE_ARRIVAL_TIME_MAX | GlobalStatistics.TOTAL_FUEL_CONSUMED | GlobalStatistics.SURFACE_FUEL_CONSUMED | GlobalStatistics.CROWN_FUEL_CONSUMED | GlobalStatistics.RADIATIVE_POWER | GlobalStatistics.HFI | GlobalStatistics.HCFB, filename: string, time: string | DateTime, interpMethod: Output_GridFileInterpolation, scen: Scenario): Output_GridFile;
     /**
      * Removes the output grid file from a scenario
      */
@@ -2803,7 +3600,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param scen The scenario to output the data for.
      * @return VectorFile
      */
-    addOutputVectorFileToScenario(type: VectorFileType, filename: string, perimStartTime: string, perimEndTime: string, scen: Scenario): VectorFile;
+    addOutputVectorFileToScenario(type: VectorFileType, filename: string, perimStartTime: string | DateTime, perimEndTime: string | DateTime, scen: Scenario): VectorFile;
     /**
      * Removes the output vector file from a scenario
      */
