@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 /** ignore this comment */
 const psaas_js_api_1 = require("psaas-js-api");
-const dateFormat = require("dateformat");
+const luxon_1 = require("luxon");
 let serverConfig = new psaas_js_api_1.defaults.ServerConfiguration();
 //initialize the connection settings for PSaaS_Builder
 psaas_js_api_1.globals.SocketHelper.initialize(serverConfig.builderAddress, serverConfig.builderPort);
@@ -19,7 +19,7 @@ psaas_js_api_1.globals.SocketHelper.initialize(serverConfig.builderAddress, serv
     fbpCalculator.slopeValue = 26;
     fbpCalculator.aspect = 180;
     fbpCalculator.useLine = false;
-    fbpCalculator.startTime = dateFormat(new Date(), "yyyy-mm-dd'T'hh:MM");
+    fbpCalculator.startTime = luxon_1.DateTime.local(2020, 6, 15, 12, 0, 0, 0).toISO();
     fbpCalculator.elapsedTime = 20;
     fbpCalculator.ffmc = 85.0;
     fbpCalculator.bui = 39.3;

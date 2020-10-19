@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 /** ignore this comment */
 const psaas_js_api_1 = require("psaas-js-api");
-const dateFormat = require("dateformat");
+const luxon_1 = require("luxon");
 let serverConfig = new psaas_js_api_1.defaults.ServerConfiguration();
 //initialize the connection settings for PSaaS_Builder
 psaas_js_api_1.globals.SocketHelper.initialize(serverConfig.builderAddress, serverConfig.builderPort);
@@ -27,7 +27,7 @@ psaas_js_api_1.globals.SocketHelper.initialize(serverConfig.builderAddress, serv
     forecastCalculator.model = "GEM"; // can also be NCEP, GEM_DETER, or CUSTOM (requires you to set the model IDs you want to use)
     let yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    forecastCalculator.date = dateFormat(yesterday, 'yyyy-mm-dd');
+    forecastCalculator.date = luxon_1.DateTime.local().toISODate();
     forecastCalculator.timezone = 25; //hard coded to CDT, see example_timezone.js for an example getting the IDs
     forecastCalculator.time = "00Z"; //needs to be either 00Z for the midnight forecast or 12Z for the noon forecast
     forecastCalculator.forecastType = "hour"; //can also be day for daily forecast

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /** ignore this comment */
 const fs = require("fs");
 const psaas_js_api_1 = require("psaas-js-api");
+const luxon_1 = require("luxon");
 let serverConfig = new psaas_js_api_1.defaults.ServerConfiguration();
 //initialize the connection settings for PSaaS_Builder
 psaas_js_api_1.globals.SocketHelper.initialize(serverConfig.builderAddress, serverConfig.builderPort);
@@ -19,8 +20,11 @@ psaas_js_api_1.client.JobManager.setDefaults({
     username: serverConfig.mqttUsername,
     password: serverConfig.mqttPassword
 });
+//uncomment this line for exceptions to be thrown when invalid values are set
+//psaas_js_api_1.globals.SocketMsg.inlineThrowOnError = true;
 //the directory of the test files
 let localDir = serverConfig.exampleDirectory;
+//the version of the example data to use
 let psaasVersion = '6.2.6.0';
 //make sure the local directory has been configured
 if (localDir.includes('@JOBS@')) {
@@ -76,25 +80,25 @@ function handleErrorNode(node) {
     let stream = prom.addFileFuelBreak(localDir + psaasVersion + '/test/hydrology_stream.kmz');
     stream.setName("Streams");
     let ws = prom.addWeatherStation(1483.0, new psaas_js_api_1.globals.LatLon(51.654700, -115.361700));
-    let b3Yaha = ws.addWeatherStream(localDir + psaasVersion + '/test/weather_B3_hourly_Sep25toOct30_2001.txt', 94.0, 17, psaas_js_api_1.psaas.HFFMCMethod.LAWSON, 89.0, 58.0, 482.0, 0.0, "2001-09-25", "2001-10-30");
-    let wpatch = prom.addLandscapeWeatherPatch("2001-10-16T13:00:00", "13:00:00", "2001-10-16T21:00:00", "21:00:00");
+    let b3Yaha = ws.addWeatherStream(localDir + psaasVersion + '/test/weather_B3_hourly_Sep25toOct30_2001.txt', 94.0, 17, psaas_js_api_1.psaas.HFFMCMethod.LAWSON, 89.0, 58.0, 482.0, 0.0, luxon_1.DateTime.fromISO("2001-09-25"), luxon_1.DateTime.fromISO("2001-10-30"));
+    let wpatch = prom.addLandscapeWeatherPatch(luxon_1.DateTime.fromISO("2001-10-16T13:00:00-05:00"), psaas_js_api_1.globals.Duration.createTime(13, 0, 0, false), luxon_1.DateTime.fromISO("2001-10-16T21:00:00-05:00"), psaas_js_api_1.globals.Duration.createTime(21, 0, 0, false));
     wpatch.setWindDirOperation(psaas_js_api_1.psaas.WeatherPatchOperation.PLUS, 10);
     wpatch.setRhOperation(psaas_js_api_1.psaas.WeatherPatchOperation.PLUS, 5);
-    let wpatch2 = prom.addFileWeatherPatch(localDir + psaasVersion + '/test/weather_patch_wd270.kmz', "2001-10-16T13:00:00", "13:00:00", "2001-10-16T21:00:00", "21:00:00");
+    let wpatch2 = prom.addFileWeatherPatch(localDir + psaasVersion + '/test/weather_patch_wd270.kmz', luxon_1.DateTime.fromISO("2001-10-16T13:00:00-05:00"), psaas_js_api_1.globals.Duration.createTime(13, 0, 0, false), luxon_1.DateTime.fromISO("2001-10-16T21:00:00-05:00"), psaas_js_api_1.globals.Duration.createTime(21, 0, 0, false));
     wpatch2.setWindDirOperation(psaas_js_api_1.psaas.WeatherPatchOperation.EQUAL, 270);
     //create the ignition points
     let ll1 = new psaas_js_api_1.globals.LatLon(51.65287648142513, -115.4779078053444);
-    let ig3 = prom.addPointIgnition('2001-10-16T13:00:00', ll1);
+    let ig3 = prom.addPointIgnition(luxon_1.DateTime.fromISO('2001-10-16T13:00:00-05:00'), ll1);
     let ll2 = new psaas_js_api_1.globals.LatLon(51.66090499909746, -115.4086430000001);
-    let ig4 = prom.addPointIgnition('2001-10-16T16:00:00', ll2);
+    let ig4 = prom.addPointIgnition(luxon_1.DateTime.fromISO('2001-10-16T16:00:00-05:00'), ll2);
     //emit some statistics at the end of timesteps
     prom.timestepSettings.addStatistic(psaas_js_api_1.globals.GlobalStatistics.TOTAL_BURN_AREA);
     prom.timestepSettings.addStatistic(psaas_js_api_1.globals.GlobalStatistics.DATE_TIME);
     prom.timestepSettings.addStatistic(psaas_js_api_1.globals.GlobalStatistics.SCENARIO_NAME);
     //create a scenario
-    let scen1 = prom.addScenario('2001-10-16T13:00:00', '2001-10-16T22:00:00');
+    let scen1 = prom.addScenario(luxon_1.DateTime.fromISO('2001-10-16T13:00:00-05:00'), luxon_1.DateTime.fromISO('2001-10-16T22:00:00-05:00'));
     scen1.setName('scen0');
-    scen1.addBurningCondition('2001-10-16', 0, 24, 19, 0.0, 95.0, 0.0);
+    scen1.addBurningCondition(luxon_1.DateTime.fromISO('2001-10-16'), 0, 24, 19, 0.0, 95.0, 0.0);
     scen1.setFgmOptions(psaas_js_api_1.globals.Duration.createTime(0, 2, 0, false), 1.0, 1.0, 1.0, false, true, true, true, false, true, 50.0);
     //optionally set dx, dy, and dt
     scen1.setProbabilisticValues(1.0, 1.0, psaas_js_api_1.globals.Duration.createTime(0, 0, 10, false));
@@ -108,13 +112,13 @@ function handleErrorNode(node) {
     scen1.addGridFileReference(degree_curing, 1);
     scen1.addWeatherPatchReference(wpatch, 3);
     scen1.addWeatherPatchReference(wpatch2, 2);
-    let ovf1 = prom.addOutputVectorFileToScenario(psaas_js_api_1.psaas.VectorFileType.KML, 'scen0/perim.kml', '2001-10-16T13:00:00', '2001-10-16T22:00:00', scen1);
+    let ovf1 = prom.addOutputVectorFileToScenario(psaas_js_api_1.psaas.VectorFileType.KML, 'scen0/perim.kml', luxon_1.DateTime.fromISO('2001-10-16T13:00:00-05:00'), luxon_1.DateTime.fromISO('2001-10-16T22:00:00-05:00'), scen1);
     ovf1.mergeContact = true;
     ovf1.multPerim = true;
     ovf1.removeIslands = true;
     ovf1.metadata = jDefaults.metadataDefaults;
-    let ogf1 = prom.addOutputGridFileToScenario(psaas_js_api_1.globals.GlobalStatistics.TEMPERATURE, 'scen0/temp.txt', '2001-10-16T21:00:00', psaas_js_api_1.psaas.Output_GridFileInterpolation.IDW, scen1);
-    let ogf2 = prom.addOutputGridFileToScenario(psaas_js_api_1.globals.GlobalStatistics.BURN_GRID, "scen0/burn_grid.tif", '2001-10-16T22:00:00', psaas_js_api_1.psaas.Output_GridFileInterpolation.IDW, scen1);
+    let ogf1 = prom.addOutputGridFileToScenario(psaas_js_api_1.globals.GlobalStatistics.TEMPERATURE, 'scen0/temp.txt', luxon_1.DateTime.fromISO('2001-10-16T21:00:00-05:00'), psaas_js_api_1.psaas.Output_GridFileInterpolation.IDW, scen1);
+    let ogf2 = prom.addOutputGridFileToScenario(psaas_js_api_1.globals.GlobalStatistics.BURN_GRID, "scen0/burn_grid.tif", luxon_1.DateTime.fromISO('2001-10-16T22:00:00-05:00'), psaas_js_api_1.psaas.Output_GridFileInterpolation.IDW, scen1);
     //allow the file to be streamed to a remote location after it is written (ex. streamOutputToMqtt, streamOutputToGeoServer).
     ogf2.shouldStream = true;
     let osf1 = prom.addOutputSummaryFileToScenario(scen1, 'scen0/summary.txt');
