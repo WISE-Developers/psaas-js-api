@@ -36,6 +36,7 @@
  * ```
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.JobManager = exports.ValidationEventArgs = exports.StatisticsEventArgs = exports.PSaaSStatistic = exports.ScenarioCompleteEventArgs = exports.SimulationCompleteEventArgs = void 0;
 /** ignore this commment */
 const mqtt = require("mqtt");
 const os = require("os");
@@ -85,6 +86,14 @@ class StatisticsEventArgs {
 }
 exports.StatisticsEventArgs = StatisticsEventArgs;
 /**
+ * Details of a validation request to PSaaS. If the validation
+ * succeeded and the FGM was valid then the job is ready to
+ * be run.
+ */
+class ValidationEventArgs {
+}
+exports.ValidationEventArgs = ValidationEventArgs;
+/**
  * A class for managing listeners for events on jobs.
  */
 class JobManager extends events_1.EventEmitter {
@@ -108,6 +117,9 @@ class JobManager extends events_1.EventEmitter {
         let message = new MqttMessage(topic, payload);
         if (message.type === MessageType.Status) {
             this.processMqttMessage(message);
+        }
+        else if (message.type === MessageType.Validate) {
+            this.processValidationMqttMessage(message.validation);
         }
     }
     /**
@@ -158,6 +170,7 @@ class JobManager extends events_1.EventEmitter {
             if (JobManager.defaultOptions.topic) {
                 options.topic = JobManager.defaultOptions.topic;
             }
+            //otherwise use psaas
             else {
                 options.topic = "psaas";
             }
@@ -197,10 +210,13 @@ class JobManager extends events_1.EventEmitter {
                 password: options.password,
                 host: options.host
             });
+            this.mqttTopic = options.topic;
             this.client.on('message', (topic, payload) => { this.onMqttMessageReceived(topic, payload); });
             await new Promise((resolve, reject) => {
                 this.client.on('connect', () => {
+                    this.mqttId = options.clientID;
                     this.client.subscribe(options.topic + "/+/" + this.jobName + "/status", { "qos": 2 });
+                    this.client.subscribe(options.topic + "/+/" + this.jobName + "/validate", { "qos": 2 });
                     resolve();
                 });
                 this.client.on('error', (err) => {
@@ -220,6 +236,26 @@ class JobManager extends events_1.EventEmitter {
         }
     }
     /**
+     * Broadcast to all available instances of PSaaS Manager that are listening
+     * to rerun a job.
+     * @param job The name of the job to rerun.
+     */
+    async broadcastJobRerun(job) {
+        let options = {
+            request: "rerun",
+            target: job,
+            delete_old: true
+        };
+        return new Promise((resolve, reject) => {
+            this.client.publish(`${this.mqttTopic}/${this.mqttId}/manager/manage`, JSON.stringify(options), (err, result) => {
+                if (err)
+                    reject(err);
+                else
+                    resolve(result);
+            });
+        });
+    }
+    /**
      * Parse a message that has been received from the MQTT connection.
      * @param message The received message.
      */
@@ -230,19 +266,25 @@ class JobManager extends events_1.EventEmitter {
             if (message.message === "PSaaS.EXE operations") {
                 let args = new SimulationCompleteEventArgs();
                 args.manager = this;
+                args.time = message.sentTime;
                 this.emit('simulationComplete', args);
             }
+            //just a single scenario is complete
             else {
                 let args = new ScenarioCompleteEventArgs(true, null);
                 args.manager = this;
+                args.time = message.sentTime;
                 this.emit('scenarioComplete', args);
             }
         }
+        //the simulation failed
         else if (message.status === "Scenario Failed") {
             let args = new ScenarioCompleteEventArgs(false, message.message);
             args.manager = this;
+            args.time = message.sentTime;
             this.emit('scenarioComplete', args);
         }
+        //-----generic information messages-----
         else if (message.message !== null && message.message.length > 0) {
             //this is a timestep change message
             if (message.statistics != null && message.statistics.size > 0) {
@@ -255,23 +297,37 @@ class JobManager extends events_1.EventEmitter {
                 });
                 let args = new StatisticsEventArgs(stats);
                 args.manager = this;
+                args.time = message.sentTime;
                 this.emit('statisticsReceived', args);
             }
         }
     }
+    /**
+     * Process the results of a job validation before passing it to
+     * any listening users.
+     * @param message The recieved validation details.
+     */
+    processValidationMqttMessage(message) {
+        let args = new ValidationEventArgs();
+        args.manager = this;
+        args.validation = message;
+        args.time = new Date();
+        this.emit('validationReceived', args);
+    }
 }
+exports.JobManager = JobManager;
 /**
  * The default connection parameters to use when
  * connecting to the MQTT broker. The client ID
  * will always be ignored.
  */
 JobManager.defaultOptions = { port: 1883, host: "127.0.0.1" };
-exports.JobManager = JobManager;
 var MessageType;
 (function (MessageType) {
     MessageType[MessageType["Unknown"] = 0] = "Unknown";
     MessageType[MessageType["Status"] = 1] = "Status";
     MessageType[MessageType["Checkin"] = 2] = "Checkin";
+    MessageType[MessageType["Validate"] = 3] = "Validate";
 })(MessageType || (MessageType = {}));
 /**
  * Parse an MQTT message type from a string.
@@ -283,6 +339,9 @@ function messageTypeFromString(value) {
     }
     else if (value.localeCompare("reportin", undefined, { sensitivity: 'accent' }) === 0) {
         return MessageType.Checkin;
+    }
+    else if (value.localeCompare("validate", undefined, { sensitivity: 'accent' }) === 0) {
+        return MessageType.Validate;
     }
     return MessageType.Unknown;
 }
@@ -356,6 +415,14 @@ class MqttMessage {
                                 }
                             }
                         }
+                        //is the recieved value has a sent time in it
+                        if (json.hasOwnProperty("time")) {
+                            this.sentTime = new Date(json.time);
+                        }
+                    }
+                    //this is a validation complete message
+                    else if (this.type === MessageType.Validate && this.payload.length > 0) {
+                        this.validation = JSON.parse(this.payload);
                     }
                 }
             }

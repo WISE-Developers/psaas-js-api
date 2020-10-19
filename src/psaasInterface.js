@@ -16,6 +16,13 @@ const luxon_1 = require("luxon");
 const net = require("net");
 const psaasGlobals_1 = require("./psaasGlobals");
 class VersionInfo {
+    /**
+     * @ignore
+     */
+    static localVersion(version) {
+        const i = version.indexOf('.');
+        return version.substr(i + 1);
+    }
 }
 exports.VersionInfo = VersionInfo;
 VersionInfo.version_info = '6.2.6.0' /*/vers*/;

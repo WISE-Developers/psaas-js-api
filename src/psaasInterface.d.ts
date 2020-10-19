@@ -12,8 +12,12 @@ import { DateTime } from "luxon";
 import * as net from "net";
 import { LatLon, Duration, FGMOptions, FBPOptions, FMCOptions, FWIOptions, Timezone, VectorMetadata, SummaryOutputs, IPSaaSSerializable, AssetOperation, GlobalStatistics, ValidationError } from "./psaasGlobals";
 export declare class VersionInfo {
-    static readonly version_info: String;
-    static readonly release_date: String;
+    static readonly version_info: string;
+    static readonly release_date: string;
+    /**
+     * @ignore
+     */
+    static localVersion(version: string): string;
 }
 export declare enum GridFileType {
     NONE = -1,

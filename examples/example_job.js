@@ -32,6 +32,18 @@ if (localDir.includes('@JOBS@')) {
     process.exit();
 }
 /**
+ * Async
+ * @param t The timeout in milliseconds
+ * @param callback The function that will be called when the delay is up.
+ */
+function delay(t) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve();
+        }, t);
+    });
+}
+/**
  * Recursively handle nodes of the validation tree and
  * print relevant ones to the console.
  * @param node The node of the validation tree to handle.
@@ -146,23 +158,83 @@ function handleErrorNode(node) {
         });
     }
     else {
-        //start the job asynchronously
-        let wrapper = await prom.beginJobPromise();
+        let wrapper = null;
+        //not yet supported by a released version of PSaaS
+        if (semver.gte(psaas_js_api_1.psaas.VersionInfo.localVersion(psaas_js_api_1.psaas.VersionInfo.version_info), '2.6.1')) {
+            //validate the job asynchronously
+            wrapper = await prom.validateJobPromise();
+        }
+        else {
+            //start the job asynchronously
+            wrapper = await prom.beginJobPromise();
+        }
         //trim the name of the newly started job
         let jobName = wrapper.name.replace(/^\s+|\s+$/g, '');
         //a manager for listening for status messages
         let manager = new psaas_js_api_1.client.JobManager(jobName);
         //start the job manager
         await manager.start();
+        //if possible the job will first be validated, catch the validation response
+        manager.on('validationReceived', (args) => {
+            //the FGM could not be validated. It's possible that the PSaaS version used doesn't support validation
+            if (!args.validation.success) {
+                //this probably means that the PSaaS Manager and PSaaS versions are different, the job may be able to be started without validation
+                //at this point in time but we'll just exit and consider this an unexpected setup
+                args.manager.dispose(); //close the connection that is listening for status updates
+                console.log("Validation could not be run, check your PSaaS version");
+            }
+            //errors were found in the FGM
+            else if (!args.validation.valid) {
+                args.manager.dispose(); //close the connection that is listening for status updates
+                console.log("The submitted FGM is not valid");
+                //just dump the error list, let the user sort through it
+                console.log(args.validation.error_list);
+            }
+            //the FGM is valid, start it running
+            else {
+                console.log("FGM valid, starting job");
+                //add a delay, shouldn't be needed but it's here so the user can see the process happening
+                delay(1000)
+                    .then(() => {
+                    //use rerun to start the job. Rerun can be used on any job that is in
+                    //the finished job list in PSaaS Manager.
+                    args.manager.broadcastJobRerun(jobName);
+                });
+            }
+        });
         //when the PSaaS job triggers that it is complete, shut down the listener
         manager.on('simulationComplete', (args) => {
-            args.manager.dispose(); //clsoe the connection that is listening for status updates
-            console.log("Simulation complete.");
+            args.manager.dispose(); //close the connection that is listening for status updates
+            if (args.hasOwnProperty("time") && args.time != null) {
+                console.log(`Simulation complete at ${args.time.toISOString()}.`);
+            }
+            else {
+                console.log("Simulation complete.");
+            }
+        });
+        //catch scenario failure
+        manager.on('scenarioComplete', (args) => {
+            if (!args.success) {
+                if (args.hasOwnProperty("time") && args.time != null) {
+                    console.log(`At ${args.time.toISOString()} a scenario failed: ${args.errorMessage}`);
+                }
+                else {
+                    console.log(`A scenario failed: ${args.errorMessage}`);
+                }
+            }
         });
         //listen for statistics at the end of timesteps
         manager.on('statisticsReceived', (args) => {
-            for (const stat of args.statistics) {
-                console.log("Received statistic " + stat.key + " with value " + stat.value);
+            if (args.hasOwnProperty("time") && args.time != null) {
+                console.log(`Received statistics at ${args.time.toISOString()}`);
+                for (const stat of args.statistics) {
+                    console.log("    Statistic " + stat.key + " with value " + stat.value);
+                }
+            }
+            else {
+                for (const stat of args.statistics) {
+                    console.log("Received statistic " + stat.key + " with value " + stat.value);
+                }
             }
         });
     }
