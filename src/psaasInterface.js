@@ -1157,7 +1157,7 @@ class FuelPatch {
         this.fromFuel = null;
         /**
          * The rule about which fuels to apply the patch to (one of this, {@link #fromFuelIndex}, or {@link #fromFuel} is required).
-         * If $fromFuel is not specified this must be set.
+         * If fromFuel is not specified this must be set.
          */
         this.fromFuelRule = null;
         /**
@@ -6281,14 +6281,14 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a grid file to the project.
-     * @param type Must be one of the GridFile::TYPE_* values.
      * @param file The location of the grid file. Can either
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
+     * @param type Must be one of the GridFile::TYPE_* values.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addGridFile(type, file, proj) {
+    addGridFile(file, proj, type) {
         let gf = new GridFile();
         gf.filename = file;
         gf.projection = proj;
@@ -6298,15 +6298,15 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a grid file to the project.
-     * @param type Must be one of the GridFile::TYPE_* values.
      * @param file The location of the grid file. Can either
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
+     * @param type Must be one of the GridFile::TYPE_* values.
      * @param comment A user comment to add to the grid file.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addGridFileWithComment(type, file, proj, comment) {
+    addGridFileWithComment(file, proj, type, comment) {
         let gf = new GridFile();
         gf.filename = file;
         gf.projection = proj;
@@ -6352,13 +6352,13 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a file fuel patch to the job.
+     * @param file The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
      * @param fromFuel The fuel to change from. Can either be one of the rules defined in FuelPatch (FROM_FUEL_*) or the name of a fuel.
      * @param toFuel The name of the fuel to change to.
-     * @param file The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
      * @param comment An optional user created comment to attach to the fuel patch.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addFileFuelPatch(fromFuel, toFuel, file, comment) {
+    addFileFuelPatch(file, fromFuel, toFuel, comment) {
         let fp = new FuelPatch();
         fp.type = FuelPatchType.FILE;
         fp.filename = file;
@@ -6369,17 +6369,20 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
             fp.fromFuel = fromFuel;
         }
         fp.toFuel = toFuel;
+        if (comment != null) {
+            fp.comments = comment;
+        }
         this.inputs.files.fuelPatchFiles.push(fp);
         return fp;
     }
     /**
      * Add a polygon fuel patch to the job.
+     * @param vertices The vertices of the polygon. Must be an array of LatLon values. The LatLon values will be copied by reference.
      * @param fromFuel The fuel to change from. Can either be one of the rules defined in FuelPatch (FROM_FUEL_*) or the name of a fuel.
      * @param toFuel The name of the fuel to change to.
-     * @param vertices The vertices of the polygon. Must be an array of LatLon values. The LatLon values will be copied by reference.
      * @param comments An optional user created comment to attach to the fuel patch.
      */
-    addPolygonFuelPatch(fromFuel, $toFuel, vertices, comments) {
+    addPolygonFuelPatch(vertices, fromFuel, toFuel, comments) {
         let fp = new FuelPatch();
         fp.type = FuelPatchType.POLYGON;
         fp.feature = vertices;
@@ -6389,7 +6392,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         else {
             fp.fromFuel = fromFuel;
         }
-        fp.toFuel = $toFuel;
+        fp.toFuel = toFuel;
         if (comments != null) {
             fp.comments = comments;
         }
@@ -6443,11 +6446,11 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a fuel break to the project.
-     * @param width The width of the fuel break.
      * @param vertices The vertices of the polyline. Must be an array of LatLon values. The LatLon values will be copied by reference.
+     * @param width The width of the fuel break.
      * @param comments An optional user created comment to attach to the fuel break;
      */
-    addPolylineFuelBreak(width, vertices, comments) {
+    addPolylineFuelBreak(vertices, width, comments) {
         let fb = new FuelBreak();
         if (comments != null) {
             fb.comments = comments;
@@ -6746,14 +6749,14 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add an ignition from a file.
-     * @param startTime The ignitions start time.
      * @param filename The location of the ignitions file. Can either be the actual file path
      * 				   or the attachment URL returned from {@link addAttachment}
+     * @param startTime The ignitions start time.
      * @param comments An optional user created comment to attach to the ignition.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      * @return Ignition
      */
-    addFileIgnition(startTime, filename, comments) {
+    addFileIgnition(filename, startTime, comments) {
         let ig = new Ignition();
         if (typeof startTime === "string") {
             ig.startTime = startTime;
@@ -6777,7 +6780,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * @param comments An optional user created comment to attach to the ignition.
      * @return Ignition
      */
-    addPointIgnition(startTime, point, comments) {
+    addPointIgnition(point, startTime, comments) {
         let ig = new Ignition();
         if (typeof startTime === "string") {
             ig.startTime = startTime;
@@ -6795,12 +6798,12 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add an ignition with multiple points.
-     * @param startTime The ignitions start time.
      * @param points An array of LatLons that are all point ignitions.
+     * @param startTime The ignitions start time.
      * @param comments An optional user created comment to attach to the ignition.
      * @return Ignition
      */
-    addMultiPointIgnition(startTime, points, comments) {
+    addMultiPointIgnition(points, startTime, comments) {
         let ig = new Ignition();
         if (typeof startTime === "string") {
             ig.startTime = startTime;
@@ -6823,7 +6826,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * @param comments An optional user created comment to attach to the ignition.
      * @return Ignition
      */
-    addPolygonIgnition(startTime, vertices, comments) {
+    addPolygonIgnition(vertices, startTime, comments) {
         let ig = new Ignition();
         if (typeof startTime === "string") {
             ig.startTime = startTime;
@@ -6841,12 +6844,12 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add an ignition from a set of vertices.
-     * @param startTime The ignitions start time.
      * @param vertices An array of LatLons that descrive the polyline.
+     * @param startTime The ignitions start time.
      * @param comments An optional user created comment to attach to the ignition.
      * @return Ignition
      */
-    addPolylineIgnition(startTime, vertices, comments) {
+    addPolylineIgnition(vertices, startTime, comments) {
         let ig = new Ignition();
         if (typeof startTime === "string") {
             ig.startTime = startTime;
@@ -7480,7 +7483,7 @@ class AdminHelper extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Deletes the specified job directory. This is not reversible.
-     * @param string $jobname The name of the job to delete.
+     * @param string jobname The name of the job to delete.
      */
     deleteJob(jobname, callback, error) {
         this.fetchState = -1;

@@ -7,6 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const psaas_js_api_1 = require("psaas-js-api");
 const luxon_1 = require("luxon");
+const semver = require("semver");
 let serverConfig = new psaas_js_api_1.defaults.ServerConfiguration();
 //initialize the connection settings for PSaaS_Builder
 psaas_js_api_1.globals.SocketHelper.initialize(serverConfig.builderAddress, serverConfig.builderPort);
@@ -81,7 +82,7 @@ function handleErrorNode(node) {
     prom.setFuelmapFile(localDir + psaasVersion + '/test/fbp_fuel_type.asc');
     prom.setLutFile(localDir + psaasVersion + '/test/fbp_lookup_table.lut');
     prom.setTimezoneByValue(25); //hard coded to CDT, see example_timezone.js for an example getting the IDs
-    let degree_curing = prom.addGridFile(psaas_js_api_1.psaas.GridFileType.DEGREE_CURING, localDir + psaasVersion + '/test/degree_of_curing.asc', localDir + psaasVersion + '/test/degree_of_curing.prj');
+    let degree_curing = prom.addGridFile(localDir + psaasVersion + '/test/degree_of_curing.asc', localDir + psaasVersion + '/test/degree_of_curing.prj', psaas_js_api_1.psaas.GridFileType.DEGREE_CURING);
     let fuel_patch = prom.addLandscapeFuelPatch("O-1a Matted Grass", "O-1b Standing Grass");
     let gravel_road = prom.addFileFuelBreak(localDir + psaasVersion + '/test/access_gravel_road.kmz');
     gravel_road.setName("Gravel Road");
@@ -100,9 +101,9 @@ function handleErrorNode(node) {
     wpatch2.setWindDirOperation(psaas_js_api_1.psaas.WeatherPatchOperation.EQUAL, 270);
     //create the ignition points
     let ll1 = new psaas_js_api_1.globals.LatLon(51.65287648142513, -115.4779078053444);
-    let ig3 = prom.addPointIgnition(luxon_1.DateTime.fromISO('2001-10-16T13:00:00-05:00'), ll1);
+    let ig3 = prom.addPointIgnition(ll1, luxon_1.DateTime.fromISO('2001-10-16T13:00:00-05:00'));
     let ll2 = new psaas_js_api_1.globals.LatLon(51.66090499909746, -115.4086430000001);
-    let ig4 = prom.addPointIgnition(luxon_1.DateTime.fromISO('2001-10-16T16:00:00-05:00'), ll2);
+    let ig4 = prom.addPointIgnition(ll2, luxon_1.DateTime.fromISO('2001-10-16T16:00:00-05:00'));
     //emit some statistics at the end of timesteps
     prom.timestepSettings.addStatistic(psaas_js_api_1.globals.GlobalStatistics.TOTAL_BURN_AREA);
     prom.timestepSettings.addStatistic(psaas_js_api_1.globals.GlobalStatistics.DATE_TIME);

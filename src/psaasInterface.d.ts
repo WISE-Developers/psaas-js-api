@@ -696,7 +696,7 @@ export declare class FuelPatch {
     fromFuel: string;
     /**
      * The rule about which fuels to apply the patch to (one of this, {@link #fromFuelIndex}, or {@link #fromFuel} is required).
-     * If $fromFuel is not specified this must be set.
+     * If fromFuel is not specified this must be set.
      */
     fromFuelRule: FromFuel;
     /**
@@ -3320,25 +3320,25 @@ export declare class PSaaS extends IPSaaSSerializable {
     unsetElevationFile(): void;
     /**
      * Add a grid file to the project.
-     * @param type Must be one of the GridFile::TYPE_* values.
      * @param file The location of the grid file. Can either
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
+     * @param type Must be one of the GridFile::TYPE_* values.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addGridFile(type: GridFileType, file: string, proj: string): GridFile;
+    addGridFile(file: string, proj: string, type: GridFileType): GridFile;
     /**
      * Add a grid file to the project.
-     * @param type Must be one of the GridFile::TYPE_* values.
      * @param file The location of the grid file. Can either
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
+     * @param type Must be one of the GridFile::TYPE_* values.
      * @param comment A user comment to add to the grid file.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addGridFileWithComment(type: GridFileType, file: string, proj: string, comment: string): GridFile;
+    addGridFileWithComment(file: string, proj: string, type: GridFileType, comment: string): GridFile;
     /**
      * Remove a GridFile object from the grid files.
      * @param gridFile The GridFile object to remove
@@ -3354,21 +3354,21 @@ export declare class PSaaS extends IPSaaSSerializable {
     addLandscapeFuelPatch(fromFuel: FromFuel | string, toFuel: string, comment?: string): FuelPatch;
     /**
      * Add a file fuel patch to the job.
+     * @param file The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
      * @param fromFuel The fuel to change from. Can either be one of the rules defined in FuelPatch (FROM_FUEL_*) or the name of a fuel.
      * @param toFuel The name of the fuel to change to.
-     * @param file The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
      * @param comment An optional user created comment to attach to the fuel patch.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addFileFuelPatch(fromFuel: FromFuel | string, toFuel: string, file: string, comment?: string): FuelPatch;
+    addFileFuelPatch(file: string, fromFuel: FromFuel | string, toFuel: string, comment?: string): FuelPatch;
     /**
      * Add a polygon fuel patch to the job.
+     * @param vertices The vertices of the polygon. Must be an array of LatLon values. The LatLon values will be copied by reference.
      * @param fromFuel The fuel to change from. Can either be one of the rules defined in FuelPatch (FROM_FUEL_*) or the name of a fuel.
      * @param toFuel The name of the fuel to change to.
-     * @param vertices The vertices of the polygon. Must be an array of LatLon values. The LatLon values will be copied by reference.
      * @param comments An optional user created comment to attach to the fuel patch.
      */
-    addPolygonFuelPatch(fromFuel: FromFuel | string, $toFuel: string, vertices: Array<LatLon>, comments?: string): FuelPatch;
+    addPolygonFuelPatch(vertices: Array<LatLon>, fromFuel: FromFuel | string, toFuel: string, comments?: string): FuelPatch;
     /**
      * Remove a FuelPatch object from the fuel patch files.
      * @param fuelPatch The FuelPatch object to remove
@@ -3391,11 +3391,11 @@ export declare class PSaaS extends IPSaaSSerializable {
     addPolygonFuelBreak(vertices: Array<LatLon>, comments?: string): FuelBreak;
     /**
      * Add a fuel break to the project.
-     * @param width The width of the fuel break.
      * @param vertices The vertices of the polyline. Must be an array of LatLon values. The LatLon values will be copied by reference.
+     * @param width The width of the fuel break.
      * @param comments An optional user created comment to attach to the fuel break;
      */
-    addPolylineFuelBreak(width: number, vertices: Array<LatLon>, comments?: string): FuelBreak;
+    addPolylineFuelBreak(vertices: Array<LatLon>, width: number, comments?: string): FuelBreak;
     /**
      * Remove a FuelBreak object from the fuel break files.
      * @param fuelBreak The FuelBreak object to remove
@@ -3485,14 +3485,14 @@ export declare class PSaaS extends IPSaaSSerializable {
     removeWeatherGrid(weatherGrid: WeatherGrid): boolean;
     /**
      * Add an ignition from a file.
-     * @param startTime The ignitions start time.
      * @param filename The location of the ignitions file. Can either be the actual file path
      * 				   or the attachment URL returned from {@link addAttachment}
+     * @param startTime The ignitions start time.
      * @param comments An optional user created comment to attach to the ignition.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      * @return Ignition
      */
-    addFileIgnition(startTime: string | DateTime, filename: string, comments?: string): Ignition;
+    addFileIgnition(filename: string, startTime: string | DateTime, comments?: string): Ignition;
     /**
      * Add an ignition from a single point. If this is to be a multipoint more points can be added
      * to the returned object using {@link Ignition#addPoint}.
@@ -3501,15 +3501,15 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param comments An optional user created comment to attach to the ignition.
      * @return Ignition
      */
-    addPointIgnition(startTime: string | DateTime, point: LatLon, comments?: string): Ignition;
+    addPointIgnition(point: LatLon, startTime: string | DateTime, comments?: string): Ignition;
     /**
      * Add an ignition with multiple points.
-     * @param startTime The ignitions start time.
      * @param points An array of LatLons that are all point ignitions.
+     * @param startTime The ignitions start time.
      * @param comments An optional user created comment to attach to the ignition.
      * @return Ignition
      */
-    addMultiPointIgnition(startTime: string | DateTime, points: Array<LatLon>, comments?: string): Ignition;
+    addMultiPointIgnition(points: Array<LatLon>, startTime: string | DateTime, comments?: string): Ignition;
     /**
      * Add an ignition from a set of vertices.
      * @param startTime The ignitions start time.
@@ -3517,15 +3517,15 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param comments An optional user created comment to attach to the ignition.
      * @return Ignition
      */
-    addPolygonIgnition(startTime: string | DateTime, vertices: Array<LatLon>, comments?: string): Ignition;
+    addPolygonIgnition(vertices: Array<LatLon>, startTime: string | DateTime, comments?: string): Ignition;
     /**
      * Add an ignition from a set of vertices.
-     * @param startTime The ignitions start time.
      * @param vertices An array of LatLons that descrive the polyline.
+     * @param startTime The ignitions start time.
      * @param comments An optional user created comment to attach to the ignition.
      * @return Ignition
      */
-    addPolylineIgnition(startTime: string | DateTime, vertices: Array<LatLon>, comments?: string): Ignition;
+    addPolylineIgnition(vertices: Array<LatLon>, startTime: string | DateTime, comments?: string): Ignition;
     /**
      * Remove an Ignition object from the ignitions.
      * @param ignition The Ignition object to remove
