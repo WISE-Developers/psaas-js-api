@@ -1,6 +1,6 @@
 {
     "name": "psaas-js-api",
-    "version": "6.2.5",
+    "version": "6.2.6",
     "description": "PSaaS JS API",
     "main": "index.js",
     "types": "index.d.ts",
@@ -13,8 +13,8 @@
         "replace-in-file": "^3.4.4",
         "readline": "^1.3.0",
         "luxon": "1.25.0",
-        "mqtt": "^4.2.1",
-        "socket.io": "^2.2.0",
+        "mqtt": "^4.2.4",
+        "socket.io": "^2.3.0",
         "protobufjs": "6.8.8",
         "npm-conf": "^1.1.3"
     },
