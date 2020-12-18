@@ -5647,7 +5647,9 @@ class FileAttachment {
     /**
      * Create a new file stream.
      * @param name The name of the file.
-     * @param content The raw contents of the file.
+     * @param content The raw contents of the file. If the content is being constructed
+     * manually this can be a string (ex. weather stream constructed from external sources).
+     * If this is a file it is recommended that a Buffer be used.
      */
     constructor(name, content) {
         this.filename = name;
@@ -5659,8 +5661,14 @@ class FileAttachment {
      */
     stream(builder) {
         builder.write(FileAttachment.PARAM_ATTACHMENT + psaasGlobals_1.SocketMsg.NEWLINE);
-        builder.write(this.filename + psaasGlobals_1.SocketMsg.NEWLINE);
-        builder.write(this.contents + psaasGlobals_1.SocketMsg.NEWLINE);
+        if (Buffer.isBuffer(this.contents)) {
+            builder.write(`${this.filename}|${this.contents.length}${psaasGlobals_1.SocketMsg.NEWLINE}`);
+        }
+        else {
+            builder.write(this.filename + psaasGlobals_1.SocketMsg.NEWLINE);
+        }
+        builder.write(this.contents);
+        builder.write(psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(FileAttachment.PARAM_ATTACHMENT_END + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
@@ -7158,9 +7166,17 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * @returns Will return false if the filename is not valid, otherwise the URL to use as the filename
      *          when referencing the attachment will be returned.
      * @example
-     * fs.readFile("/mnt/location/file.txt", "utf8", function(err, data) {
+     * fs.readFile("/mnt/location/file.txt", "utf8", (err, data) => {
+     *     //on successful read data will be a string containing the contents of the file
      *     let psaas = new PSaaS();
      *     let att = psaas.addAttachment("file.txt", data);
+     *     psaas.addFileIgnition("2019-02-20T12:00:00", att, "No comment");
+     * });
+     *
+     * fs.readFile("/mnt/location/file.kmz", (err, data) => {
+     *     //on successful read data will be a Buffer containing the contents of the file
+     *     let psaas = new PSaaS();
+     *     let att = psaas.addAttachment("file.kmz", data);
      *     psaas.addFileIgnition("2019-02-20T12:00:00", att, "No comment");
      * });
      */

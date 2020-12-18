@@ -3668,13 +3668,21 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @returns Will return false if the filename is not valid, otherwise the URL to use as the filename
      *          when referencing the attachment will be returned.
      * @example
-     * fs.readFile("/mnt/location/file.txt", "utf8", function(err, data) {
+     * fs.readFile("/mnt/location/file.txt", "utf8", (err, data) => {
+     *     //on successful read data will be a string containing the contents of the file
      *     let psaas = new PSaaS();
      *     let att = psaas.addAttachment("file.txt", data);
      *     psaas.addFileIgnition("2019-02-20T12:00:00", att, "No comment");
      * });
+     *
+     * fs.readFile("/mnt/location/file.kmz", (err, data) => {
+     *     //on successful read data will be a Buffer containing the contents of the file
+     *     let psaas = new PSaaS();
+     *     let att = psaas.addAttachment("file.kmz", data);
+     *     psaas.addFileIgnition("2019-02-20T12:00:00", att, "No comment");
+     * });
      */
-    addAttachment(filename: string, contents: string): string | boolean;
+    addAttachment(filename: string, contents: string | Buffer): string | boolean;
     /**
      * Sends the job to the job manager for execution.
      * @throws This method can only be called once at a time per instance.

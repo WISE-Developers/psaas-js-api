@@ -69,8 +69,8 @@ function handleErrorNode(node) {
     //set this to the location of the test files folder.
     let prom = new psaas_js_api_1.psaas.PSaaS();
     //add the projection and elevation files as attachments
-    let projContents = fs.readFileSync(localDir + psaasVersion + '/test/elevation.prj', "utf8");
-    let elevContents = fs.readFileSync(localDir + psaasVersion + '/test/elevation.asc', "utf8");
+    let projContents = fs.readFileSync(localDir + psaasVersion + '/test/elevation.prj');
+    let elevContents = fs.readFileSync(localDir + psaasVersion + '/test/elevation.asc');
     let projAttachment = prom.addAttachment('elevation.prj', projContents);
     let elevAttachment = prom.addAttachment('elevation.asc', elevContents);
     if (!projAttachment || !elevAttachment) {
