@@ -85,12 +85,16 @@ function handleErrorNode(node) {
     let degree_curing = prom.addGridFile(localDir + psaasVersion + '/test/degree_of_curing.asc', localDir + psaasVersion + '/test/degree_of_curing.prj', psaas_js_api_1.psaas.GridFileType.DEGREE_CURING);
     let fuel_patch = prom.addLandscapeFuelPatch("O-1a Matted Grass", "O-1b Standing Grass");
     let gravel_road = prom.addFileFuelBreak(localDir + psaasVersion + '/test/access_gravel_road.kmz');
+    gravel_road.width = 10.0;
     gravel_road.setName("Gravel Road");
     let unimproved_road = prom.addFileFuelBreak(localDir + psaasVersion + '/test/access_unimproved_road.kmz');
+    unimproved_road.width = 10.0;
     unimproved_road.setName("Unimproved Road");
     let river = prom.addFileFuelBreak(localDir + psaasVersion + '/test/hydrology_river.kmz');
+    river.width = 25.0;
     river.setName("Rivers");
     let stream = prom.addFileFuelBreak(localDir + psaasVersion + '/test/hydrology_stream.kmz');
+    stream.width = 20.0;
     stream.setName("Streams");
     let ws = prom.addWeatherStation(1483.0, new psaas_js_api_1.globals.LatLon(51.654700, -115.361700));
     let b3Yaha = ws.addWeatherStream(localDir + psaasVersion + '/test/weather_B3_hourly_Sep25toOct30_2001.txt', 94.0, 17, psaas_js_api_1.psaas.HFFMCMethod.LAWSON, 89.0, 58.0, 482.0, 0.0, luxon_1.DateTime.fromISO("2001-09-25"), luxon_1.DateTime.fromISO("2001-10-30"));
