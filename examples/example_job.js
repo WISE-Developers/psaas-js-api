@@ -160,7 +160,6 @@ function handleErrorNode(node) {
     }
     else {
         let wrapper = null;
-        //not yet supported by a released version of PSaaS
         if (semver.gte(psaas_js_api_1.psaas.VersionInfo.localVersion(psaas_js_api_1.psaas.VersionInfo.version_info), '2.6.1')) {
             //validate the job asynchronously
             wrapper = await prom.validateJobPromise();
