@@ -14,7 +14,7 @@ This module can be referenced from the package.json for your project. The depend
 {
     "name": "test-project",
     "dependencies": {
-        "psaas-js-api": "bitbucket:psaasredapp/psaas-js-api#v6.2.5.7_20200727"
+        "psaas-js-api": "bitbucket:psaasredapp/psaas-js-api#v6.2.6.2_20201227"
     }
 }
 ```
@@ -28,7 +28,7 @@ git+https://bitbucket.org/psaasredapp/psaas-js-api.git
 
 2) Reference a specific commit instead of a tag
 ```
-bitbucket:psaasredapp/psaas-js-api#85e0660390aab21d32f70fda97438520122de8d9
+bitbucket:psaasredapp/psaas-js-api#b919eed930d4177b159c60091b93bdebcdf2e925
 ```
 
 3) Use the head revision of the repository
