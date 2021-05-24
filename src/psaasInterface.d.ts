@@ -591,6 +591,20 @@ export declare class WeatherGrid {
      * Whether this wind grid is for wind speed, or wind direction (required). Must be one of TYPE_DIRECTION and TYPE_SPEED.
      */
     type: WeatherGridType;
+    /**
+     * The default sector data. If specified {@link defaultValuesProjection} must also be specified.
+     */
+    defaultValuesFile: string;
+    /**
+     * The projection file for the default sector data. Must be specified if {@link defaultValuesFile} is specified.
+     */
+    defaultValuesProjection: string;
+    /**
+     * A convenience method for specifying the default values grid file and its projection.
+     * @param defaultValuesFile The file or attachment that contains a grid of default values for the grid.
+     * @param defaultValuesProjection The projection file for the specified default values file.
+     */
+    setDefaultValuesGrid(defaultValuesFile: string, defaultValuesProjection: string): void;
     getId(): string;
     /**
      * Set the name of the weather grid. This name must be unique within

@@ -1002,6 +1002,15 @@ class WeatherGrid {
         this._endTimeOfDay = new psaasGlobals_1.Duration();
         this._endTimeOfDay.fromString(value);
     }
+    /**
+     * A convenience method for specifying the default values grid file and its projection.
+     * @param defaultValuesFile The file or attachment that contains a grid of default values for the grid.
+     * @param defaultValuesProjection The projection file for the specified default values file.
+     */
+    setDefaultValuesGrid(defaultValuesFile, defaultValuesProjection) {
+        this.defaultValuesFile = defaultValuesFile;
+        this.defaultValuesProjection = defaultValuesProjection;
+    }
     getId() {
         return this._id;
     }
@@ -1095,6 +1104,21 @@ class WeatherGrid {
             });
             errs.push(tempErr);
         }
+        if (this.defaultValuesFile != null && this.defaultValuesFile.length > 0) {
+            if (this.defaultValuesProjection == null || this.defaultValuesProjection.length == 0) {
+                errs.push(new psaasGlobals_1.ValidationError("defaultValuesProjection", "The projection for the default sector data is required.", this));
+            }
+            else if (!psaasGlobals_1.SocketMsg.skipFileTests) {
+                //the filename must be an attachment or a local file
+                if (!this.defaultValuesFile.startsWith("attachment:/") && !fs.existsSync(this.defaultValuesFile)) {
+                    errs.push(new psaasGlobals_1.ValidationError("defaultValuesFile", "The default grid data file does not exist.", this));
+                }
+                //the projection file must be an attachment or a local file
+                if (!this.defaultValuesProjection.startsWith("attachment:/") && !fs.existsSync(this.defaultValuesProjection)) {
+                    errs.push(new psaasGlobals_1.ValidationError("defaultValuesProjection", "The default grid data projection file does not exist.", this));
+                }
+            }
+        }
         return errs;
     }
     /**
@@ -1103,15 +1127,22 @@ class WeatherGrid {
      */
     stream(builder) {
         let tmp = this._id + '|' + this.comments + '|' + this._startTime.toISO() + '|' + this._endTime.toISO() + '|' + this._startTimeOfDay.toString() + '|' + this._endTimeOfDay.toString() + '|' + this.type;
+        tmp = tmp + '|' + this.gridData.length;
         for (let gd of this.gridData) {
             tmp = tmp + '|' + gd.speed + '|' + gd.sector + '|' + gd.filename + '|' + gd.projection;
+        }
+        if (this.defaultValuesFile != null && this.defaultValuesFile.length > 0) {
+            tmp = tmp + '|' + this.defaultValuesFile + '|' + this.defaultValuesProjection;
+        }
+        else {
+            tmp = tmp + '|-1|-1';
         }
         builder.write(WeatherGrid.PARAM_WEATHER_GRID + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
 exports.WeatherGrid = WeatherGrid;
-WeatherGrid.PARAM_WEATHER_GRID = "weathergrid";
+WeatherGrid.PARAM_WEATHER_GRID = "weathergrid_2";
 WeatherGrid.counter = 0;
 var FuelPatchType;
 (function (FuelPatchType) {
