@@ -3384,9 +3384,9 @@ export declare class PSaaS extends IPSaaSSerializable {
     /**
      * Set the projection file. This file is required.
      * An exception will be thrown if the file does not exist.
-     * @param file
+     * @param filename
      */
-    setProjectionFile(file: string): void;
+    setProjectionFile(filename: string): void;
     /**
      * Unset the projection file.
      */
@@ -3394,12 +3394,11 @@ export declare class PSaaS extends IPSaaSSerializable {
     /**
      * Set the look up table. This file is required.
      * An exception will be thrown if the file does not exist.
-     * @param file
+     * @param filename
      */
-    setLutFile(file: string): void;
+    setLutFile(filename: string): void;
     /**
      * Unset the look up table.
-     * @param file
      */
     unsetLutFile(): void;
     /**
@@ -3445,10 +3444,10 @@ export declare class PSaaS extends IPSaaSSerializable {
     /**
      * Set the fuel map file. This file is required.
      * An exception will be thrown if the file does not exist.
-     * @param file Can either be the actual file path or the
+     * @param filename Can either be the actual file path or the
      * 			   attachment URL returned from {@link addAttachment}
      */
-    setFuelmapFile(file: string): void;
+    setFuelmapFile(filename: string): void;
     /**
      * Unset the fuel map file.
      */
@@ -3463,28 +3462,27 @@ export declare class PSaaS extends IPSaaSSerializable {
     /**
      * Set the elevation grid file. An elevation grid file is optional.
      * An exception will be thrown if the file does not exist.
-     * @param file Can either be the actual file path or the attachment
+     * @param filename Can either be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      */
-    setElevationFile(file: string): void;
+    setElevationFile(filename: string): void;
     /**
      * Unset the elevation grid file
-     * @param file
      */
     unsetElevationFile(): void;
     /**
      * Add a grid file to the project.
-     * @param file The location of the grid file. Can either
+     * @param filename The location of the grid file. Can either
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
      * @param type Must be one of the GridFile::TYPE_* values.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addGridFile(file: string, proj: string, type: GridFileType): GridFile;
+    addGridFile(filename: string, proj: string, type: GridFileType): GridFile;
     /**
      * Add a grid file to the project.
-     * @param file The location of the grid file. Can either
+     * @param filename The location of the grid file. Can either
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
@@ -3492,7 +3490,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param comment A user comment to add to the grid file.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addGridFileWithComment(file: string, proj: string, type: GridFileType, comment: string): GridFile;
+    addGridFileWithComment(filename: string, proj: string, type: GridFileType, comment: string): GridFile;
     /**
      * Remove a GridFile object from the grid files.
      * @param gridFile The GridFile object to remove
@@ -3508,13 +3506,13 @@ export declare class PSaaS extends IPSaaSSerializable {
     addLandscapeFuelPatch(fromFuel: FromFuel | string, toFuel: string, comment?: string): FuelPatch;
     /**
      * Add a file fuel patch to the job.
-     * @param file The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
+     * @param filename The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
      * @param fromFuel The fuel to change from. Can either be one of the rules defined in FuelPatch (FROM_FUEL_*) or the name of a fuel.
      * @param toFuel The name of the fuel to change to.
      * @param comment An optional user created comment to attach to the fuel patch.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addFileFuelPatch(file: string, fromFuel: FromFuel | string, toFuel: string, comment?: string): FuelPatch;
+    addFileFuelPatch(filename: string, fromFuel: FromFuel | string, toFuel: string, comment?: string): FuelPatch;
     /**
      * Add a polygon fuel patch to the job.
      * @param vertices The vertices of the polygon. Must be an array of LatLon values. The LatLon values will be copied by reference.
@@ -3531,12 +3529,12 @@ export declare class PSaaS extends IPSaaSSerializable {
     removeFuelPatch(fuelPatch: FuelPatch): boolean;
     /**
      * Add a fuel break to the project.
-     * @param file The file location of the fuel break. Can either be the actual file
+     * @param filename The file location of the fuel break. Can either be the actual file
      * 			   path or the attachment URL returned from {@link addAttachment}
      * @param comments An optional user created comment to attach to the fuel break.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addFileFuelBreak(file: string, comments?: string): FuelBreak;
+    addFileFuelBreak(filename: string, comments?: string): FuelBreak;
     /**
      * Add a fuel break to the project.
      * @param vertices The vertices of the polygon. Must be an array of LatLon values. The LatLon values will be copied by reference.
@@ -3822,6 +3820,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @returns Will return false if the filename is not valid, otherwise the URL to use as the filename
      *          when referencing the attachment will be returned.
      * @example
+     * ```javascript
      * fs.readFile("/mnt/location/file.txt", "utf8", (err, data) => {
      *     //on successful read data will be a string containing the contents of the file
      *     let psaas = new PSaaS();
@@ -3835,6 +3834,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      *     let att = psaas.addAttachment("file.kmz", data);
      *     psaas.addFileIgnition("2019-02-20T12:00:00", att, "No comment");
      * });
+     * ```
      */
     addAttachment(filename: string, contents: string | Buffer): string | boolean;
     /**

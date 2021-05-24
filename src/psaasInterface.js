@@ -6347,10 +6347,10 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     /**
      * Set the projection file. This file is required.
      * An exception will be thrown if the file does not exist.
-     * @param file
+     * @param filename
      */
-    setProjectionFile(file) {
-        this.inputs.files.projFile = file;
+    setProjectionFile(filename) {
+        this.inputs.files.projFile = filename;
     }
     /**
      * Unset the projection file.
@@ -6361,14 +6361,13 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     /**
      * Set the look up table. This file is required.
      * An exception will be thrown if the file does not exist.
-     * @param file
+     * @param filename
      */
-    setLutFile(file) {
-        this.inputs.files.lutFile = file;
+    setLutFile(filename) {
+        this.inputs.files.lutFile = filename;
     }
     /**
      * Unset the look up table.
-     * @param file
      */
     unsetLutFile() {
         this.inputs.files.lutFile = "";
@@ -6453,11 +6452,11 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     /**
      * Set the fuel map file. This file is required.
      * An exception will be thrown if the file does not exist.
-     * @param file Can either be the actual file path or the
+     * @param filename Can either be the actual file path or the
      * 			   attachment URL returned from {@link addAttachment}
      */
-    setFuelmapFile(file) {
-        this.inputs.files.fuelmapFile = file;
+    setFuelmapFile(filename) {
+        this.inputs.files.fuelmapFile = filename;
     }
     /**
      * Unset the fuel map file.
@@ -6476,31 +6475,30 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     /**
      * Set the elevation grid file. An elevation grid file is optional.
      * An exception will be thrown if the file does not exist.
-     * @param file Can either be the actual file path or the attachment
+     * @param filename Can either be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      */
-    setElevationFile(file) {
-        this.inputs.files.elevFile = file;
+    setElevationFile(filename) {
+        this.inputs.files.elevFile = filename;
     }
     /**
      * Unset the elevation grid file
-     * @param file
      */
     unsetElevationFile() {
         this.inputs.files.elevFile = "";
     }
     /**
      * Add a grid file to the project.
-     * @param file The location of the grid file. Can either
+     * @param filename The location of the grid file. Can either
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
      * @param type Must be one of the GridFile::TYPE_* values.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addGridFile(file, proj, type) {
+    addGridFile(filename, proj, type) {
         let gf = new GridFile();
-        gf.filename = file;
+        gf.filename = filename;
         gf.projection = proj;
         gf.type = type;
         this.inputs.files.gridFiles.push(gf);
@@ -6508,7 +6506,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a grid file to the project.
-     * @param file The location of the grid file. Can either
+     * @param filename The location of the grid file. Can either
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
@@ -6516,9 +6514,9 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * @param comment A user comment to add to the grid file.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addGridFileWithComment(file, proj, type, comment) {
+    addGridFileWithComment(filename, proj, type, comment) {
         let gf = new GridFile();
-        gf.filename = file;
+        gf.filename = filename;
         gf.projection = proj;
         gf.type = type;
         gf.comment = comment;
@@ -6562,16 +6560,16 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a file fuel patch to the job.
-     * @param file The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
+     * @param filename The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
      * @param fromFuel The fuel to change from. Can either be one of the rules defined in FuelPatch (FROM_FUEL_*) or the name of a fuel.
      * @param toFuel The name of the fuel to change to.
      * @param comment An optional user created comment to attach to the fuel patch.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addFileFuelPatch(file, fromFuel, toFuel, comment) {
+    addFileFuelPatch(filename, fromFuel, toFuel, comment) {
         let fp = new FuelPatch();
         fp.type = FuelPatchType.FILE;
-        fp.filename = file;
+        fp.filename = filename;
         if (fromFuel === FromFuel.ALL || fromFuel === FromFuel.ALL_COMBUSTABLE || fromFuel === FromFuel.NODATA) {
             fp.fromFuelRule = fromFuel;
         }
@@ -6624,18 +6622,18 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a fuel break to the project.
-     * @param file The file location of the fuel break. Can either be the actual file
+     * @param filename The file location of the fuel break. Can either be the actual file
      * 			   path or the attachment URL returned from {@link addAttachment}
      * @param comments An optional user created comment to attach to the fuel break.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addFileFuelBreak(file, comments) {
+    addFileFuelBreak(filename, comments) {
         let fb = new FuelBreak();
         if (comments != null) {
             fb.comments = comments;
         }
         fb.type = FuelBreakType.FILE;
-        fb.filename = file;
+        fb.filename = filename;
         this.inputs.files.fuelBreakFiles.push(fb);
         return fb;
     }
@@ -7368,6 +7366,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * @returns Will return false if the filename is not valid, otherwise the URL to use as the filename
      *          when referencing the attachment will be returned.
      * @example
+     * ```javascript
      * fs.readFile("/mnt/location/file.txt", "utf8", (err, data) => {
      *     //on successful read data will be a string containing the contents of the file
      *     let psaas = new PSaaS();
@@ -7381,6 +7380,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      *     let att = psaas.addAttachment("file.kmz", data);
      *     psaas.addFileIgnition("2019-02-20T12:00:00", att, "No comment");
      * });
+     * ```
      */
     addAttachment(filename, contents) {
         if (!this.validateFilename(filename)) {
