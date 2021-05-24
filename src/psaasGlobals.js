@@ -791,6 +791,24 @@ class FGMOptions {
          * Only valid if globalAssetOperation in AssetOperation::STOP_AFTER_X.
          */
         this.assetCollisionCount = -1;
+        /**
+         * ![v7](https://img.shields.io/badge/-v7-blue)![2021.04.01](https://img.shields.io/badge/-2021.04.01-red)
+         *
+         * Use a false origin to work with location information in the PSaaS backend. Currently the origin will always be the
+         * lower-left location of the fuel map.
+         *
+         * This is a v7 only setting. On v6 false origin is always on.
+         */
+        this.enableFalseOrigin = true;
+        /**
+         * ![v7](https://img.shields.io/badge/-v7-blue)![2021.04.01](https://img.shields.io/badge/-2021.04.01-red)
+         *
+         * Use scaling to work with location information in the PSaaS backend. Currently the scale will be the scale defined
+         * in the fuel map's projection.
+         *
+         * This is a v7 only setting. On v6 false scaling is always on.
+         */
+        this.enableFalseScaling = true;
     }
     /**
      * Get the maximum time step during acceleration.
@@ -1218,6 +1236,10 @@ class FGMOptions {
             builder.write(FGMOptions.PARAM_PERIMETER_SPACING + SocketMsg.NEWLINE);
             builder.write(this._perimeterSpacing + SocketMsg.NEWLINE);
         }
+        builder.write(FGMOptions.PARAM_FALSE_ORIGIN + SocketMsg.NEWLINE);
+        builder.write((+this.enableFalseOrigin) + SocketMsg.NEWLINE);
+        builder.write(FGMOptions.PARAM_FALSE_SCALING + SocketMsg.NEWLINE);
+        builder.write((+this.enableFalseScaling) + SocketMsg.NEWLINE);
         builder.write(FGMOptions.PARAM_SIM_PROPS + SocketMsg.NEWLINE);
         builder.write((+this._ignitionSize) + "|" + this._initialVertexCount.toFixed() + "|" + this.globalAssetOperation + "|" + this.assetCollisionCount + SocketMsg.NEWLINE);
     }
@@ -1333,6 +1355,8 @@ FGMOptions.PARAM_NON_FUELS_TO_VECTOR_BREAKS = "fgm_nonFuelsToVectorBreaks";
 FGMOptions.PARAM_USE_INDEPENDENT_TIMESTEPS = "fgm_useIndependentTimesteps";
 FGMOptions.PARAM_PERIMETER_SPACING = "fgm_perimeterSpacing";
 FGMOptions.PARAM_SIM_PROPS = "simulation_properties";
+FGMOptions.PARAM_FALSE_ORIGIN = "fgm_falseOrigin";
+FGMOptions.PARAM_FALSE_SCALING = "fgm_falseScaling";
 FGMOptions.DEFAULT_MAXACCTS = "MAXACCTS";
 FGMOptions.DEFAULT_DISTRES = "DISTRES";
 FGMOptions.DEFAULT_PERIMRES = "PERIMRES";

@@ -368,6 +368,8 @@ export declare class FGMOptions {
     static readonly PARAM_USE_INDEPENDENT_TIMESTEPS = "fgm_useIndependentTimesteps";
     static readonly PARAM_PERIMETER_SPACING = "fgm_perimeterSpacing";
     static readonly PARAM_SIM_PROPS = "simulation_properties";
+    static readonly PARAM_FALSE_ORIGIN = "fgm_falseOrigin";
+    static readonly PARAM_FALSE_SCALING = "fgm_falseScaling";
     static readonly DEFAULT_MAXACCTS = "MAXACCTS";
     static readonly DEFAULT_DISTRES = "DISTRES";
     static readonly DEFAULT_PERIMRES = "PERIMRES";
@@ -611,6 +613,24 @@ export declare class FGMOptions {
      * Only valid if globalAssetOperation in AssetOperation::STOP_AFTER_X.
      */
     assetCollisionCount: number;
+    /**
+     * ![v7](https://img.shields.io/badge/-v7-blue)![2021.04.01](https://img.shields.io/badge/-2021.04.01-red)
+     *
+     * Use a false origin to work with location information in the PSaaS backend. Currently the origin will always be the
+     * lower-left location of the fuel map.
+     *
+     * This is a v7 only setting. On v6 false origin is always on.
+     */
+    enableFalseOrigin: boolean;
+    /**
+     * ![v7](https://img.shields.io/badge/-v7-blue)![2021.04.01](https://img.shields.io/badge/-2021.04.01-red)
+     *
+     * Use scaling to work with location information in the PSaaS backend. Currently the scale will be the scale defined
+     * in the fuel map's projection.
+     *
+     * This is a v7 only setting. On v6 false scaling is always on.
+     */
+    enableFalseScaling: boolean;
     /**
      * Checks to see if all required values have been set.
      */
