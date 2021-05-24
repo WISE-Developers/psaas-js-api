@@ -1447,6 +1447,73 @@ export declare class AssetFile {
     stream(builder: net.Socket): void;
 }
 /**
+ * A target to direct simulated weather towards.
+ */
+export declare class TargetFile {
+    private static readonly PARAM_TARGET_FILE;
+    protected static counter: number;
+    /**
+     * The name of the target. The name must be unique amongst target file collections.
+     */
+    private _id;
+    /**
+     * Get the name of the target.
+     */
+    get id(): string;
+    /**
+     * Set the name of the target. Must be unique amongst the target collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value: string);
+    /**
+     * User comments about the target (optional).
+     */
+    comments: string;
+    /**
+     * The type of target (required).
+     */
+    type: AssetShapeType;
+    /**
+     * The filename associated with this target. Only valid if type is FILE.
+     */
+    private _filename;
+    /**
+     * Get the location of the file containing the target.
+     */
+    get filename(): string;
+    /**
+     * Set the location of the file containing the target. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value: string);
+    /**
+     * An array of LatLon describing the target. Only valid if type is POLYLINE, POLYGON, or POINT.
+     */
+    feature: LatLon[];
+    getId(): string;
+    /**
+     * Set the name of the target. This name must be unique within
+     * the simulation. The name will get a default value when the
+     * target is constructed but can be overriden with this method.
+     */
+    setName(name: string): void;
+    constructor();
+    /**
+     * Checks to see if all required values have been set.
+     */
+    isValid(): boolean;
+    /**
+     * Find all errors that may exist in the asset.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
+     * Streams the ignition to a socket.
+     * @param builder
+     */
+    stream(builder: net.Socket): void;
+}
+/**
  * Options for associating an ignition point with a scenario.
  */
 export declare class IgnitionReference {
@@ -1657,6 +1724,27 @@ export declare class AssetReference {
     checkValid(): Array<ValidationError>;
 }
 /**
+ * A reference to a target that has been added to a scenario. Contains options
+ * for how to handle the target.
+ */
+export declare class TargetReference {
+    /**
+     * The name of the target that was added.
+     */
+    protected name: string;
+    /**
+     * An index of a geometry within the shape to use as the target.
+     */
+    geometryIndex: number;
+    /**
+     * An index of a point within the shape to use as the target.
+     */
+    pointIndex: number;
+    getName(): string;
+    constructor(id: string);
+    checkValid(): Array<ValidationError>;
+}
+/**
  * Settings to modify PSaaS behaviour at the end of every timestep.
  * @author "Travis Redpath"
  */
@@ -1828,6 +1916,8 @@ export declare class Scenario {
     private static readonly PARAM_PRIMARY_STREAM;
     private static readonly PARAM_SCENARIO_TO_COPY;
     private static readonly PARAM_ASSET_REF;
+    private static readonly PARAM_WIND_TARGET_REF;
+    private static readonly PARAM_VECTOR_TARGET_REF;
     protected static counter: number;
     protected isCopy: boolean;
     /**
@@ -1940,6 +2030,14 @@ export declare class Scenario {
      * reaches the shape.
      */
     assetFiles: AssetReference[];
+    /**
+     * A target used by this scenario to modify the wind direction.
+     */
+    windTargetFile: TargetReference;
+    /**
+     * A target used by this scenario to modify the vector behaviour.
+     */
+    vectorTargetFile: TargetReference;
     /**
      * The name of the scenario that will be copied.
      */
@@ -2125,6 +2223,24 @@ export declare class Scenario {
      */
     removeAssetFile(ref: AssetReference): boolean;
     /**
+     * Add a target file to the scenario for wind direction. Must already be added to the {@link PSaaS} object.
+     * @param file The target file to add to the scenario.
+     */
+    setWindTargetFile(file: TargetFile): TargetReference;
+    /**
+     * Remove the wind target file from the scenario.
+     */
+    clearWindTargetFile(): boolean;
+    /**
+     * Add a target file to the scenario for vector direction. Must already be added to the {@link PSaaS} object.
+     * @param file The target file to add to the scenario.
+     */
+    setVectorTargetFile(file: TargetFile): TargetReference;
+    /**
+     * Remove the vector target file from the scenario.
+     */
+    clearVectorTargetFile(): boolean;
+    /**
      * Checks to see if all required values have been set.
      */
     isValid(): boolean;
@@ -2213,6 +2329,10 @@ export declare class PSaaSInputs {
      * Assets that can stop simulations when reached.
      */
     assetFiles: AssetFile[];
+    /**
+     * Targets that can affect how weather information is processed.
+     */
+    targetFiles: TargetFile[];
     constructor();
     /**
      * Validate the user specified inputs.
@@ -2412,6 +2532,8 @@ export declare class Output_GridFile {
      * <li>FUEL_LOAD_MAP</li>
      * <li>CFL_MAP</li>
      * <li>GRASSPHENOLOGY_MAP</li>
+     * <li>ROSVECTOR_MAP</li>
+     * <li>DIRVECTOR_MAP</li>
      * </ul>
      */
     get statistic(): GlobalStatistics;
@@ -2478,6 +2600,8 @@ export declare class Output_GridFile {
      * <li>FUEL_LOAD_MAP</li>
      * <li>CFL_MAP</li>
      * <li>GRASSPHENOLOGY_MAP</li>
+     * <li>ROSVECTOR_MAP</li>
+     * <li>DIRVECTOR_MAP</li>
      * </ul>
      */
     set statistic(value: GlobalStatistics);
@@ -3717,6 +3841,37 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param asset The asset to remove.
      */
     removeAsset(asset: AssetFile): boolean;
+    /**
+     * Add a new target using a shapefile.
+     * @param filename The location of the shapefile to use as the shape of the target.
+     * @param comments Any user defined comments for the target. Can be null if there are no comments.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
+     */
+    addFileTarget(filename: string, comments?: string): TargetFile;
+    /**
+     * Add a new target using a single point.
+     * @param location The lat/lon of the target.
+     * @param comments Any user defined comments for the target. Can be null if there are no comments.
+     */
+    addPointTarget(location: LatLon, comments?: string): TargetFile;
+    /**
+     * Add a new target using a polygon.
+     * @param locations An array of lat/lons that make up the polygon.
+     * @param comments Any user defined comments for the target. Can be null if there are no comments.
+     */
+    addPolygonTarget(locations: Array<LatLon>, comments?: string): TargetFile;
+    /**
+     * Add a new target using a polyline.
+     * @param locations An array of lat/lons that make up the polyline.
+     * @param comments Any user defined comments for the asset. Can be null if there are no comments.
+     */
+    addPolylineTarget(locations: Array<LatLon>, comments?: string): TargetFile;
+    /**
+     * Remove an target from the job. This will not remove it from any
+     * scenarios that it may be associated with.
+     * @param target The target to remove.
+     */
+    removeTarget(target: TargetFile): boolean;
     /**
      * Add a scenario to the job.
      * @param startTime The start time of the scenario. If a string is used it must be formatted as 'YYYY-MM-DDThh:mm:ss'.

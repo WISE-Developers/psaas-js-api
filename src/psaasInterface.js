@@ -9,7 +9,7 @@
  * For an example see index.js.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Admin = exports.StopPriority = exports.StartJobWrapper = exports.PSaaS = exports.JobOptions = exports.LoadBalanceType = exports.UnitSettings = exports.MassAreaUnit = exports.IntensityUnit = exports.VelocityUnit = exports.CoordinateUnit = exports.AngleUnit = exports.PercentUnit = exports.EnergyUnit = exports.MassUnit = exports.PressureUnit = exports.TemperatureUnit = exports.VolumeUnit = exports.AreaUnit = exports.DistanceUnit = exports.TimeUnit = exports.GeoServerOutputStreamInfo = exports.MqttOutputStreamInfo = exports.OutputStreamInfo = exports.PSaaSOutputs = exports.StatsFile = exports.StatsFileType = exports.SummaryFile = exports.VectorFile = exports.PerimeterTimeOverride = exports.VectorFileType = exports.Output_GridFile = exports.ExportTimeOverride = exports.Output_GridFileCompression = exports.Output_GridFileInterpolation = exports.PSaaSInputs = exports.FuelOption = exports.FuelOptionType = exports.Scenario = exports.StationStream = exports.StreamOptions = exports.TimestepSettings = exports.AssetReference = exports.LayerInfo = exports.LayerInfoOptions = exports.BurningConditions = exports.SinglePointIgnitionOptions = exports.MultiPointIgnitionOptions = exports.PolylineIgnitionOptions = exports.IgnitionReference = exports.AssetFile = exports.AssetShapeType = exports.Ignition = exports.IgnitionType = exports.WeatherStation = exports.WeatherStream = exports.HFFMCMethod = exports.PSaaSInputsFiles = exports.FuelBreak = exports.FuelBreakType = exports.FuelPatch = exports.FromFuel = exports.FuelPatchType = exports.WeatherGrid = exports.WeatherGrid_GridFile = exports.WeatherGridType = exports.WeatherGridSector = exports.WeatherPatch = exports.WeatherPatch_WindDirection = exports.WeatherPatch_WindSpeed = exports.WeatherPatch_Precipitation = exports.WeatherPatch_RelativeHumidity = exports.WeatherPatch_Temperature = exports.WeatherPatchDetails = exports.WeatherPatchType = exports.WeatherPatchOperation = exports.GridFile = exports.GridFileType = exports.VersionInfo = void 0;
+exports.Admin = exports.StopPriority = exports.StartJobWrapper = exports.PSaaS = exports.JobOptions = exports.LoadBalanceType = exports.UnitSettings = exports.MassAreaUnit = exports.IntensityUnit = exports.VelocityUnit = exports.CoordinateUnit = exports.AngleUnit = exports.PercentUnit = exports.EnergyUnit = exports.MassUnit = exports.PressureUnit = exports.TemperatureUnit = exports.VolumeUnit = exports.AreaUnit = exports.DistanceUnit = exports.TimeUnit = exports.GeoServerOutputStreamInfo = exports.MqttOutputStreamInfo = exports.OutputStreamInfo = exports.PSaaSOutputs = exports.StatsFile = exports.StatsFileType = exports.SummaryFile = exports.VectorFile = exports.PerimeterTimeOverride = exports.VectorFileType = exports.Output_GridFile = exports.ExportTimeOverride = exports.Output_GridFileCompression = exports.Output_GridFileInterpolation = exports.PSaaSInputs = exports.FuelOption = exports.FuelOptionType = exports.Scenario = exports.StationStream = exports.StreamOptions = exports.TimestepSettings = exports.TargetReference = exports.AssetReference = exports.LayerInfo = exports.LayerInfoOptions = exports.BurningConditions = exports.SinglePointIgnitionOptions = exports.MultiPointIgnitionOptions = exports.PolylineIgnitionOptions = exports.IgnitionReference = exports.TargetFile = exports.AssetFile = exports.AssetShapeType = exports.Ignition = exports.IgnitionType = exports.WeatherStation = exports.WeatherStream = exports.HFFMCMethod = exports.PSaaSInputsFiles = exports.FuelBreak = exports.FuelBreakType = exports.FuelPatch = exports.FromFuel = exports.FuelPatchType = exports.WeatherGrid = exports.WeatherGrid_GridFile = exports.WeatherGridType = exports.WeatherGridSector = exports.WeatherPatch = exports.WeatherPatch_WindDirection = exports.WeatherPatch_WindSpeed = exports.WeatherPatch_Precipitation = exports.WeatherPatch_RelativeHumidity = exports.WeatherPatch_Temperature = exports.WeatherPatchDetails = exports.WeatherPatchType = exports.WeatherPatchOperation = exports.GridFile = exports.GridFileType = exports.VersionInfo = void 0;
 /** ignore this comment */
 const fs = require("fs");
 const luxon_1 = require("luxon");
@@ -37,6 +37,8 @@ var GridFileType;
     GridFileType[GridFileType["PERCENT_DEAD_FIR"] = 4] = "PERCENT_DEAD_FIR";
     GridFileType[GridFileType["CROWN_BASE_HEIGHT"] = 5] = "CROWN_BASE_HEIGHT";
     GridFileType[GridFileType["TREE_HEIGHT"] = 6] = "TREE_HEIGHT";
+    GridFileType[GridFileType["FUEL_LOAD"] = 7] = "FUEL_LOAD";
+    GridFileType[GridFileType["FBP_VECTOR"] = 8] = "FBP_VECTOR";
 })(GridFileType = exports.GridFileType || (exports.GridFileType = {}));
 /**
  * Information about a grid input file.
@@ -2707,6 +2709,125 @@ exports.AssetFile = AssetFile;
 AssetFile.PARAM_ASSET_FILE = "asset_file";
 AssetFile.counter = 0;
 /**
+ * A target to direct simulated weather towards.
+ */
+class TargetFile {
+    constructor() {
+        /**
+         * User comments about the target (optional).
+         */
+        this.comments = "";
+        /**
+         * The type of target (required).
+         */
+        this.type = -1;
+        /**
+         * The filename associated with this target. Only valid if type is FILE.
+         */
+        this._filename = "";
+        /**
+         * An array of LatLon describing the target. Only valid if type is POLYLINE, POLYGON, or POINT.
+         */
+        this.feature = new Array();
+        this._id = "target" + TargetFile.counter;
+        TargetFile.counter += 1;
+    }
+    /**
+     * Get the name of the target.
+     */
+    get id() {
+        return this._id;
+    }
+    /**
+     * Set the name of the target. Must be unique amongst the target collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The name of the target is not valid");
+        }
+        this.setName(value);
+    }
+    /**
+     * Get the location of the file containing the target.
+     */
+    get filename() {
+        return this._filename;
+    }
+    /**
+     * Set the location of the file containing the target. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The target file does not exist.");
+        }
+        this._filename = value;
+    }
+    getId() {
+        return this._id;
+    }
+    /**
+     * Set the name of the target. This name must be unique within
+     * the simulation. The name will get a default value when the
+     * target is constructed but can be overriden with this method.
+     */
+    setName(name) {
+        this._id = name.replace(/\|/g, "");
+    }
+    /**
+     * Checks to see if all required values have been set.
+     */
+    isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the asset.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
+        if (!this._id || this._id.length === 0) {
+            errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the target.", this));
+        }
+        if (this.type == AssetShapeType.FILE) {
+            if (!psaasGlobals_1.SocketMsg.skipFileTests) {
+                //the file must be an attachment or a local file
+                if (!this._filename.startsWith("attachment:/") && fs.existsSync(this._filename)) {
+                    errs.push(new psaasGlobals_1.ValidationError("filename", "The specified target file does not exist.", this));
+                }
+            }
+        }
+        else if ((this.type == AssetShapeType.POLYLINE || this.type == AssetShapeType.POLYGON || this.type == AssetShapeType.POINT) && this.feature.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("feature", "No locations have been added to the target.", this));
+        }
+        else {
+            errs.push(new psaasGlobals_1.ValidationError("type", "Invalid target type.", this));
+        }
+        return errs;
+    }
+    /**
+     * Streams the ignition to a socket.
+     * @param builder
+     */
+    stream(builder) {
+        let tmp = this._id + '|' + this.comments + '|' + (+this.type);
+        if (this.type == AssetShapeType.FILE) {
+            tmp = tmp + this._filename;
+        }
+        else {
+            for (let p of this.feature) {
+                tmp = tmp + '|' + p.latitude + '|' + p.longitude;
+            }
+        }
+        builder.write(TargetFile.PARAM_TARGET_FILE + psaasGlobals_1.SocketMsg.NEWLINE);
+        builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
+    }
+}
+exports.TargetFile = TargetFile;
+TargetFile.PARAM_TARGET_FILE = "target_file";
+TargetFile.counter = 0;
+/**
  * Options for associating an ignition point with a scenario.
  */
 class IgnitionReference {
@@ -3077,6 +3198,38 @@ class AssetReference {
 }
 exports.AssetReference = AssetReference;
 /**
+ * A reference to a target that has been added to a scenario. Contains options
+ * for how to handle the target.
+ */
+class TargetReference {
+    constructor(id) {
+        /**
+         * The name of the target that was added.
+         */
+        this.name = "";
+        /**
+         * An index of a geometry within the shape to use as the target.
+         */
+        this.geometryIndex = -1;
+        /**
+         * An index of a point within the shape to use as the target.
+         */
+        this.pointIndex = -1;
+        this.name = id;
+    }
+    getName() {
+        return this.name;
+    }
+    checkValid() {
+        const errs = new Array();
+        if (this.name == null || this.name.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("name", "No target reference has been set.", this));
+        }
+        return errs;
+    }
+}
+exports.TargetReference = TargetReference;
+/**
  * Settings to modify PSaaS behaviour at the end of every timestep.
  * @author "Travis Redpath"
  */
@@ -3389,6 +3542,14 @@ class Scenario {
          * reaches the shape.
          */
         this.assetFiles = new Array();
+        /**
+         * A target used by this scenario to modify the wind direction.
+         */
+        this.windTargetFile = null;
+        /**
+         * A target used by this scenario to modify the vector behaviour.
+         */
+        this.vectorTargetFile = null;
         /**
          * The name of the scenario that will be copied.
          */
@@ -3845,6 +4006,42 @@ class Scenario {
         return false;
     }
     /**
+     * Add a target file to the scenario for wind direction. Must already be added to the {@link PSaaS} object.
+     * @param file The target file to add to the scenario.
+     */
+    setWindTargetFile(file) {
+        this.windTargetFile = new TargetReference(file.getId());
+        return this.windTargetFile;
+    }
+    /**
+     * Remove the wind target file from the scenario.
+     */
+    clearWindTargetFile() {
+        if (this.windTargetFile == null) {
+            return false;
+        }
+        this.windTargetFile = null;
+        return true;
+    }
+    /**
+     * Add a target file to the scenario for vector direction. Must already be added to the {@link PSaaS} object.
+     * @param file The target file to add to the scenario.
+     */
+    setVectorTargetFile(file) {
+        this.vectorTargetFile = new TargetReference(file.getId());
+        return this.vectorTargetFile;
+    }
+    /**
+     * Remove the vector target file from the scenario.
+     */
+    clearVectorTargetFile() {
+        if (this.vectorTargetFile == null) {
+            return false;
+        }
+        this.vectorTargetFile = null;
+        return true;
+    }
+    /**
      * Checks to see if all required values have been set.
      */
     isValid() {
@@ -4002,6 +4199,24 @@ class Scenario {
                 });
                 errs.push(temp);
             }
+            if (this.windTargetFile != null) {
+                let temp = new psaasGlobals_1.ValidationError("windTargetFile", "Errors found in target reference.", this);
+                this.windTargetFile.checkValid().forEach(err => {
+                    temp.addChild(err);
+                });
+                if (temp.children.length > 0) {
+                    errs.push(temp);
+                }
+            }
+            if (this.vectorTargetFile != null) {
+                let temp = new psaasGlobals_1.ValidationError("vectorTargetFile", "Errors found in target references.", this);
+                this.vectorTargetFile.checkValid().forEach(err => {
+                    temp.addChild(err);
+                });
+                if (temp.children.length > 0) {
+                    errs.push(temp);
+                }
+            }
         }
         return errs;
     }
@@ -4096,6 +4311,16 @@ class Scenario {
             builder.write(Scenario.PARAM_ASSET_REF + psaasGlobals_1.SocketMsg.NEWLINE);
             builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
         }
+        if (this.windTargetFile != null) {
+            let tmp = this.windTargetFile.getName() + '|' + this.windTargetFile.geometryIndex + '|' + this.windTargetFile.pointIndex;
+            builder.write(Scenario.PARAM_WIND_TARGET_REF + psaasGlobals_1.SocketMsg.NEWLINE);
+            builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
+        }
+        if (this.vectorTargetFile != null) {
+            let tmp = this.vectorTargetFile.getName() + '|' + this.vectorTargetFile.geometryIndex + '|' + this.vectorTargetFile.pointIndex;
+            builder.write(Scenario.PARAM_VECTOR_TARGET_REF + psaasGlobals_1.SocketMsg.NEWLINE);
+            builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
+        }
         builder.write(Scenario.PARAM_SCENARIO_END + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
@@ -4115,6 +4340,8 @@ Scenario.PARAM_LAYER_INFO = "layerinfo";
 Scenario.PARAM_PRIMARY_STREAM = "primarystream";
 Scenario.PARAM_SCENARIO_TO_COPY = "scenariotocopy";
 Scenario.PARAM_ASSET_REF = "asset_ref";
+Scenario.PARAM_WIND_TARGET_REF = "wind_target_ref";
+Scenario.PARAM_VECTOR_TARGET_REF = "vector_target_ref";
 Scenario.counter = 0;
 /**
  * Types of options that can be applied to the fuels in
@@ -4208,6 +4435,10 @@ class PSaaSInputs {
          * Assets that can stop simulations when reached.
          */
         this.assetFiles = new Array();
+        /**
+         * Targets that can affect how weather information is processed.
+         */
+        this.targetFiles = new Array();
         this.files = new PSaaSInputsFiles();
         this.timezone = new psaasGlobals_1.Timezone();
     }
@@ -4342,6 +4573,30 @@ class PSaaSInputs {
             });
             errs.push(temp);
         }
+        let targetErrors = new Array();
+        for (let i = 0; i < this.targetFiles.length; i++) {
+            let tgErr = new psaasGlobals_1.ValidationError(i, `Errors found in scenario at index ${i}.`, this.targetFiles);
+            for (let j = i + 1; j < this.targetFiles.length; j++) {
+                if (this.targetFiles[i].getId().toUpperCase() === this.targetFiles[j].getId().toUpperCase()) {
+                    let err = new psaasGlobals_1.ValidationError("id", "Duplicate target IDs.", this.targetFiles[i]);
+                    tgErr.addChild(err);
+                    break;
+                }
+            }
+            this.targetFiles[i].checkValid().forEach(err => {
+                tgErr.addChild(err);
+            });
+            if (tgErr.children.length > 0) {
+                scenarioErrors.push(tgErr);
+            }
+        }
+        if (targetErrors.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("targetFiles", "Errors found in targets.", this);
+            targetErrors.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
         let fuelOptionErrors = new Array();
         for (let i = 0; i < this.fuelOptions.length; i++) {
             let foErrs = this.fuelOptions[i].checkValid();
@@ -4382,6 +4637,9 @@ class PSaaSInputs {
         }
         for (let asset of this.assetFiles) {
             asset.stream(builder);
+        }
+        for (let target of this.targetFiles) {
+            target.stream(builder);
         }
         return this.timezone.stream(builder);
     }
@@ -7158,6 +7416,80 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         var index = this.inputs.assetFiles.indexOf(asset);
         if (index != -1) {
             this.inputs.assetFiles.splice(index, 1);
+            return true;
+        }
+        return false;
+    }
+    /**
+     * Add a new target using a shapefile.
+     * @param filename The location of the shapefile to use as the shape of the target.
+     * @param comments Any user defined comments for the target. Can be null if there are no comments.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
+     */
+    addFileTarget(filename, comments) {
+        var target = new TargetFile();
+        if (comments != null) {
+            target.comments = comments;
+        }
+        target.type = AssetShapeType.FILE;
+        target.filename = filename;
+        this.inputs.targetFiles.push(target);
+        return target;
+    }
+    /**
+     * Add a new target using a single point.
+     * @param location The lat/lon of the target.
+     * @param comments Any user defined comments for the target. Can be null if there are no comments.
+     */
+    addPointTarget(location, comments) {
+        var target = new TargetFile();
+        if (comments != null) {
+            target.comments = comments;
+        }
+        target.type = AssetShapeType.POINT;
+        target.feature.push(location);
+        this.inputs.targetFiles.push(target);
+        return target;
+    }
+    /**
+     * Add a new target using a polygon.
+     * @param locations An array of lat/lons that make up the polygon.
+     * @param comments Any user defined comments for the target. Can be null if there are no comments.
+     */
+    addPolygonTarget(locations, comments) {
+        var target = new TargetFile();
+        if (comments != null) {
+            target.comments = comments;
+        }
+        target.type = AssetShapeType.POLYGON;
+        target.feature = locations;
+        this.inputs.targetFiles.push(target);
+        return target;
+    }
+    /**
+     * Add a new target using a polyline.
+     * @param locations An array of lat/lons that make up the polyline.
+     * @param comments Any user defined comments for the asset. Can be null if there are no comments.
+     */
+    addPolylineTarget(locations, comments) {
+        var target = new TargetFile();
+        if (comments != null) {
+            target.comments = comments;
+        }
+        target.type = AssetShapeType.POLYLINE;
+        target.feature = locations;
+        this.inputs.targetFiles.push(target);
+        return target;
+    }
+    /**
+     * Remove an target from the job. This will not remove it from any
+     * scenarios that it may be associated with.
+     * @param target The target to remove.
+     */
+    removeTarget(target) {
+        var index = this.inputs.targetFiles.indexOf(target);
+        if (index != -1) {
+            this.inputs.targetFiles.splice(index, 1);
             return true;
         }
         return false;
