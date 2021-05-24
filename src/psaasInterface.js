@@ -20,13 +20,12 @@ class VersionInfo {
      * @ignore
      */
     static localVersion(version) {
-        const i = version.indexOf('.');
-        return version.substr(i + 1);
+        return version;
     }
 }
 exports.VersionInfo = VersionInfo;
-VersionInfo.version_info = '6.2.6.2' /*/vers*/;
-VersionInfo.release_date = 'December 27, 2020' /*/rld*/;
+VersionInfo.version_info = '2021.05.01' /*/vers*/;
+VersionInfo.release_date = 'May 16, 2021' /*/rld*/;
 var GridFileType;
 (function (GridFileType) {
     GridFileType[GridFileType["NONE"] = -1] = "NONE";
