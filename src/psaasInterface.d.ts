@@ -27,7 +27,9 @@ export declare enum GridFileType {
     PERCENT_CONIFER = 3,
     PERCENT_DEAD_FIR = 4,
     CROWN_BASE_HEIGHT = 5,
-    TREE_HEIGHT = 6
+    TREE_HEIGHT = 6,
+    FUEL_LOAD = 7,
+    FBP_VECTOR = 8
 }
 /**
  * Information about a grid input file.

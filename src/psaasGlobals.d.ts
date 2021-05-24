@@ -1264,7 +1264,30 @@ export declare enum GlobalStatistics {
      * Change in fire area. (sq. metres)
      */
     AREA_CHANGE = 83,
-    BURN = 84
+    BURN = 84,
+    HROS_MAP = 85,
+    FROS_MAP = 86,
+    BROS_MAP = 87,
+    RSS_MAP = 88,
+    RAZ_MAP = 89,
+    FMC_MAP = 90,
+    CFB_MAP = 91,
+    CFC_MAP = 92,
+    SFC_MAP = 93,
+    TFC_MAP = 94,
+    FI_MAP = 95,
+    FL_MAP = 96,
+    CURINGDEGREE_MAP = 97,
+    GREENUP_MAP = 98,
+    PC_MAP = 99,
+    PDF_MAP = 100,
+    CBH_MAP = 101,
+    TREE_HEIGHT_MAP = 102,
+    FUEL_LOAD_MAP = 103,
+    CFL_MAP = 104,
+    GRASSPHENOLOGY_MAP = 105,
+    ROSVECTOR_MAP = 106,
+    DIRVECTOR_MAP = 107
 }
 export declare class ValidationError {
     /**

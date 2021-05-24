@@ -4646,6 +4646,8 @@ class Output_GridFile {
      * <li>FUEL_LOAD_MAP</li>
      * <li>CFL_MAP</li>
      * <li>GRASSPHENOLOGY_MAP</li>
+     * <li>ROSVECTOR_MAP</li>
+     * <li>DIRVECTOR_MAP</li>
      * </ul>
      */
     get statistic() {
@@ -4714,6 +4716,8 @@ class Output_GridFile {
      * <li>FUEL_LOAD_MAP</li>
      * <li>CFL_MAP</li>
      * <li>GRASSPHENOLOGY_MAP</li>
+     * <li>ROSVECTOR_MAP</li>
+     * <li>DIRVECTOR_MAP</li>
      * </ul>
      */
     set statistic(value) {
@@ -4767,7 +4771,13 @@ class Output_GridFile {
             this.statistic != psaasGlobals_1.GlobalStatistics.ACTIVE_PERIMETER && this.statistic != psaasGlobals_1.GlobalStatistics.BURN && this.statistic != psaasGlobals_1.GlobalStatistics.BURN_PERCENTAGE &&
             this.statistic != psaasGlobals_1.GlobalStatistics.FIRE_ARRIVAL_TIME_MIN && this.statistic != psaasGlobals_1.GlobalStatistics.FIRE_ARRIVAL_TIME_MAX && this.statistic != psaasGlobals_1.GlobalStatistics.TOTAL_FUEL_CONSUMED &&
             this.statistic != psaasGlobals_1.GlobalStatistics.SURFACE_FUEL_CONSUMED && this.statistic != psaasGlobals_1.GlobalStatistics.CROWN_FUEL_CONSUMED && this.statistic != psaasGlobals_1.GlobalStatistics.RADIATIVE_POWER &&
-            this.statistic != psaasGlobals_1.GlobalStatistics.HFI && this.statistic != psaasGlobals_1.GlobalStatistics.HCFB) {
+            this.statistic != psaasGlobals_1.GlobalStatistics.HFI && this.statistic != psaasGlobals_1.GlobalStatistics.HCFB && this.statistic != psaasGlobals_1.GlobalStatistics.HROS_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.FROS_MAP &&
+            this.statistic != psaasGlobals_1.GlobalStatistics.BROS_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.RSS_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.RAZ_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.FMC_MAP &&
+            this.statistic != psaasGlobals_1.GlobalStatistics.CFB_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.CFC_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.SFC_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.TFC_MAP &&
+            this.statistic != psaasGlobals_1.GlobalStatistics.FI_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.FL_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.CURINGDEGREE_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.GREENUP_MAP &&
+            this.statistic != psaasGlobals_1.GlobalStatistics.PC_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.PDF_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.CBH_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.TREE_HEIGHT_MAP &&
+            this.statistic != psaasGlobals_1.GlobalStatistics.FUEL_LOAD_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.CFL_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.GRASSPHENOLOGY_MAP &&
+            this.statistic != psaasGlobals_1.GlobalStatistics.ROSVECTOR_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.DIRVECTOR_MAP) {
             errs.push(new psaasGlobals_1.ValidationError("statistic", "Invalid statistic specified for grid export.", this));
         }
         //catch an error where the interpolation method is restricted for the output statistic

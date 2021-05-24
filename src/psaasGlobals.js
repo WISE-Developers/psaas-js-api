@@ -2324,6 +2324,29 @@ var GlobalStatistics;
      */
     GlobalStatistics[GlobalStatistics["AREA_CHANGE"] = 83] = "AREA_CHANGE";
     GlobalStatistics[GlobalStatistics["BURN"] = 84] = "BURN";
+    GlobalStatistics[GlobalStatistics["HROS_MAP"] = 85] = "HROS_MAP";
+    GlobalStatistics[GlobalStatistics["FROS_MAP"] = 86] = "FROS_MAP";
+    GlobalStatistics[GlobalStatistics["BROS_MAP"] = 87] = "BROS_MAP";
+    GlobalStatistics[GlobalStatistics["RSS_MAP"] = 88] = "RSS_MAP";
+    GlobalStatistics[GlobalStatistics["RAZ_MAP"] = 89] = "RAZ_MAP";
+    GlobalStatistics[GlobalStatistics["FMC_MAP"] = 90] = "FMC_MAP";
+    GlobalStatistics[GlobalStatistics["CFB_MAP"] = 91] = "CFB_MAP";
+    GlobalStatistics[GlobalStatistics["CFC_MAP"] = 92] = "CFC_MAP";
+    GlobalStatistics[GlobalStatistics["SFC_MAP"] = 93] = "SFC_MAP";
+    GlobalStatistics[GlobalStatistics["TFC_MAP"] = 94] = "TFC_MAP";
+    GlobalStatistics[GlobalStatistics["FI_MAP"] = 95] = "FI_MAP";
+    GlobalStatistics[GlobalStatistics["FL_MAP"] = 96] = "FL_MAP";
+    GlobalStatistics[GlobalStatistics["CURINGDEGREE_MAP"] = 97] = "CURINGDEGREE_MAP";
+    GlobalStatistics[GlobalStatistics["GREENUP_MAP"] = 98] = "GREENUP_MAP";
+    GlobalStatistics[GlobalStatistics["PC_MAP"] = 99] = "PC_MAP";
+    GlobalStatistics[GlobalStatistics["PDF_MAP"] = 100] = "PDF_MAP";
+    GlobalStatistics[GlobalStatistics["CBH_MAP"] = 101] = "CBH_MAP";
+    GlobalStatistics[GlobalStatistics["TREE_HEIGHT_MAP"] = 102] = "TREE_HEIGHT_MAP";
+    GlobalStatistics[GlobalStatistics["FUEL_LOAD_MAP"] = 103] = "FUEL_LOAD_MAP";
+    GlobalStatistics[GlobalStatistics["CFL_MAP"] = 104] = "CFL_MAP";
+    GlobalStatistics[GlobalStatistics["GRASSPHENOLOGY_MAP"] = 105] = "GRASSPHENOLOGY_MAP";
+    GlobalStatistics[GlobalStatistics["ROSVECTOR_MAP"] = 106] = "ROSVECTOR_MAP";
+    GlobalStatistics[GlobalStatistics["DIRVECTOR_MAP"] = 107] = "DIRVECTOR_MAP";
 })(GlobalStatistics = exports.GlobalStatistics || (exports.GlobalStatistics = {}));
 class ValidationError {
     constructor(propertyName, message, object) {
