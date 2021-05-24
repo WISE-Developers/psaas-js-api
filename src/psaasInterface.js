@@ -4583,6 +4583,146 @@ class Output_GridFile {
         }
         this._outputTime = luxon_1.DateTime.fromISO(value);
     }
+    /**
+     * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
+     * CROWN_FUEL_CONSUMED, or RADIATIVE_POWER the {@link Output_GridFileInterpolation interpolation method} must be DISCRETIZED.
+     * Setting the output statistic to any of those values will automatically set the interpolation method.
+     *
+     * Valid values:
+     * <ul>
+     * <li>TEMPERATURE</li>
+     * <li>DEW_POINT</li>
+     * <li>RELATIVE_HUMIDITY</li>
+     * <li>WIND_DIRECTION</li>
+     * <li>WIND_SPEED</li>
+     * <li>PRECIPITATION</li>
+     * <li>FFMC</li>
+     * <li>ISI</li>
+     * <li>FWI</li>
+     * <li>BUI</li>
+     * <li>MAX_FI</li>
+     * <li>MAX_FL</li>
+     * <li>MAX_ROS</li>
+     * <li>MAX_SFC</li>
+     * <li>MAX_CFC</li>
+     * <li>MAX_TFC</li>
+     * <li>MAX_CFB</li>
+     * <li>RAZ</li>
+     * <li>BURN_GRID</li>
+     * <li>FIRE_ARRIVAL_TIME</li>
+     * <li>HROS</li>
+     * <li>FROS</li>
+     * <li>BROS</li>
+     * <li>RSS</li>
+     * <li>ACTIVE_PERIMETER</li>
+     * <li>BURN</li>
+     * <li>BURN_PERCENTAGE</li>
+     * <li>FIRE_ARRIVAL_TIME_MIN</li>
+     * <li>FIRE_ARRIVAL_TIME_MAX</li>
+     * <li>TOTAL_FUEL_CONSUMED</li>
+     * <li>SURFACE_FUEL_CONSUMED</li>
+     * <li>CROWN_FUEL_CONSUMED</li>
+     * <li>RADIATIVE_POWER</li>
+     * <li>HFI</li>
+     * <li>HCFB</li>
+     * <li>HROS_MAP</li>
+     * <li>FROS_MAP</li>
+     * <li>BROS_MAP</li>
+     * <li>RSS_MAP</li>
+     * <li>RAZ_MAP</li>
+     * <li>FMC_MAP</li>
+     * <li>CFB_MAP</li>
+     * <li>CFC_MAP</li>
+     * <li>SFC_MAP</li>
+     * <li>TFC_MAP</li>
+     * <li>FI_MAP</li>
+     * <li>FL_MAP</li>
+     * <li>CURINGDEGREE_MAP</li>
+     * <li>GREENUP_MAP</li>
+     * <li>PC_MAP</li>
+     * <li>PDF_MAP</li>
+     * <li>CBH_MAP</li>
+     * <li>TREE_HEIGHT_MAP</li>
+     * <li>FUEL_LOAD_MAP</li>
+     * <li>CFL_MAP</li>
+     * <li>GRASSPHENOLOGY_MAP</li>
+     * </ul>
+     */
+    get statistic() {
+        return this._statistic;
+    }
+    /**
+     * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
+     * CROWN_FUEL_CONSUMED, or RADIATIVE_POWER the {@link Output_GridFileInterpolation interpolation method} must be DISCRETIZED.
+     * Setting the output statistic to any of those values will automatically set the interpolation method.
+     *
+     * Valid values:
+     * <ul>
+     * <li>TEMPERATURE</li>
+     * <li>DEW_POINT</li>
+     * <li>RELATIVE_HUMIDITY</li>
+     * <li>WIND_DIRECTION</li>
+     * <li>WIND_SPEED</li>
+     * <li>PRECIPITATION</li>
+     * <li>FFMC</li>
+     * <li>ISI</li>
+     * <li>FWI</li>
+     * <li>BUI</li>
+     * <li>MAX_FI</li>
+     * <li>MAX_FL</li>
+     * <li>MAX_ROS</li>
+     * <li>MAX_SFC</li>
+     * <li>MAX_CFC</li>
+     * <li>MAX_TFC</li>
+     * <li>MAX_CFB</li>
+     * <li>RAZ</li>
+     * <li>BURN_GRID</li>
+     * <li>FIRE_ARRIVAL_TIME</li>
+     * <li>HROS</li>
+     * <li>FROS</li>
+     * <li>BROS</li>
+     * <li>RSS</li>
+     * <li>ACTIVE_PERIMETER</li>
+     * <li>BURN</li>
+     * <li>BURN_PERCENTAGE</li>
+     * <li>FIRE_ARRIVAL_TIME_MIN</li>
+     * <li>FIRE_ARRIVAL_TIME_MAX</li>
+     * <li>TOTAL_FUEL_CONSUMED</li>
+     * <li>SURFACE_FUEL_CONSUMED</li>
+     * <li>CROWN_FUEL_CONSUMED</li>
+     * <li>RADIATIVE_POWER</li>
+     * <li>HFI</li>
+     * <li>HCFB</li>
+     * <li>HROS_MAP</li>
+     * <li>FROS_MAP</li>
+     * <li>BROS_MAP</li>
+     * <li>RSS_MAP</li>
+     * <li>RAZ_MAP</li>
+     * <li>FMC_MAP</li>
+     * <li>CFB_MAP</li>
+     * <li>CFC_MAP</li>
+     * <li>SFC_MAP</li>
+     * <li>TFC_MAP</li>
+     * <li>FI_MAP</li>
+     * <li>FL_MAP</li>
+     * <li>CURINGDEGREE_MAP</li>
+     * <li>GREENUP_MAP</li>
+     * <li>PC_MAP</li>
+     * <li>PDF_MAP</li>
+     * <li>CBH_MAP</li>
+     * <li>TREE_HEIGHT_MAP</li>
+     * <li>FUEL_LOAD_MAP</li>
+     * <li>CFL_MAP</li>
+     * <li>GRASSPHENOLOGY_MAP</li>
+     * </ul>
+     */
+    set statistic(value) {
+        this._statistic = value;
+        if (value === psaasGlobals_1.GlobalStatistics.TOTAL_FUEL_CONSUMED || value === psaasGlobals_1.GlobalStatistics.SURFACE_FUEL_CONSUMED ||
+            value === psaasGlobals_1.GlobalStatistics.CROWN_FUEL_CONSUMED || value === psaasGlobals_1.GlobalStatistics.RADIATIVE_POWER) {
+            this.interpMethod = Output_GridFileInterpolation.DISCRETIZED;
+        }
+    }
     add_subScenarioOverrideTimes(add) {
         this.subScenarioOverrideTimes.push(add);
     }
@@ -4629,6 +4769,12 @@ class Output_GridFile {
             this.statistic != psaasGlobals_1.GlobalStatistics.SURFACE_FUEL_CONSUMED && this.statistic != psaasGlobals_1.GlobalStatistics.CROWN_FUEL_CONSUMED && this.statistic != psaasGlobals_1.GlobalStatistics.RADIATIVE_POWER &&
             this.statistic != psaasGlobals_1.GlobalStatistics.HFI && this.statistic != psaasGlobals_1.GlobalStatistics.HCFB) {
             errs.push(new psaasGlobals_1.ValidationError("statistic", "Invalid statistic specified for grid export.", this));
+        }
+        //catch an error where the interpolation method is restricted for the output statistic
+        else if ((this.statistic === psaasGlobals_1.GlobalStatistics.TOTAL_FUEL_CONSUMED || this.statistic === psaasGlobals_1.GlobalStatistics.SURFACE_FUEL_CONSUMED ||
+            this.statistic === psaasGlobals_1.GlobalStatistics.CROWN_FUEL_CONSUMED || this.statistic === psaasGlobals_1.GlobalStatistics.RADIATIVE_POWER) &&
+            this.interpMethod !== Output_GridFileInterpolation.DISCRETIZED) {
+            errs.push(new psaasGlobals_1.ValidationError("interpMethod", "Interpolation method must be discretized.", this));
         }
         let subscenarioErrs = new Array();
         for (let i = 0; i < this.subScenarioOverrideTimes.length; i++) {

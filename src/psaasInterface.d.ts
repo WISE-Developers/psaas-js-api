@@ -2346,10 +2346,139 @@ export declare class Output_GridFile {
      * @deprecated
      */
     set outputTime(value: string);
+    private _statistic;
     /**
-     * The statistic that should be output (required).
+     * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
+     * CROWN_FUEL_CONSUMED, or RADIATIVE_POWER the {@link Output_GridFileInterpolation interpolation method} must be DISCRETIZED.
+     * Setting the output statistic to any of those values will automatically set the interpolation method.
+     *
+     * Valid values:
+     * <ul>
+     * <li>TEMPERATURE</li>
+     * <li>DEW_POINT</li>
+     * <li>RELATIVE_HUMIDITY</li>
+     * <li>WIND_DIRECTION</li>
+     * <li>WIND_SPEED</li>
+     * <li>PRECIPITATION</li>
+     * <li>FFMC</li>
+     * <li>ISI</li>
+     * <li>FWI</li>
+     * <li>BUI</li>
+     * <li>MAX_FI</li>
+     * <li>MAX_FL</li>
+     * <li>MAX_ROS</li>
+     * <li>MAX_SFC</li>
+     * <li>MAX_CFC</li>
+     * <li>MAX_TFC</li>
+     * <li>MAX_CFB</li>
+     * <li>RAZ</li>
+     * <li>BURN_GRID</li>
+     * <li>FIRE_ARRIVAL_TIME</li>
+     * <li>HROS</li>
+     * <li>FROS</li>
+     * <li>BROS</li>
+     * <li>RSS</li>
+     * <li>ACTIVE_PERIMETER</li>
+     * <li>BURN</li>
+     * <li>BURN_PERCENTAGE</li>
+     * <li>FIRE_ARRIVAL_TIME_MIN</li>
+     * <li>FIRE_ARRIVAL_TIME_MAX</li>
+     * <li>TOTAL_FUEL_CONSUMED</li>
+     * <li>SURFACE_FUEL_CONSUMED</li>
+     * <li>CROWN_FUEL_CONSUMED</li>
+     * <li>RADIATIVE_POWER</li>
+     * <li>HFI</li>
+     * <li>HCFB</li>
+     * <li>HROS_MAP</li>
+     * <li>FROS_MAP</li>
+     * <li>BROS_MAP</li>
+     * <li>RSS_MAP</li>
+     * <li>RAZ_MAP</li>
+     * <li>FMC_MAP</li>
+     * <li>CFB_MAP</li>
+     * <li>CFC_MAP</li>
+     * <li>SFC_MAP</li>
+     * <li>TFC_MAP</li>
+     * <li>FI_MAP</li>
+     * <li>FL_MAP</li>
+     * <li>CURINGDEGREE_MAP</li>
+     * <li>GREENUP_MAP</li>
+     * <li>PC_MAP</li>
+     * <li>PDF_MAP</li>
+     * <li>CBH_MAP</li>
+     * <li>TREE_HEIGHT_MAP</li>
+     * <li>FUEL_LOAD_MAP</li>
+     * <li>CFL_MAP</li>
+     * <li>GRASSPHENOLOGY_MAP</li>
+     * </ul>
      */
-    statistic: GlobalStatistics;
+    get statistic(): GlobalStatistics;
+    /**
+     * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
+     * CROWN_FUEL_CONSUMED, or RADIATIVE_POWER the {@link Output_GridFileInterpolation interpolation method} must be DISCRETIZED.
+     * Setting the output statistic to any of those values will automatically set the interpolation method.
+     *
+     * Valid values:
+     * <ul>
+     * <li>TEMPERATURE</li>
+     * <li>DEW_POINT</li>
+     * <li>RELATIVE_HUMIDITY</li>
+     * <li>WIND_DIRECTION</li>
+     * <li>WIND_SPEED</li>
+     * <li>PRECIPITATION</li>
+     * <li>FFMC</li>
+     * <li>ISI</li>
+     * <li>FWI</li>
+     * <li>BUI</li>
+     * <li>MAX_FI</li>
+     * <li>MAX_FL</li>
+     * <li>MAX_ROS</li>
+     * <li>MAX_SFC</li>
+     * <li>MAX_CFC</li>
+     * <li>MAX_TFC</li>
+     * <li>MAX_CFB</li>
+     * <li>RAZ</li>
+     * <li>BURN_GRID</li>
+     * <li>FIRE_ARRIVAL_TIME</li>
+     * <li>HROS</li>
+     * <li>FROS</li>
+     * <li>BROS</li>
+     * <li>RSS</li>
+     * <li>ACTIVE_PERIMETER</li>
+     * <li>BURN</li>
+     * <li>BURN_PERCENTAGE</li>
+     * <li>FIRE_ARRIVAL_TIME_MIN</li>
+     * <li>FIRE_ARRIVAL_TIME_MAX</li>
+     * <li>TOTAL_FUEL_CONSUMED</li>
+     * <li>SURFACE_FUEL_CONSUMED</li>
+     * <li>CROWN_FUEL_CONSUMED</li>
+     * <li>RADIATIVE_POWER</li>
+     * <li>HFI</li>
+     * <li>HCFB</li>
+     * <li>HROS_MAP</li>
+     * <li>FROS_MAP</li>
+     * <li>BROS_MAP</li>
+     * <li>RSS_MAP</li>
+     * <li>RAZ_MAP</li>
+     * <li>FMC_MAP</li>
+     * <li>CFB_MAP</li>
+     * <li>CFC_MAP</li>
+     * <li>SFC_MAP</li>
+     * <li>TFC_MAP</li>
+     * <li>FI_MAP</li>
+     * <li>FL_MAP</li>
+     * <li>CURINGDEGREE_MAP</li>
+     * <li>GREENUP_MAP</li>
+     * <li>PC_MAP</li>
+     * <li>PDF_MAP</li>
+     * <li>CBH_MAP</li>
+     * <li>TREE_HEIGHT_MAP</li>
+     * <li>FUEL_LOAD_MAP</li>
+     * <li>CFL_MAP</li>
+     * <li>GRASSPHENOLOGY_MAP</li>
+     * </ul>
+     */
+    set statistic(value: GlobalStatistics);
     /**
      * The interpolation method (required).
      */
