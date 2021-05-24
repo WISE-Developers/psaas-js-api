@@ -360,6 +360,9 @@ export declare class FGMOptions {
     static readonly PARAM_DY = "fgm_dy";
     static readonly PARAM_DT = "fgm_dt";
     static readonly PARAM_DWD = "fgm_dwd";
+    static readonly PARAM_OWD = "fgm_owd";
+    static readonly PARAM_DVD = "fgm_dvd";
+    static readonly PARAM_OVD = "fgm_ovd";
     static readonly PARAM_GROWTHAPPLIED = "fgm_growthPercApplied";
     static readonly PARAM_GROWTHPERC = "fgm_growthPercentile";
     static readonly PARAM_SUPPRESS_TIGHT_CONCAVE = "fgm_suppressTightConcave";
@@ -530,6 +533,59 @@ export declare class FGMOptions {
      * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
      */
     set dwd(value: number);
+    /**
+     * What to change the wind direction to, to perform probabilistic analyses on weather.
+     * Applied after all patches and grids, and does not recalculate any FWI calculations.
+     * Applied before any FBP calculations.
+     * Provided in compass degrees, 0 to 360 is acceptable.
+     * Applied to both simulations, and to instantaneous calculations as shown on the map trace view query, for consistency.
+     */
+    private _owd;
+    /**
+     * Get the value to override wind directions to perform probabilistic analyses on weather.
+     */
+    get owd(): number;
+    /**
+     * Set the value to change the wind direction to for the entire grid, in compass degrees. Must be between in [0, 360).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set owd(value: number);
+    /**
+     * Used to calculate grid-based statistics without modelling a fire. Where-as various inputs will determine the dimensions and
+     * orientation of the ellipse representing fire growth at a location, this value determines the direction of vector growth out
+     * of the defined ellipse. In this mode, provided FBP equationsa are used. oVD stands for overrideVectorDirection.
+     * What to define (or change) the vector direction to.
+     * Applied after all patches and grids, and does not recalculate any FWI calculations.
+     * Provided in compass degrees, 0 to 360 is acceptable.
+     */
+    private _ovd;
+    /**
+     * Get the direction of vector growth out of a defined ellipse.
+     */
+    get ovd(): number;
+    /**
+     * Set the value of the vector growth out of a defined ellipse in compass degrees. Must be in [0, 360).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set ovd(value: number);
+    /**
+     * Used to calculate grid-based statistics without modelling a fire.  Where-as various inputs will determine the dimensions and
+     * orientation of the ellipse representing fire growth at a location, this value determines the direction of vector growth out
+     * of the defined ellipse.  In this mode, provided FBP equations are used.  dVD stands for deltaVectorDirection.
+     * How much to nudge wind direction to perform probabilistic analyses on weather.
+     * Applied after all patches and grids, and does not recalculate any FWI calculations.
+     * Provided in compass degrees, -360 to 360 is acceptable.
+     */
+    private _dvd;
+    /**
+     * Get the amount to nudge the wind direction when performing probabilistic analyses on weather.
+     */
+    get dvd(): number;
+    /**
+     * Set the amount to nudge the wind direction when performing probabilistic analyses on weather. Must be in [-360, 360].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dvd(value: number);
     /**
      * Whether the growth percentile value is applied (optional).
      * Has a default value.

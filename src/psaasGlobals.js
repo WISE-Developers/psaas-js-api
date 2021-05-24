@@ -745,6 +745,32 @@ class FGMOptions {
          */
         this._dwd = null;
         /**
+         * What to change the wind direction to, to perform probabilistic analyses on weather.
+         * Applied after all patches and grids, and does not recalculate any FWI calculations.
+         * Applied before any FBP calculations.
+         * Provided in compass degrees, 0 to 360 is acceptable.
+         * Applied to both simulations, and to instantaneous calculations as shown on the map trace view query, for consistency.
+         */
+        this._owd = null;
+        /**
+         * Used to calculate grid-based statistics without modelling a fire. Where-as various inputs will determine the dimensions and
+         * orientation of the ellipse representing fire growth at a location, this value determines the direction of vector growth out
+         * of the defined ellipse. In this mode, provided FBP equationsa are used. oVD stands for overrideVectorDirection.
+         * What to define (or change) the vector direction to.
+         * Applied after all patches and grids, and does not recalculate any FWI calculations.
+         * Provided in compass degrees, 0 to 360 is acceptable.
+         */
+        this._ovd = null;
+        /**
+         * Used to calculate grid-based statistics without modelling a fire.  Where-as various inputs will determine the dimensions and
+         * orientation of the ellipse representing fire growth at a location, this value determines the direction of vector growth out
+         * of the defined ellipse.  In this mode, provided FBP equations are used.  dVD stands for deltaVectorDirection.
+         * How much to nudge wind direction to perform probabilistic analyses on weather.
+         * Applied after all patches and grids, and does not recalculate any FWI calculations.
+         * Provided in compass degrees, -360 to 360 is acceptable.
+         */
+        this._dvd = null;
+        /**
          * Whether the growth percentile value is applied (optional).
          * Has a default value.
          */
@@ -947,6 +973,54 @@ class FGMOptions {
         this._dwd = value;
     }
     /**
+     * Get the value to override wind directions to perform probabilistic analyses on weather.
+     */
+    get owd() {
+        return this._owd;
+    }
+    /**
+     * Set the value to change the wind direction to for the entire grid, in compass degrees. Must be between in [0, 360).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set owd(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value < 0 || value >= 360)) {
+            throw new RangeError("The wind direction override value is not valid.");
+        }
+        this._owd = value;
+    }
+    /**
+     * Get the direction of vector growth out of a defined ellipse.
+     */
+    get ovd() {
+        return this._ovd;
+    }
+    /**
+     * Set the value of the vector growth out of a defined ellipse in compass degrees. Must be in [0, 360).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set ovd(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value < 0 || value >= 360)) {
+            throw new RangeError("The vector growth direction is not valid.");
+        }
+        this._ovd = value;
+    }
+    /**
+     * Get the amount to nudge the wind direction when performing probabilistic analyses on weather.
+     */
+    get dvd() {
+        return this._dvd;
+    }
+    /**
+     * Set the amount to nudge the wind direction when performing probabilistic analyses on weather. Must be in [-360, 360].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dvd(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value < -360 || value > 360)) {
+            throw new RangeError("The wind direction nudge distance for probabilistic analysis is not valid.");
+        }
+        this._dvd = value;
+    }
+    /**
      * Get the growth percentile.
      */
     get growthPercentile() {
@@ -1072,6 +1146,21 @@ class FGMOptions {
         if (this._dwd != null) {
             if (this._dwd < -360.0 || this._dwd > 360.0) {
                 errs.push(new ValidationError("dwd", "A delta value for the wind direction is set but is not valid.", this));
+            }
+        }
+        if (this._owd != null) {
+            if (this._owd < 0.0 || this._owd >= 360.0) {
+                errs.push(new ValidationError("owd", "A wind direction override value is set but is not valid.", this));
+            }
+        }
+        if (this._dvd != null) {
+            if (this._dvd < -360.0 || this._dvd > 360.0) {
+                errs.push(new ValidationError("dvd", "A delta value for the wind direction on probabilistic analysis is set but is not valid.", this));
+            }
+        }
+        if (this._ovd != null) {
+            if (this._ovd < 0.0 || this._ovd >= 360.0) {
+                errs.push(new ValidationError("ovd", "A vector growth direction is set but is not valid.", this));
             }
         }
         if (this.growthPercentileApplied != null && this.growthPercentileApplied) {
@@ -1208,6 +1297,18 @@ class FGMOptions {
             builder.write(FGMOptions.PARAM_DWD + SocketMsg.NEWLINE);
             builder.write(this._dwd + SocketMsg.NEWLINE);
         }
+        if (this._owd != null) {
+            builder.write(FGMOptions.PARAM_OWD + SocketMsg.NEWLINE);
+            builder.write(this._owd + SocketMsg.NEWLINE);
+        }
+        if (this._dvd != null) {
+            builder.write(FGMOptions.PARAM_DVD + SocketMsg.NEWLINE);
+            builder.write(this._dvd + SocketMsg.NEWLINE);
+        }
+        if (this._ovd != null) {
+            builder.write(FGMOptions.PARAM_OVD + SocketMsg.NEWLINE);
+            builder.write(this._ovd + SocketMsg.NEWLINE);
+        }
         if (this.growthPercentileApplied != null) {
             builder.write(FGMOptions.PARAM_GROWTHAPPLIED + SocketMsg.NEWLINE);
             builder.write((+this.growthPercentileApplied) + SocketMsg.NEWLINE);
@@ -1300,6 +1401,18 @@ class FGMOptions {
             builder.write(FGMOptions.PARAM_DWD + SocketMsg.NEWLINE);
             builder.write(this._dwd + SocketMsg.NEWLINE);
         }
+        if (this._owd != null) {
+            builder.write(FGMOptions.PARAM_OWD + SocketMsg.NEWLINE);
+            builder.write(this._owd + SocketMsg.NEWLINE);
+        }
+        if (this._dvd != null) {
+            builder.write(FGMOptions.PARAM_DVD + SocketMsg.NEWLINE);
+            builder.write(this._dvd + SocketMsg.NEWLINE);
+        }
+        if (this._ovd != null) {
+            builder.write(FGMOptions.PARAM_OVD + SocketMsg.NEWLINE);
+            builder.write(this._ovd + SocketMsg.NEWLINE);
+        }
         if (this.growthPercentileApplied != null) {
             builder.write(FGMOptions.PARAM_GROWTHAPPLIED + SocketMsg.NEWLINE);
             builder.write((+this.growthPercentileApplied) + SocketMsg.NEWLINE);
@@ -1347,6 +1460,9 @@ FGMOptions.PARAM_DX = "fgm_dx";
 FGMOptions.PARAM_DY = "fgm_dy";
 FGMOptions.PARAM_DT = "fgm_dt";
 FGMOptions.PARAM_DWD = "fgm_dwd";
+FGMOptions.PARAM_OWD = "fgm_owd";
+FGMOptions.PARAM_DVD = "fgm_dvd";
+FGMOptions.PARAM_OVD = "fgm_ovd";
 FGMOptions.PARAM_GROWTHAPPLIED = "fgm_growthPercApplied";
 FGMOptions.PARAM_GROWTHPERC = "fgm_growthPercentile";
 FGMOptions.PARAM_SUPPRESS_TIGHT_CONCAVE = "fgm_suppressTightConcave";
