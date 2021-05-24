@@ -4401,6 +4401,9 @@ var Output_GridFileInterpolation;
      * Interpolate using voronoi area weighting.
      */
     Output_GridFileInterpolation["AREA_WEIGHTING"] = "AreaWeighting";
+    Output_GridFileInterpolation["CALCULATE"] = "Calculate";
+    Output_GridFileInterpolation["DISCRETIZED"] = "Discretized";
+    Output_GridFileInterpolation["VORONOI_OVERLAP"] = "VoronoiOverlap";
 })(Output_GridFileInterpolation = exports.Output_GridFileInterpolation || (exports.Output_GridFileInterpolation = {}));
 /**
  * If the grid file is a TIF file its contents can be
@@ -4510,6 +4513,12 @@ class Output_GridFile {
          */
         this._outputTime = null;
         /**
+         * The amount to discritize the existing grid to (optional).
+         * Only applicable if the interpolation mode is set to {@link Output_GridFileInterpolation.DISCRETIZED}.
+         * Must be in [1, 1000].
+         */
+        this.discretize = null;
+        /**
          * The name of the scenario that this output is for (required).
          */
         this.scenarioName = "";
@@ -4601,6 +4610,9 @@ class Output_GridFile {
         if (this.interpMethod == null) {
             errs.push(new psaasGlobals_1.ValidationError("interpMethod", "The interpolation method has not been specified.", this));
         }
+        if (this.discretize != null && (this.discretize < 1 || this.discretize > 1000)) {
+            errs.push(new psaasGlobals_1.ValidationError("discritize", "The discritization must be an integer greater than 0 and less than 1001.", this));
+        }
         if (this.statistic == null) {
             errs.push(new psaasGlobals_1.ValidationError("statistic", "The statistic to export has not been specified.", this));
         }
@@ -4650,6 +4662,9 @@ class Output_GridFile {
         tmp = tmp + '|' + this.shouldMinimize + '|' + Output_GridFile.streamNullableString(this.subScenarioName) + '|' + this.subScenarioOverrideTimes.length;
         for (let e of this.subScenarioOverrideTimes) {
             tmp = tmp + '|' + e.subScenarioName + '|' + e.getExportOverrideTime();
+        }
+        if (this.discretize != null) {
+            tmp = tmp + '|' + this.discretize;
         }
         builder.write(Output_GridFile.PARAM_GRIDFILE + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);

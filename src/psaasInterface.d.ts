@@ -2240,7 +2240,10 @@ export declare enum Output_GridFileInterpolation {
     /**
      * Interpolate using voronoi area weighting.
      */
-    AREA_WEIGHTING = "AreaWeighting"
+    AREA_WEIGHTING = "AreaWeighting",
+    CALCULATE = "Calculate",
+    DISCRETIZED = "Discretized",
+    VORONOI_OVERLAP = "VoronoiOverlap"
 }
 /**
  * If the grid file is a TIF file its contents can be
@@ -2351,6 +2354,12 @@ export declare class Output_GridFile {
      * The interpolation method (required).
      */
     interpMethod: Output_GridFileInterpolation;
+    /**
+     * The amount to discritize the existing grid to (optional).
+     * Only applicable if the interpolation mode is set to {@link Output_GridFileInterpolation.DISCRETIZED}.
+     * Must be in [1, 1000].
+     */
+    discretize: number;
     /**
      * The name of the scenario that this output is for (required).
      */
