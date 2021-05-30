@@ -252,6 +252,7 @@ export declare class TimeRange {
      * or a luxon {@link DateTime}.
      */
     endTime: string | DateTime;
+    constructor(startTime: string | DateTime, endTime: string | DateTime);
 }
 /**
  * A class to hold information about time zone names retrieved from Java.

@@ -456,6 +456,10 @@ exports.Duration = Duration;
  * A range of times represented by a start and end time.
  */
 class TimeRange {
+    constructor(startTime, endTime) {
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
 }
 exports.TimeRange = TimeRange;
 /**
