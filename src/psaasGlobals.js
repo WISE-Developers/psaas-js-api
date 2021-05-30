@@ -3,8 +3,7 @@
  * Global classes needed for multiple parts of the API.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ValidationError = exports.GlobalStatistics = exports.SummaryOutputs = exports.PSaaSLogger = exports.PSaaSLogLevel = exports.VectorMetadata = exports.FWIOptions = exports.FMCOptions = exports.FBPOptions = exports.FGMOptions = exports.AssetOperation = exports.Timezone = exports.TimezoneName = exports.Duration = exports.LatLon = exports.Province = exports.Units = exports.IPSaaSSerializable = exports.SocketHelper = exports.SocketMsg = void 0;
-/** ignore this comment */
+exports.ValidationError = exports.GlobalStatistics = exports.SummaryOutputs = exports.PSaaSLogger = exports.PSaaSLogLevel = exports.VectorMetadata = exports.FWIOptions = exports.FMCOptions = exports.FBPOptions = exports.FGMOptions = exports.AssetOperation = exports.Timezone = exports.TimezoneName = exports.TimeRange = exports.Duration = exports.LatLon = exports.Province = exports.Units = exports.IPSaaSSerializable = exports.SocketHelper = exports.SocketMsg = void 0;
 const net = require("net");
 class SocketMsg {
 }
@@ -453,6 +452,12 @@ class Duration {
     }
 }
 exports.Duration = Duration;
+/**
+ * A range of times represented by a start and end time.
+ */
+class TimeRange {
+}
+exports.TimeRange = TimeRange;
 /**
  * An error type indicating that a {@link Duration} is not valid.
  */

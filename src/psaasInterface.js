@@ -4766,9 +4766,15 @@ class Output_GridFile {
          */
         this.filename = "";
         /**
-         * Output time (required).
+         * The end of the output time range (required). Will also be
+         * used as the start of the output time range if the start
+         * output time has not been specified.
          */
         this._outputTime = null;
+        /**
+         * The start of the output time range (optional).
+         */
+        this._startOutputTime = null;
         /**
          * The amount to discritize the existing grid to (optional).
          * Only applicable if the interpolation mode is set to {@link Output_GridFileInterpolation.DISCRETIZED}.
@@ -4807,20 +4813,22 @@ class Output_GridFile {
         this.subScenarioOverrideTimes = new Array();
     }
     /**
-     * Get the export time as a Luxon DateTime.
+     * Get the end export time as a Luxon DateTime.
      */
     get lOutputTime() {
         return this._outputTime;
     }
     /**
-     * Get the export time as an ISO8601 string.
-     * @deprecated
+     * Get the end export time as an ISO8601 string.
+     * @deprecated Use lOutputTime instead.
      */
     get outputTime() {
         return this._outputTime == null ? "" : this._outputTime.toISO();
     }
     /**
-     * Set the export time using a Luxon DateTime. Cannot be null.
+     * Set the end export time using a Luxon DateTime. Cannot be null. If
+     * the start export time is not set this value will also be used for
+     * the start time.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
      */
     set lOutputTime(value) {
@@ -4831,14 +4839,42 @@ class Output_GridFile {
     }
     /**
      * Set the export time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * If the start export time is not set this value will also be used for
+     * the start time.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
-     * @deprecated
+     * @deprecated Use lOutputTime instead.
      */
     set outputTime(value) {
         if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
             throw new RangeError("The export time is not valid");
         }
         this._outputTime = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * Get the start export time as a Luxon DateTime.
+     */
+    get lStartOutputTime() {
+        return this._startOutputTime;
+    }
+    /**
+     * Get the start export time as an ISO8601 string.
+     * @deprecated Use lStartOutputTime instead.
+     */
+    get startOutputTime() {
+        return this._startOutputTime == null ? "" : this._startOutputTime.toISO();
+    }
+    /**
+     * Set the start export time using a Luxon DateTime. Use null to clear the value.
+     */
+    set lStartOutputTime(value) {
+        this._startOutputTime = value;
+    }
+    /**
+     * Set the start export time using a string. Use null to clear the value.
+     * @deprecated Use lOutputTime instead.
+     */
+    set startOutputTime(value) {
+        this._startOutputTime = luxon_1.DateTime.fromISO(value);
     }
     /**
      * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
@@ -5078,6 +5114,18 @@ class Output_GridFile {
         }
         if (this.discretize != null) {
             tmp = tmp + '|' + this.discretize;
+        }
+        else {
+            //TODO remove the if and just send null, this is just to help ensure PSaaS Builder compatibility for now
+            if (this._startOutputTime != null) {
+                tmp = tmp + '|null';
+            }
+        }
+        if (this._startOutputTime != null) {
+            tmp = tmp + '|' + this._startOutputTime.toISO();
+        }
+        else {
+            tmp = tmp + '|null';
         }
         builder.write(Output_GridFile.PARAM_GRIDFILE + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
@@ -7550,7 +7598,25 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
             ogf.outputTime = time;
         }
         else {
-            ogf.lOutputTime = time;
+            if (time instanceof psaasGlobals_1.TimeRange) {
+                if (typeof time.endTime === "string") {
+                    ogf.outputTime = time.endTime;
+                }
+                else {
+                    ogf.lOutputTime = time.endTime;
+                }
+                if (time.startTime != null) {
+                    if (typeof time.startTime === "string") {
+                        ogf.startOutputTime = time.startTime;
+                    }
+                    else {
+                        ogf.lStartOutputTime = time.startTime;
+                    }
+                }
+            }
+            else {
+                ogf.lOutputTime = time;
+            }
         }
         ogf.scenarioName = scen.getId();
         ogf.statistic = stat;

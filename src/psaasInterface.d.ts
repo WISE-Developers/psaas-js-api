@@ -10,7 +10,7 @@
 /// <reference types="node" />
 import { DateTime } from "luxon";
 import * as net from "net";
-import { LatLon, Duration, FGMOptions, FBPOptions, FMCOptions, FWIOptions, Timezone, VectorMetadata, SummaryOutputs, IPSaaSSerializable, AssetOperation, GlobalStatistics, ValidationError } from "./psaasGlobals";
+import { LatLon, Duration, FGMOptions, FBPOptions, FMCOptions, FWIOptions, Timezone, VectorMetadata, SummaryOutputs, IPSaaSSerializable, AssetOperation, GlobalStatistics, ValidationError, TimeRange } from "./psaasGlobals";
 export declare class VersionInfo {
     static readonly version_info: string;
     static readonly release_date: string;
@@ -2445,29 +2445,57 @@ export declare class Output_GridFile {
      */
     filename: string;
     /**
-     * Output time (required).
+     * The end of the output time range (required). Will also be
+     * used as the start of the output time range if the start
+     * output time has not been specified.
      */
     private _outputTime;
     /**
-     * Get the export time as a Luxon DateTime.
+     * Get the end export time as a Luxon DateTime.
      */
     get lOutputTime(): DateTime;
     /**
-     * Get the export time as an ISO8601 string.
-     * @deprecated
+     * Get the end export time as an ISO8601 string.
+     * @deprecated Use lOutputTime instead.
      */
     get outputTime(): string;
     /**
-     * Set the export time using a Luxon DateTime. Cannot be null.
+     * Set the end export time using a Luxon DateTime. Cannot be null. If
+     * the start export time is not set this value will also be used for
+     * the start time.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
      */
     set lOutputTime(value: DateTime);
     /**
      * Set the export time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * If the start export time is not set this value will also be used for
+     * the start time.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
-     * @deprecated
+     * @deprecated Use lOutputTime instead.
      */
     set outputTime(value: string);
+    /**
+     * The start of the output time range (optional).
+     */
+    private _startOutputTime;
+    /**
+     * Get the start export time as a Luxon DateTime.
+     */
+    get lStartOutputTime(): DateTime;
+    /**
+     * Get the start export time as an ISO8601 string.
+     * @deprecated Use lStartOutputTime instead.
+     */
+    get startOutputTime(): string;
+    /**
+     * Set the start export time using a Luxon DateTime. Use null to clear the value.
+     */
+    set lStartOutputTime(value: DateTime);
+    /**
+     * Set the start export time using a string. Use null to clear the value.
+     * @deprecated Use lOutputTime instead.
+     */
+    set startOutputTime(value: string);
     private _statistic;
     /**
      * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
@@ -3896,7 +3924,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param scen The scenario to output the data for.
      * @return Output_GridFile
      */
-    addOutputGridFileToScenario(stat: GlobalStatistics.TEMPERATURE | GlobalStatistics.DEW_POINT | GlobalStatistics.RELATIVE_HUMIDITY | GlobalStatistics.WIND_DIRECTION | GlobalStatistics.WIND_SPEED | GlobalStatistics.PRECIPITATION | GlobalStatistics.FFMC | GlobalStatistics.ISI | GlobalStatistics.FWI | GlobalStatistics.BUI | GlobalStatistics.MAX_FI | GlobalStatistics.MAX_FL | GlobalStatistics.MAX_ROS | GlobalStatistics.MAX_SFC | GlobalStatistics.MAX_CFC | GlobalStatistics.MAX_TFC | GlobalStatistics.MAX_CFB | GlobalStatistics.RAZ | GlobalStatistics.BURN_GRID | GlobalStatistics.FIRE_ARRIVAL_TIME | GlobalStatistics.HROS | GlobalStatistics.FROS | GlobalStatistics.BROS | GlobalStatistics.RSS | GlobalStatistics.ACTIVE_PERIMETER | GlobalStatistics.BURN | GlobalStatistics.BURN_PERCENTAGE | GlobalStatistics.FIRE_ARRIVAL_TIME_MIN | GlobalStatistics.FIRE_ARRIVAL_TIME_MAX | GlobalStatistics.TOTAL_FUEL_CONSUMED | GlobalStatistics.SURFACE_FUEL_CONSUMED | GlobalStatistics.CROWN_FUEL_CONSUMED | GlobalStatistics.RADIATIVE_POWER | GlobalStatistics.HFI | GlobalStatistics.HCFB, filename: string, time: string | DateTime, interpMethod: Output_GridFileInterpolation, scen: Scenario): Output_GridFile;
+    addOutputGridFileToScenario(stat: GlobalStatistics.TEMPERATURE | GlobalStatistics.DEW_POINT | GlobalStatistics.RELATIVE_HUMIDITY | GlobalStatistics.WIND_DIRECTION | GlobalStatistics.WIND_SPEED | GlobalStatistics.PRECIPITATION | GlobalStatistics.FFMC | GlobalStatistics.ISI | GlobalStatistics.FWI | GlobalStatistics.BUI | GlobalStatistics.MAX_FI | GlobalStatistics.MAX_FL | GlobalStatistics.MAX_ROS | GlobalStatistics.MAX_SFC | GlobalStatistics.MAX_CFC | GlobalStatistics.MAX_TFC | GlobalStatistics.MAX_CFB | GlobalStatistics.RAZ | GlobalStatistics.BURN_GRID | GlobalStatistics.FIRE_ARRIVAL_TIME | GlobalStatistics.HROS | GlobalStatistics.FROS | GlobalStatistics.BROS | GlobalStatistics.RSS | GlobalStatistics.ACTIVE_PERIMETER | GlobalStatistics.BURN | GlobalStatistics.BURN_PERCENTAGE | GlobalStatistics.FIRE_ARRIVAL_TIME_MIN | GlobalStatistics.FIRE_ARRIVAL_TIME_MAX | GlobalStatistics.TOTAL_FUEL_CONSUMED | GlobalStatistics.SURFACE_FUEL_CONSUMED | GlobalStatistics.CROWN_FUEL_CONSUMED | GlobalStatistics.RADIATIVE_POWER | GlobalStatistics.HFI | GlobalStatistics.HCFB | GlobalStatistics.HROS_MAP | GlobalStatistics.FROS_MAP | GlobalStatistics.BROS_MAP | GlobalStatistics.RSS_MAP | GlobalStatistics.RAZ_MAP | GlobalStatistics.FMC_MAP | GlobalStatistics.CFB_MAP | GlobalStatistics.CFC_MAP | GlobalStatistics.SFC_MAP | GlobalStatistics.TFC_MAP | GlobalStatistics.FI_MAP | GlobalStatistics.FL_MAP | GlobalStatistics.CURINGDEGREE_MAP | GlobalStatistics.GREENUP_MAP | GlobalStatistics.PC_MAP | GlobalStatistics.PDF_MAP | GlobalStatistics.CBH_MAP | GlobalStatistics.TREE_HEIGHT_MAP | GlobalStatistics.FUEL_LOAD_MAP | GlobalStatistics.CFL_MAP | GlobalStatistics.GRASSPHENOLOGY_MAP | GlobalStatistics.ROSVECTOR_MAP | GlobalStatistics.DIRVECTOR_MAP, filename: string, time: string | DateTime | TimeRange, interpMethod: Output_GridFileInterpolation, scen: Scenario): Output_GridFile;
     /**
      * Removes the output grid file from a scenario
      */

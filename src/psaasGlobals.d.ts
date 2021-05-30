@@ -3,6 +3,7 @@
  */
 /// <reference types="node" />
 /** ignore this comment */
+import { DateTime } from "luxon";
 import * as net from "net";
 export declare class SocketMsg {
     static readonly STARTUP: string;
@@ -236,6 +237,21 @@ export declare class Duration {
     protected _parseTime(): void;
     protected _parseTimeModifier(num: string): void;
     protected _nextToken(): string;
+}
+/**
+ * A range of times represented by a start and end time.
+ */
+export declare class TimeRange {
+    /**
+     * The start of the time range. Can either be an ISO8601 formatted string
+     * or a luxon {@link DateTime}.
+     */
+    startTime: string | DateTime;
+    /**
+     * The end of the time range. Can either be an ISO8601 formatted string
+     * or a luxon {@link DateTime}.
+     */
+    endTime: string | DateTime;
 }
 /**
  * A class to hold information about time zone names retrieved from Java.
