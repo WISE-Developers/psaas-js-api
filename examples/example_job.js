@@ -135,6 +135,8 @@ function handleErrorNode(node) {
     ovf1.metadata = jDefaults.metadataDefaults;
     let ogf1 = prom.addOutputGridFileToScenario(psaas_js_api_1.globals.GlobalStatistics.TEMPERATURE, 'scen0/temp.txt', luxon_1.DateTime.fromISO('2001-10-16T21:00:00-05:00'), psaas_js_api_1.psaas.Output_GridFileInterpolation.IDW, scen1);
     let ogf2 = prom.addOutputGridFileToScenario(psaas_js_api_1.globals.GlobalStatistics.BURN_GRID, "scen0/burn_grid.tif", luxon_1.DateTime.fromISO('2001-10-16T22:00:00-05:00'), psaas_js_api_1.psaas.Output_GridFileInterpolation.IDW, scen1);
+    let ogf3 = prom.addOutputGridFileToScenario(psaas_js_api_1.globals.GlobalStatistics.TOTAL_FUEL_CONSUMED, "scen0/total_fuel_consumed.tif", new psaas_js_api_1.globals.TimeRange(luxon_1.DateTime.fromISO('2001-10-16T14:00:00-05:00'), luxon_1.DateTime.fromISO('2001-10-16T22:00:00-05:00')), psaas_js_api_1.psaas.Output_GridFileInterpolation.DISCRETIZED, scen1);
+    ogf3.discretize = 10;
     //allow the file to be streamed to a remote location after it is written (ex. streamOutputToMqtt, streamOutputToGeoServer).
     ogf2.shouldStream = true;
     let osf1 = prom.addOutputSummaryFileToScenario(scen1, 'scen0/summary.txt');
