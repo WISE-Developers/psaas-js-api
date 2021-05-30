@@ -7,7 +7,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const psaas_js_api_1 = require("psaas-js-api");
 const luxon_1 = require("luxon");
-const semver = require("semver");
 let serverConfig = new psaas_js_api_1.defaults.ServerConfiguration();
 //initialize the connection settings for PSaaS_Builder
 psaas_js_api_1.globals.SocketHelper.initialize(serverConfig.builderAddress, serverConfig.builderPort);
@@ -164,14 +163,9 @@ function handleErrorNode(node) {
     }
     else {
         let wrapper = null;
-        if (semver.gte(psaas_js_api_1.psaas.VersionInfo.localVersion(psaas_js_api_1.psaas.VersionInfo.version_info), '2.6.1')) {
-            //validate the job asynchronously
-            wrapper = await prom.validateJobPromise();
-        }
-        else {
-            //start the job asynchronously
-            wrapper = await prom.beginJobPromise();
-        }
+        //validate the job asynchronously
+        //assume we will always have a backend that is capable of using validation now as the versioning is no longer compatible with semver
+        wrapper = await prom.validateJobPromise();
         //trim the name of the newly started job
         let jobName = wrapper.name.replace(/^\s+|\s+$/g, '');
         //a manager for listening for status messages
