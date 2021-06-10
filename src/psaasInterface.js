@@ -3235,6 +3235,12 @@ exports.TargetReference = TargetReference;
 class TimestepSettings {
     constructor() {
         this.statistics = new Array();
+        /**
+         * The amount to discritize the existing grid to (optional).
+         * Will only be applied to statistics that require a discretization parameter.
+         * Must be in [1,1001].
+         */
+        this.discretize = null;
     }
     /**
      * Check to see if a global statistic if valid to be used as a timestep setting.
@@ -3300,6 +3306,9 @@ class TimestepSettings {
             });
             errs.push(temp);
         }
+        if (this.discretize != null && (this.discretize < 1 || this.discretize > 1000)) {
+            errs.push(new psaasGlobals_1.ValidationError("discritize", "The discritization must be an integer greater than 0 and less than 1001.", this));
+        }
         return errs;
     }
     /**
@@ -3307,6 +3316,10 @@ class TimestepSettings {
      * @param builder
      */
     stream(builder) {
+        if (this.discretize != null) {
+            builder.write(TimestepSettings.PARAM_EMIT_STATISTIC + psaasGlobals_1.SocketMsg.NEWLINE);
+            builder.write(`d|${this.discretize}${psaasGlobals_1.SocketMsg.NEWLINE}`);
+        }
         this.statistics.forEach(element => {
             builder.write(TimestepSettings.PARAM_EMIT_STATISTIC + psaasGlobals_1.SocketMsg.NEWLINE);
             builder.write(element + psaasGlobals_1.SocketMsg.NEWLINE);
@@ -5116,10 +5129,7 @@ class Output_GridFile {
             tmp = tmp + '|' + this.discretize;
         }
         else {
-            //TODO remove the if and just send null, this is just to help ensure PSaaS Builder compatibility for now
-            if (this._startOutputTime != null) {
-                tmp = tmp + '|null';
-            }
+            tmp = tmp + '|null';
         }
         if (this._startOutputTime != null) {
             tmp = tmp + '|' + this._startOutputTime.toISO();
@@ -5672,6 +5682,11 @@ class StatsFile {
          * will be added to the file.
          */
         this.columns = new Array();
+        /**
+         * The amount to discritize the existing grid to (optional).
+         * Must be in [1, 1000].
+         */
+        this.discretize = null;
         this.scenName = scen.getId();
         this.shouldStream = false;
     }
@@ -5799,6 +5814,9 @@ class StatsFile {
             });
             errs.push(temp);
         }
+        if (this.discretize != null && (this.discretize < 1 || this.discretize > 1000)) {
+            errs.push(new psaasGlobals_1.ValidationError("discritize", "The discritization must be an integer greater than 0 and less than 1001.", this));
+        }
         return errs;
     }
     /**
@@ -5816,6 +5834,12 @@ class StatsFile {
         tmp = tmp + '|0|' + this.columns.length;
         for (let col of this.columns) {
             tmp = tmp + '|' + col;
+        }
+        if (this.discretize == null) {
+            tmp = tmp + '|null';
+        }
+        else {
+            tmp = tmp + '|' + this.discretize;
         }
         builder.write(StatsFile.PARAM_STATSFILE + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);

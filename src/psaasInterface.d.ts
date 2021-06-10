@@ -1752,6 +1752,12 @@ export declare class TimestepSettings {
     private static readonly PARAM_EMIT_STATISTIC;
     private statistics;
     /**
+     * The amount to discritize the existing grid to (optional).
+     * Will only be applied to statistics that require a discretization parameter.
+     * Must be in [1,1001].
+     */
+    discretize: number;
+    /**
      * Check to see if a global statistic if valid to be used as a timestep setting.
      * @param stat True if the input statistic if valid for timestep settings.
      */
@@ -2961,6 +2967,11 @@ export declare class StatsFile {
      * will be added to the file.
      */
     columns: GlobalStatistics[];
+    /**
+     * The amount to discritize the existing grid to (optional).
+     * Must be in [1, 1000].
+     */
+    discretize: number;
     /**
      * Create a new stats file.
      * @param scen The name of the scenario to output a stats file for.
