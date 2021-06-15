@@ -1585,7 +1585,7 @@ class FMCOptions {
          * The elevation where NODATA or no grid exists (required). Must be between 0 and 7000.
          * Has a default value.
          */
-        this._nodataElev = -9999;
+        this._nodataElev = -99;
         /**
          * Optional.
          * Has a default value.
@@ -1625,7 +1625,7 @@ class FMCOptions {
      * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
      */
     set nodataElev(value) {
-        if (SocketMsg.inlineThrowOnError && (value == null || (value < 0 && value != -1 && value != -99 && value != -9999) || value > 7000)) {
+        if (SocketMsg.inlineThrowOnError && (value == null || (value < 0 && value != -1 && value != -99) || value > 7000)) {
             throw new RangeError("The ignition size is not valid.");
         }
         this._nodataElev = value;
