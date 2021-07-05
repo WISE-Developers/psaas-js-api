@@ -7,7 +7,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const psaas_js_api_1 = require("psaas-js-api");
 const luxon_1 = require("luxon");
-const semver = require("semver");
 let serverConfig = new psaas_js_api_1.defaults.ServerConfiguration();
 //initialize the connection settings for PSaaS_Builder
 psaas_js_api_1.globals.SocketHelper.initialize(serverConfig.builderAddress, serverConfig.builderPort);
@@ -136,6 +135,8 @@ function handleErrorNode(node) {
     ovf1.metadata = jDefaults.metadataDefaults;
     let ogf1 = prom.addOutputGridFileToScenario(psaas_js_api_1.globals.GlobalStatistics.TEMPERATURE, 'scen0/temp.txt', luxon_1.DateTime.fromISO('2001-10-16T21:00:00-05:00'), psaas_js_api_1.psaas.Output_GridFileInterpolation.IDW, scen1);
     let ogf2 = prom.addOutputGridFileToScenario(psaas_js_api_1.globals.GlobalStatistics.BURN_GRID, "scen0/burn_grid.tif", luxon_1.DateTime.fromISO('2001-10-16T22:00:00-05:00'), psaas_js_api_1.psaas.Output_GridFileInterpolation.IDW, scen1);
+    let ogf3 = prom.addOutputGridFileToScenario(psaas_js_api_1.globals.GlobalStatistics.TOTAL_FUEL_CONSUMED, "scen0/total_fuel_consumed.tif", new psaas_js_api_1.globals.TimeRange(luxon_1.DateTime.fromISO('2001-10-16T14:00:00-05:00'), luxon_1.DateTime.fromISO('2001-10-16T22:00:00-05:00')), psaas_js_api_1.psaas.Output_GridFileInterpolation.DISCRETIZED, scen1);
+    ogf3.discretize = 10;
     //allow the file to be streamed to a remote location after it is written (ex. streamOutputToMqtt, streamOutputToGeoServer).
     ogf2.shouldStream = true;
     let osf1 = prom.addOutputSummaryFileToScenario(scen1, 'scen0/summary.txt');
@@ -164,14 +165,9 @@ function handleErrorNode(node) {
     }
     else {
         let wrapper = null;
-        if (semver.gte(psaas_js_api_1.psaas.VersionInfo.localVersion(psaas_js_api_1.psaas.VersionInfo.version_info), '2.6.1')) {
-            //validate the job asynchronously
-            wrapper = await prom.validateJobPromise();
-        }
-        else {
-            //start the job asynchronously
-            wrapper = await prom.beginJobPromise();
-        }
+        //validate the job asynchronously
+        //assume we will always have a backend that is capable of using validation now as the versioning is no longer compatible with semver
+        wrapper = await prom.validateJobPromise();
         //trim the name of the newly started job
         let jobName = wrapper.name.replace(/^\s+|\s+$/g, '');
         //a manager for listening for status messages

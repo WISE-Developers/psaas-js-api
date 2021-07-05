@@ -3,6 +3,7 @@
  */
 /// <reference types="node" />
 /** ignore this comment */
+import { DateTime } from "luxon";
 import * as net from "net";
 export declare class SocketMsg {
     static readonly STARTUP: string;
@@ -238,6 +239,22 @@ export declare class Duration {
     protected _nextToken(): string;
 }
 /**
+ * A range of times represented by a start and end time.
+ */
+export declare class TimeRange {
+    /**
+     * The start of the time range. Can either be an ISO8601 formatted string
+     * or a luxon {@link DateTime}.
+     */
+    startTime: string | DateTime;
+    /**
+     * The end of the time range. Can either be an ISO8601 formatted string
+     * or a luxon {@link DateTime}.
+     */
+    endTime: string | DateTime;
+    constructor(startTime: string | DateTime, endTime: string | DateTime);
+}
+/**
  * A class to hold information about time zone names retrieved from Java.
  * The value is what will be passed back to the job builder.
  * @author "Travis Redpath"
@@ -360,6 +377,9 @@ export declare class FGMOptions {
     static readonly PARAM_DY = "fgm_dy";
     static readonly PARAM_DT = "fgm_dt";
     static readonly PARAM_DWD = "fgm_dwd";
+    static readonly PARAM_OWD = "fgm_owd";
+    static readonly PARAM_DVD = "fgm_dvd";
+    static readonly PARAM_OVD = "fgm_ovd";
     static readonly PARAM_GROWTHAPPLIED = "fgm_growthPercApplied";
     static readonly PARAM_GROWTHPERC = "fgm_growthPercentile";
     static readonly PARAM_SUPPRESS_TIGHT_CONCAVE = "fgm_suppressTightConcave";
@@ -368,6 +388,8 @@ export declare class FGMOptions {
     static readonly PARAM_USE_INDEPENDENT_TIMESTEPS = "fgm_useIndependentTimesteps";
     static readonly PARAM_PERIMETER_SPACING = "fgm_perimeterSpacing";
     static readonly PARAM_SIM_PROPS = "simulation_properties";
+    static readonly PARAM_FALSE_ORIGIN = "fgm_falseOrigin";
+    static readonly PARAM_FALSE_SCALING = "fgm_falseScaling";
     static readonly DEFAULT_MAXACCTS = "MAXACCTS";
     static readonly DEFAULT_DISTRES = "DISTRES";
     static readonly DEFAULT_PERIMRES = "PERIMRES";
@@ -529,6 +551,59 @@ export declare class FGMOptions {
      */
     set dwd(value: number);
     /**
+     * What to change the wind direction to, to perform probabilistic analyses on weather.
+     * Applied after all patches and grids, and does not recalculate any FWI calculations.
+     * Applied before any FBP calculations.
+     * Provided in compass degrees, 0 to 360 is acceptable.
+     * Applied to both simulations, and to instantaneous calculations as shown on the map trace view query, for consistency.
+     */
+    private _owd;
+    /**
+     * Get the value to override wind directions to perform probabilistic analyses on weather.
+     */
+    get owd(): number;
+    /**
+     * Set the value to change the wind direction to for the entire grid, in compass degrees. Must be between in [0, 360).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set owd(value: number);
+    /**
+     * Used to calculate grid-based statistics without modelling a fire. Where-as various inputs will determine the dimensions and
+     * orientation of the ellipse representing fire growth at a location, this value determines the direction of vector growth out
+     * of the defined ellipse. In this mode, provided FBP equationsa are used. oVD stands for overrideVectorDirection.
+     * What to define (or change) the vector direction to.
+     * Applied after all patches and grids, and does not recalculate any FWI calculations.
+     * Provided in compass degrees, 0 to 360 is acceptable.
+     */
+    private _ovd;
+    /**
+     * Get the direction of vector growth out of a defined ellipse.
+     */
+    get ovd(): number;
+    /**
+     * Set the value of the vector growth out of a defined ellipse in compass degrees. Must be in [0, 360).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set ovd(value: number);
+    /**
+     * Used to calculate grid-based statistics without modelling a fire.  Where-as various inputs will determine the dimensions and
+     * orientation of the ellipse representing fire growth at a location, this value determines the direction of vector growth out
+     * of the defined ellipse.  In this mode, provided FBP equations are used.  dVD stands for deltaVectorDirection.
+     * How much to nudge wind direction to perform probabilistic analyses on weather.
+     * Applied after all patches and grids, and does not recalculate any FWI calculations.
+     * Provided in compass degrees, -360 to 360 is acceptable.
+     */
+    private _dvd;
+    /**
+     * Get the amount to nudge the wind direction when performing probabilistic analyses on weather.
+     */
+    get dvd(): number;
+    /**
+     * Set the amount to nudge the wind direction when performing probabilistic analyses on weather. Must be in [-360, 360].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dvd(value: number);
+    /**
      * Whether the growth percentile value is applied (optional).
      * Has a default value.
      */
@@ -611,6 +686,24 @@ export declare class FGMOptions {
      * Only valid if globalAssetOperation in AssetOperation::STOP_AFTER_X.
      */
     assetCollisionCount: number;
+    /**
+     * ![v7](https://img.shields.io/badge/-v7-blue)![2021.04.01](https://img.shields.io/badge/-2021.04.01-red)
+     *
+     * Use a false origin to work with location information in the PSaaS backend. Currently the origin will always be the
+     * lower-left location of the fuel map.
+     *
+     * This is a v7 only setting. On v6 false origin is always on.
+     */
+    enableFalseOrigin: boolean;
+    /**
+     * ![v7](https://img.shields.io/badge/-v7-blue)![2021.04.01](https://img.shields.io/badge/-2021.04.01-red)
+     *
+     * Use scaling to work with location information in the PSaaS backend. Currently the scale will be the scale defined
+     * in the fuel map's projection.
+     *
+     * This is a v7 only setting. On v6 false scaling is always on.
+     */
+    enableFalseScaling: boolean;
     /**
      * Checks to see if all required values have been set.
      */
@@ -1188,7 +1281,30 @@ export declare enum GlobalStatistics {
      * Change in fire area. (sq. metres)
      */
     AREA_CHANGE = 83,
-    BURN = 84
+    BURN = 84,
+    HROS_MAP = 85,
+    FROS_MAP = 86,
+    BROS_MAP = 87,
+    RSS_MAP = 88,
+    RAZ_MAP = 89,
+    FMC_MAP = 90,
+    CFB_MAP = 91,
+    CFC_MAP = 92,
+    SFC_MAP = 93,
+    TFC_MAP = 94,
+    FI_MAP = 95,
+    FL_MAP = 96,
+    CURINGDEGREE_MAP = 97,
+    GREENUP_MAP = 98,
+    PC_MAP = 99,
+    PDF_MAP = 100,
+    CBH_MAP = 101,
+    TREE_HEIGHT_MAP = 102,
+    FUEL_LOAD_MAP = 103,
+    CFL_MAP = 104,
+    GRASSPHENOLOGY_MAP = 105,
+    ROSVECTOR_MAP = 106,
+    DIRVECTOR_MAP = 107
 }
 export declare class ValidationError {
     /**

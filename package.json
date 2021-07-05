@@ -1,6 +1,6 @@
 {
     "name": "psaas-js-api",
-    "version": "6.2.6",
+    "version": "2021.07.00",
     "description": "PSaaS JS API",
     "main": "index.js",
     "types": "index.d.ts",

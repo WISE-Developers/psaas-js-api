@@ -9,7 +9,7 @@
  * For an example see index.js.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Admin = exports.StopPriority = exports.StartJobWrapper = exports.PSaaS = exports.JobOptions = exports.LoadBalanceType = exports.UnitSettings = exports.MassAreaUnit = exports.IntensityUnit = exports.VelocityUnit = exports.CoordinateUnit = exports.AngleUnit = exports.PercentUnit = exports.EnergyUnit = exports.MassUnit = exports.PressureUnit = exports.TemperatureUnit = exports.VolumeUnit = exports.AreaUnit = exports.DistanceUnit = exports.TimeUnit = exports.GeoServerOutputStreamInfo = exports.MqttOutputStreamInfo = exports.OutputStreamInfo = exports.PSaaSOutputs = exports.StatsFile = exports.StatsFileType = exports.SummaryFile = exports.VectorFile = exports.PerimeterTimeOverride = exports.VectorFileType = exports.Output_GridFile = exports.ExportTimeOverride = exports.Output_GridFileCompression = exports.Output_GridFileInterpolation = exports.PSaaSInputs = exports.FuelOption = exports.FuelOptionType = exports.Scenario = exports.StationStream = exports.StreamOptions = exports.TimestepSettings = exports.AssetReference = exports.LayerInfo = exports.LayerInfoOptions = exports.BurningConditions = exports.SinglePointIgnitionOptions = exports.MultiPointIgnitionOptions = exports.PolylineIgnitionOptions = exports.IgnitionReference = exports.AssetFile = exports.AssetShapeType = exports.Ignition = exports.IgnitionType = exports.WeatherStation = exports.WeatherStream = exports.HFFMCMethod = exports.PSaaSInputsFiles = exports.FuelBreak = exports.FuelBreakType = exports.FuelPatch = exports.FromFuel = exports.FuelPatchType = exports.WeatherGrid = exports.WeatherGrid_GridFile = exports.WeatherGridType = exports.WeatherGridSector = exports.WeatherPatch = exports.WeatherPatch_WindDirection = exports.WeatherPatch_WindSpeed = exports.WeatherPatch_Precipitation = exports.WeatherPatch_RelativeHumidity = exports.WeatherPatch_Temperature = exports.WeatherPatchDetails = exports.WeatherPatchType = exports.WeatherPatchOperation = exports.GridFile = exports.GridFileType = exports.VersionInfo = void 0;
+exports.Admin = exports.StopPriority = exports.StartJobWrapper = exports.PSaaS = exports.JobOptions = exports.LoadBalanceType = exports.UnitSettings = exports.MassAreaUnit = exports.IntensityUnit = exports.VelocityUnit = exports.CoordinateUnit = exports.AngleUnit = exports.PercentUnit = exports.EnergyUnit = exports.MassUnit = exports.PressureUnit = exports.TemperatureUnit = exports.VolumeUnit = exports.AreaUnit = exports.DistanceUnit = exports.TimeUnit = exports.GeoServerOutputStreamInfo = exports.MqttOutputStreamInfo = exports.OutputStreamInfo = exports.PSaaSOutputs = exports.StatsFile = exports.StatsFileType = exports.SummaryFile = exports.VectorFile = exports.PerimeterTimeOverride = exports.VectorFileType = exports.Output_GridFile = exports.ExportTimeOverride = exports.Output_GridFileCompression = exports.Output_GridFileInterpolation = exports.PSaaSInputs = exports.FuelOption = exports.FuelOptionType = exports.Scenario = exports.StationStream = exports.StreamOptions = exports.TimestepSettings = exports.TargetReference = exports.AssetReference = exports.LayerInfo = exports.LayerInfoOptions = exports.BurningConditions = exports.SinglePointIgnitionOptions = exports.MultiPointIgnitionOptions = exports.PolylineIgnitionOptions = exports.IgnitionReference = exports.TargetFile = exports.AssetFile = exports.AssetShapeType = exports.Ignition = exports.IgnitionType = exports.WeatherStation = exports.WeatherStream = exports.HFFMCMethod = exports.PSaaSInputsFiles = exports.FuelBreak = exports.FuelBreakType = exports.FuelPatch = exports.FromFuel = exports.FuelPatchType = exports.WeatherGrid = exports.WeatherGrid_GridFile = exports.WeatherGridType = exports.WeatherGridSector = exports.WeatherPatch = exports.WeatherPatch_WindDirection = exports.WeatherPatch_WindSpeed = exports.WeatherPatch_Precipitation = exports.WeatherPatch_RelativeHumidity = exports.WeatherPatch_Temperature = exports.WeatherPatchDetails = exports.WeatherPatchType = exports.WeatherPatchOperation = exports.GridFile = exports.GridFileType = exports.VersionInfo = void 0;
 /** ignore this comment */
 const fs = require("fs");
 const luxon_1 = require("luxon");
@@ -20,13 +20,12 @@ class VersionInfo {
      * @ignore
      */
     static localVersion(version) {
-        const i = version.indexOf('.');
-        return version.substr(i + 1);
+        return version;
     }
 }
 exports.VersionInfo = VersionInfo;
-VersionInfo.version_info = '6.2.6.2' /*/vers*/;
-VersionInfo.release_date = 'December 27, 2020' /*/rld*/;
+VersionInfo.version_info = '2021.07.00' /*/vers*/;
+VersionInfo.release_date = 'July 4, 2021' /*/rld*/;
 var GridFileType;
 (function (GridFileType) {
     GridFileType[GridFileType["NONE"] = -1] = "NONE";
@@ -37,6 +36,8 @@ var GridFileType;
     GridFileType[GridFileType["PERCENT_DEAD_FIR"] = 4] = "PERCENT_DEAD_FIR";
     GridFileType[GridFileType["CROWN_BASE_HEIGHT"] = 5] = "CROWN_BASE_HEIGHT";
     GridFileType[GridFileType["TREE_HEIGHT"] = 6] = "TREE_HEIGHT";
+    GridFileType[GridFileType["FUEL_LOAD"] = 7] = "FUEL_LOAD";
+    GridFileType[GridFileType["FBP_VECTOR"] = 8] = "FBP_VECTOR";
 })(GridFileType = exports.GridFileType || (exports.GridFileType = {}));
 /**
  * Information about a grid input file.
@@ -1002,6 +1003,15 @@ class WeatherGrid {
         this._endTimeOfDay = new psaasGlobals_1.Duration();
         this._endTimeOfDay.fromString(value);
     }
+    /**
+     * A convenience method for specifying the default values grid file and its projection.
+     * @param defaultValuesFile The file or attachment that contains a grid of default values for the grid.
+     * @param defaultValuesProjection The projection file for the specified default values file.
+     */
+    setDefaultValuesGrid(defaultValuesFile, defaultValuesProjection) {
+        this.defaultValuesFile = defaultValuesFile;
+        this.defaultValuesProjection = defaultValuesProjection;
+    }
     getId() {
         return this._id;
     }
@@ -1095,6 +1105,21 @@ class WeatherGrid {
             });
             errs.push(tempErr);
         }
+        if (this.defaultValuesFile != null && this.defaultValuesFile.length > 0) {
+            if (this.defaultValuesProjection == null || this.defaultValuesProjection.length == 0) {
+                errs.push(new psaasGlobals_1.ValidationError("defaultValuesProjection", "The projection for the default sector data is required.", this));
+            }
+            else if (!psaasGlobals_1.SocketMsg.skipFileTests) {
+                //the filename must be an attachment or a local file
+                if (!this.defaultValuesFile.startsWith("attachment:/") && !fs.existsSync(this.defaultValuesFile)) {
+                    errs.push(new psaasGlobals_1.ValidationError("defaultValuesFile", "The default grid data file does not exist.", this));
+                }
+                //the projection file must be an attachment or a local file
+                if (!this.defaultValuesProjection.startsWith("attachment:/") && !fs.existsSync(this.defaultValuesProjection)) {
+                    errs.push(new psaasGlobals_1.ValidationError("defaultValuesProjection", "The default grid data projection file does not exist.", this));
+                }
+            }
+        }
         return errs;
     }
     /**
@@ -1103,15 +1128,22 @@ class WeatherGrid {
      */
     stream(builder) {
         let tmp = this._id + '|' + this.comments + '|' + this._startTime.toISO() + '|' + this._endTime.toISO() + '|' + this._startTimeOfDay.toString() + '|' + this._endTimeOfDay.toString() + '|' + this.type;
+        tmp = tmp + '|' + this.gridData.length;
         for (let gd of this.gridData) {
             tmp = tmp + '|' + gd.speed + '|' + gd.sector + '|' + gd.filename + '|' + gd.projection;
+        }
+        if (this.defaultValuesFile != null && this.defaultValuesFile.length > 0) {
+            tmp = tmp + '|' + this.defaultValuesFile + '|' + this.defaultValuesProjection;
+        }
+        else {
+            tmp = tmp + '|-1|-1';
         }
         builder.write(WeatherGrid.PARAM_WEATHER_GRID + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
 exports.WeatherGrid = WeatherGrid;
-WeatherGrid.PARAM_WEATHER_GRID = "weathergrid";
+WeatherGrid.PARAM_WEATHER_GRID = "weathergrid_2";
 WeatherGrid.counter = 0;
 var FuelPatchType;
 (function (FuelPatchType) {
@@ -2676,6 +2708,125 @@ exports.AssetFile = AssetFile;
 AssetFile.PARAM_ASSET_FILE = "asset_file";
 AssetFile.counter = 0;
 /**
+ * A target to direct simulated weather towards.
+ */
+class TargetFile {
+    constructor() {
+        /**
+         * User comments about the target (optional).
+         */
+        this.comments = "";
+        /**
+         * The type of target (required).
+         */
+        this.type = -1;
+        /**
+         * The filename associated with this target. Only valid if type is FILE.
+         */
+        this._filename = "";
+        /**
+         * An array of LatLon describing the target. Only valid if type is POLYLINE, POLYGON, or POINT.
+         */
+        this.feature = new Array();
+        this._id = "target" + TargetFile.counter;
+        TargetFile.counter += 1;
+    }
+    /**
+     * Get the name of the target.
+     */
+    get id() {
+        return this._id;
+    }
+    /**
+     * Set the name of the target. Must be unique amongst the target collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
+            throw new RangeError("The name of the target is not valid");
+        }
+        this.setName(value);
+    }
+    /**
+     * Get the location of the file containing the target.
+     */
+    get filename() {
+        return this._filename;
+    }
+    /**
+     * Set the location of the file containing the target. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value) {
+        if (psaasGlobals_1.SocketMsg.inlineThrowOnError && !psaasGlobals_1.SocketMsg.skipFileTests && !value.startsWith("attachment:/") && !fs.existsSync(value)) {
+            throw new RangeError("The target file does not exist.");
+        }
+        this._filename = value;
+    }
+    getId() {
+        return this._id;
+    }
+    /**
+     * Set the name of the target. This name must be unique within
+     * the simulation. The name will get a default value when the
+     * target is constructed but can be overriden with this method.
+     */
+    setName(name) {
+        this._id = name.replace(/\|/g, "");
+    }
+    /**
+     * Checks to see if all required values have been set.
+     */
+    isValid() {
+        return this.checkValid().length == 0;
+    }
+    /**
+     * Find all errors that may exist in the asset.
+     * @returns A list of errors that were found.
+     */
+    checkValid() {
+        const errs = new Array();
+        if (!this._id || this._id.length === 0) {
+            errs.push(new psaasGlobals_1.ValidationError("id", "No ID has been set for the target.", this));
+        }
+        if (this.type == AssetShapeType.FILE) {
+            if (!psaasGlobals_1.SocketMsg.skipFileTests) {
+                //the file must be an attachment or a local file
+                if (!this._filename.startsWith("attachment:/") && fs.existsSync(this._filename)) {
+                    errs.push(new psaasGlobals_1.ValidationError("filename", "The specified target file does not exist.", this));
+                }
+            }
+        }
+        else if ((this.type == AssetShapeType.POLYLINE || this.type == AssetShapeType.POLYGON || this.type == AssetShapeType.POINT) && this.feature.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("feature", "No locations have been added to the target.", this));
+        }
+        else {
+            errs.push(new psaasGlobals_1.ValidationError("type", "Invalid target type.", this));
+        }
+        return errs;
+    }
+    /**
+     * Streams the ignition to a socket.
+     * @param builder
+     */
+    stream(builder) {
+        let tmp = this._id + '|' + this.comments + '|' + (+this.type);
+        if (this.type == AssetShapeType.FILE) {
+            tmp = tmp + this._filename;
+        }
+        else {
+            for (let p of this.feature) {
+                tmp = tmp + '|' + p.latitude + '|' + p.longitude;
+            }
+        }
+        builder.write(TargetFile.PARAM_TARGET_FILE + psaasGlobals_1.SocketMsg.NEWLINE);
+        builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
+    }
+}
+exports.TargetFile = TargetFile;
+TargetFile.PARAM_TARGET_FILE = "target_file";
+TargetFile.counter = 0;
+/**
  * Options for associating an ignition point with a scenario.
  */
 class IgnitionReference {
@@ -3046,12 +3197,50 @@ class AssetReference {
 }
 exports.AssetReference = AssetReference;
 /**
+ * A reference to a target that has been added to a scenario. Contains options
+ * for how to handle the target.
+ */
+class TargetReference {
+    constructor(id) {
+        /**
+         * The name of the target that was added.
+         */
+        this.name = "";
+        /**
+         * An index of a geometry within the shape to use as the target.
+         */
+        this.geometryIndex = -1;
+        /**
+         * An index of a point within the shape to use as the target.
+         */
+        this.pointIndex = -1;
+        this.name = id;
+    }
+    getName() {
+        return this.name;
+    }
+    checkValid() {
+        const errs = new Array();
+        if (this.name == null || this.name.length == 0) {
+            errs.push(new psaasGlobals_1.ValidationError("name", "No target reference has been set.", this));
+        }
+        return errs;
+    }
+}
+exports.TargetReference = TargetReference;
+/**
  * Settings to modify PSaaS behaviour at the end of every timestep.
  * @author "Travis Redpath"
  */
 class TimestepSettings {
     constructor() {
         this.statistics = new Array();
+        /**
+         * The amount to discritize the existing grid to (optional).
+         * Will only be applied to statistics that require a discretization parameter.
+         * Must be in [1,1001].
+         */
+        this.discretize = null;
     }
     /**
      * Check to see if a global statistic if valid to be used as a timestep setting.
@@ -3117,6 +3306,9 @@ class TimestepSettings {
             });
             errs.push(temp);
         }
+        if (this.discretize != null && (this.discretize < 1 || this.discretize > 1000)) {
+            errs.push(new psaasGlobals_1.ValidationError("discritize", "The discritization must be an integer greater than 0 and less than 1001.", this));
+        }
         return errs;
     }
     /**
@@ -3124,6 +3316,10 @@ class TimestepSettings {
      * @param builder
      */
     stream(builder) {
+        if (this.discretize != null) {
+            builder.write(TimestepSettings.PARAM_EMIT_STATISTIC + psaasGlobals_1.SocketMsg.NEWLINE);
+            builder.write(`d|${this.discretize}${psaasGlobals_1.SocketMsg.NEWLINE}`);
+        }
         this.statistics.forEach(element => {
             builder.write(TimestepSettings.PARAM_EMIT_STATISTIC + psaasGlobals_1.SocketMsg.NEWLINE);
             builder.write(element + psaasGlobals_1.SocketMsg.NEWLINE);
@@ -3358,6 +3554,14 @@ class Scenario {
          * reaches the shape.
          */
         this.assetFiles = new Array();
+        /**
+         * A target used by this scenario to modify the wind direction.
+         */
+        this.windTargetFile = null;
+        /**
+         * A target used by this scenario to modify the vector behaviour.
+         */
+        this.vectorTargetFile = null;
         /**
          * The name of the scenario that will be copied.
          */
@@ -3814,6 +4018,42 @@ class Scenario {
         return false;
     }
     /**
+     * Add a target file to the scenario for wind direction. Must already be added to the {@link PSaaS} object.
+     * @param file The target file to add to the scenario.
+     */
+    setWindTargetFile(file) {
+        this.windTargetFile = new TargetReference(file.getId());
+        return this.windTargetFile;
+    }
+    /**
+     * Remove the wind target file from the scenario.
+     */
+    clearWindTargetFile() {
+        if (this.windTargetFile == null) {
+            return false;
+        }
+        this.windTargetFile = null;
+        return true;
+    }
+    /**
+     * Add a target file to the scenario for vector direction. Must already be added to the {@link PSaaS} object.
+     * @param file The target file to add to the scenario.
+     */
+    setVectorTargetFile(file) {
+        this.vectorTargetFile = new TargetReference(file.getId());
+        return this.vectorTargetFile;
+    }
+    /**
+     * Remove the vector target file from the scenario.
+     */
+    clearVectorTargetFile() {
+        if (this.vectorTargetFile == null) {
+            return false;
+        }
+        this.vectorTargetFile = null;
+        return true;
+    }
+    /**
      * Checks to see if all required values have been set.
      */
     isValid() {
@@ -3971,6 +4211,24 @@ class Scenario {
                 });
                 errs.push(temp);
             }
+            if (this.windTargetFile != null) {
+                let temp = new psaasGlobals_1.ValidationError("windTargetFile", "Errors found in target reference.", this);
+                this.windTargetFile.checkValid().forEach(err => {
+                    temp.addChild(err);
+                });
+                if (temp.children.length > 0) {
+                    errs.push(temp);
+                }
+            }
+            if (this.vectorTargetFile != null) {
+                let temp = new psaasGlobals_1.ValidationError("vectorTargetFile", "Errors found in target references.", this);
+                this.vectorTargetFile.checkValid().forEach(err => {
+                    temp.addChild(err);
+                });
+                if (temp.children.length > 0) {
+                    errs.push(temp);
+                }
+            }
         }
         return errs;
     }
@@ -4065,6 +4323,16 @@ class Scenario {
             builder.write(Scenario.PARAM_ASSET_REF + psaasGlobals_1.SocketMsg.NEWLINE);
             builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
         }
+        if (this.windTargetFile != null) {
+            let tmp = this.windTargetFile.getName() + '|' + this.windTargetFile.geometryIndex + '|' + this.windTargetFile.pointIndex;
+            builder.write(Scenario.PARAM_WIND_TARGET_REF + psaasGlobals_1.SocketMsg.NEWLINE);
+            builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
+        }
+        if (this.vectorTargetFile != null) {
+            let tmp = this.vectorTargetFile.getName() + '|' + this.vectorTargetFile.geometryIndex + '|' + this.vectorTargetFile.pointIndex;
+            builder.write(Scenario.PARAM_VECTOR_TARGET_REF + psaasGlobals_1.SocketMsg.NEWLINE);
+            builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
+        }
         builder.write(Scenario.PARAM_SCENARIO_END + psaasGlobals_1.SocketMsg.NEWLINE);
     }
 }
@@ -4084,6 +4352,8 @@ Scenario.PARAM_LAYER_INFO = "layerinfo";
 Scenario.PARAM_PRIMARY_STREAM = "primarystream";
 Scenario.PARAM_SCENARIO_TO_COPY = "scenariotocopy";
 Scenario.PARAM_ASSET_REF = "asset_ref";
+Scenario.PARAM_WIND_TARGET_REF = "wind_target_ref";
+Scenario.PARAM_VECTOR_TARGET_REF = "vector_target_ref";
 Scenario.counter = 0;
 /**
  * Types of options that can be applied to the fuels in
@@ -4177,6 +4447,10 @@ class PSaaSInputs {
          * Assets that can stop simulations when reached.
          */
         this.assetFiles = new Array();
+        /**
+         * Targets that can affect how weather information is processed.
+         */
+        this.targetFiles = new Array();
         this.files = new PSaaSInputsFiles();
         this.timezone = new psaasGlobals_1.Timezone();
     }
@@ -4311,6 +4585,30 @@ class PSaaSInputs {
             });
             errs.push(temp);
         }
+        let targetErrors = new Array();
+        for (let i = 0; i < this.targetFiles.length; i++) {
+            let tgErr = new psaasGlobals_1.ValidationError(i, `Errors found in scenario at index ${i}.`, this.targetFiles);
+            for (let j = i + 1; j < this.targetFiles.length; j++) {
+                if (this.targetFiles[i].getId().toUpperCase() === this.targetFiles[j].getId().toUpperCase()) {
+                    let err = new psaasGlobals_1.ValidationError("id", "Duplicate target IDs.", this.targetFiles[i]);
+                    tgErr.addChild(err);
+                    break;
+                }
+            }
+            this.targetFiles[i].checkValid().forEach(err => {
+                tgErr.addChild(err);
+            });
+            if (tgErr.children.length > 0) {
+                scenarioErrors.push(tgErr);
+            }
+        }
+        if (targetErrors.length > 0) {
+            let temp = new psaasGlobals_1.ValidationError("targetFiles", "Errors found in targets.", this);
+            targetErrors.forEach(err => {
+                temp.addChild(err);
+            });
+            errs.push(temp);
+        }
         let fuelOptionErrors = new Array();
         for (let i = 0; i < this.fuelOptions.length; i++) {
             let foErrs = this.fuelOptions[i].checkValid();
@@ -4352,6 +4650,9 @@ class PSaaSInputs {
         for (let asset of this.assetFiles) {
             asset.stream(builder);
         }
+        for (let target of this.targetFiles) {
+            target.stream(builder);
+        }
         return this.timezone.stream(builder);
     }
 }
@@ -4370,6 +4671,9 @@ var Output_GridFileInterpolation;
      * Interpolate using voronoi area weighting.
      */
     Output_GridFileInterpolation["AREA_WEIGHTING"] = "AreaWeighting";
+    Output_GridFileInterpolation["CALCULATE"] = "Calculate";
+    Output_GridFileInterpolation["DISCRETIZED"] = "Discretized";
+    Output_GridFileInterpolation["VORONOI_OVERLAP"] = "VoronoiOverlap";
 })(Output_GridFileInterpolation = exports.Output_GridFileInterpolation || (exports.Output_GridFileInterpolation = {}));
 /**
  * If the grid file is a TIF file its contents can be
@@ -4475,9 +4779,21 @@ class Output_GridFile {
          */
         this.filename = "";
         /**
-         * Output time (required).
+         * The end of the output time range (required). Will also be
+         * used as the start of the output time range if the start
+         * output time has not been specified.
          */
         this._outputTime = null;
+        /**
+         * The start of the output time range (optional).
+         */
+        this._startOutputTime = null;
+        /**
+         * The amount to discritize the existing grid to (optional).
+         * Only applicable if the interpolation mode is set to {@link Output_GridFileInterpolation.DISCRETIZED}.
+         * Must be in [1, 1000].
+         */
+        this.discretize = null;
         /**
          * The name of the scenario that this output is for (required).
          */
@@ -4510,20 +4826,22 @@ class Output_GridFile {
         this.subScenarioOverrideTimes = new Array();
     }
     /**
-     * Get the export time as a Luxon DateTime.
+     * Get the end export time as a Luxon DateTime.
      */
     get lOutputTime() {
         return this._outputTime;
     }
     /**
-     * Get the export time as an ISO8601 string.
-     * @deprecated
+     * Get the end export time as an ISO8601 string.
+     * @deprecated Use lOutputTime instead.
      */
     get outputTime() {
         return this._outputTime == null ? "" : this._outputTime.toISO();
     }
     /**
-     * Set the export time using a Luxon DateTime. Cannot be null.
+     * Set the end export time using a Luxon DateTime. Cannot be null. If
+     * the start export time is not set this value will also be used for
+     * the start time.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
      */
     set lOutputTime(value) {
@@ -4534,14 +4852,186 @@ class Output_GridFile {
     }
     /**
      * Set the export time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * If the start export time is not set this value will also be used for
+     * the start time.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
-     * @deprecated
+     * @deprecated Use lOutputTime instead.
      */
     set outputTime(value) {
         if (psaasGlobals_1.SocketMsg.inlineThrowOnError && (value == null || value.length == 0)) {
             throw new RangeError("The export time is not valid");
         }
         this._outputTime = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * Get the start export time as a Luxon DateTime.
+     */
+    get lStartOutputTime() {
+        return this._startOutputTime;
+    }
+    /**
+     * Get the start export time as an ISO8601 string.
+     * @deprecated Use lStartOutputTime instead.
+     */
+    get startOutputTime() {
+        return this._startOutputTime == null ? "" : this._startOutputTime.toISO();
+    }
+    /**
+     * Set the start export time using a Luxon DateTime. Use null to clear the value.
+     */
+    set lStartOutputTime(value) {
+        this._startOutputTime = value;
+    }
+    /**
+     * Set the start export time using a string. Use null to clear the value.
+     * @deprecated Use lOutputTime instead.
+     */
+    set startOutputTime(value) {
+        this._startOutputTime = luxon_1.DateTime.fromISO(value);
+    }
+    /**
+     * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
+     * CROWN_FUEL_CONSUMED, or RADIATIVE_POWER the {@link Output_GridFileInterpolation interpolation method} must be DISCRETIZED.
+     * Setting the output statistic to any of those values will automatically set the interpolation method.
+     *
+     * Valid values:
+     * <ul>
+     * <li>TEMPERATURE</li>
+     * <li>DEW_POINT</li>
+     * <li>RELATIVE_HUMIDITY</li>
+     * <li>WIND_DIRECTION</li>
+     * <li>WIND_SPEED</li>
+     * <li>PRECIPITATION</li>
+     * <li>FFMC</li>
+     * <li>ISI</li>
+     * <li>FWI</li>
+     * <li>BUI</li>
+     * <li>MAX_FI</li>
+     * <li>MAX_FL</li>
+     * <li>MAX_ROS</li>
+     * <li>MAX_SFC</li>
+     * <li>MAX_CFC</li>
+     * <li>MAX_TFC</li>
+     * <li>MAX_CFB</li>
+     * <li>RAZ</li>
+     * <li>BURN_GRID</li>
+     * <li>FIRE_ARRIVAL_TIME</li>
+     * <li>HROS</li>
+     * <li>FROS</li>
+     * <li>BROS</li>
+     * <li>RSS</li>
+     * <li>ACTIVE_PERIMETER</li>
+     * <li>BURN</li>
+     * <li>BURN_PERCENTAGE</li>
+     * <li>FIRE_ARRIVAL_TIME_MIN</li>
+     * <li>FIRE_ARRIVAL_TIME_MAX</li>
+     * <li>TOTAL_FUEL_CONSUMED</li>
+     * <li>SURFACE_FUEL_CONSUMED</li>
+     * <li>CROWN_FUEL_CONSUMED</li>
+     * <li>RADIATIVE_POWER</li>
+     * <li>HFI</li>
+     * <li>HCFB</li>
+     * <li>HROS_MAP</li>
+     * <li>FROS_MAP</li>
+     * <li>BROS_MAP</li>
+     * <li>RSS_MAP</li>
+     * <li>RAZ_MAP</li>
+     * <li>FMC_MAP</li>
+     * <li>CFB_MAP</li>
+     * <li>CFC_MAP</li>
+     * <li>SFC_MAP</li>
+     * <li>TFC_MAP</li>
+     * <li>FI_MAP</li>
+     * <li>FL_MAP</li>
+     * <li>CURINGDEGREE_MAP</li>
+     * <li>GREENUP_MAP</li>
+     * <li>PC_MAP</li>
+     * <li>PDF_MAP</li>
+     * <li>CBH_MAP</li>
+     * <li>TREE_HEIGHT_MAP</li>
+     * <li>FUEL_LOAD_MAP</li>
+     * <li>CFL_MAP</li>
+     * <li>GRASSPHENOLOGY_MAP</li>
+     * <li>ROSVECTOR_MAP</li>
+     * <li>DIRVECTOR_MAP</li>
+     * </ul>
+     */
+    get statistic() {
+        return this._statistic;
+    }
+    /**
+     * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
+     * CROWN_FUEL_CONSUMED, or RADIATIVE_POWER the {@link Output_GridFileInterpolation interpolation method} must be DISCRETIZED.
+     * Setting the output statistic to any of those values will automatically set the interpolation method.
+     *
+     * Valid values:
+     * <ul>
+     * <li>TEMPERATURE</li>
+     * <li>DEW_POINT</li>
+     * <li>RELATIVE_HUMIDITY</li>
+     * <li>WIND_DIRECTION</li>
+     * <li>WIND_SPEED</li>
+     * <li>PRECIPITATION</li>
+     * <li>FFMC</li>
+     * <li>ISI</li>
+     * <li>FWI</li>
+     * <li>BUI</li>
+     * <li>MAX_FI</li>
+     * <li>MAX_FL</li>
+     * <li>MAX_ROS</li>
+     * <li>MAX_SFC</li>
+     * <li>MAX_CFC</li>
+     * <li>MAX_TFC</li>
+     * <li>MAX_CFB</li>
+     * <li>RAZ</li>
+     * <li>BURN_GRID</li>
+     * <li>FIRE_ARRIVAL_TIME</li>
+     * <li>HROS</li>
+     * <li>FROS</li>
+     * <li>BROS</li>
+     * <li>RSS</li>
+     * <li>ACTIVE_PERIMETER</li>
+     * <li>BURN</li>
+     * <li>BURN_PERCENTAGE</li>
+     * <li>FIRE_ARRIVAL_TIME_MIN</li>
+     * <li>FIRE_ARRIVAL_TIME_MAX</li>
+     * <li>TOTAL_FUEL_CONSUMED</li>
+     * <li>SURFACE_FUEL_CONSUMED</li>
+     * <li>CROWN_FUEL_CONSUMED</li>
+     * <li>RADIATIVE_POWER</li>
+     * <li>HFI</li>
+     * <li>HCFB</li>
+     * <li>HROS_MAP</li>
+     * <li>FROS_MAP</li>
+     * <li>BROS_MAP</li>
+     * <li>RSS_MAP</li>
+     * <li>RAZ_MAP</li>
+     * <li>FMC_MAP</li>
+     * <li>CFB_MAP</li>
+     * <li>CFC_MAP</li>
+     * <li>SFC_MAP</li>
+     * <li>TFC_MAP</li>
+     * <li>FI_MAP</li>
+     * <li>FL_MAP</li>
+     * <li>CURINGDEGREE_MAP</li>
+     * <li>GREENUP_MAP</li>
+     * <li>PC_MAP</li>
+     * <li>PDF_MAP</li>
+     * <li>CBH_MAP</li>
+     * <li>TREE_HEIGHT_MAP</li>
+     * <li>FUEL_LOAD_MAP</li>
+     * <li>CFL_MAP</li>
+     * <li>GRASSPHENOLOGY_MAP</li>
+     * <li>ROSVECTOR_MAP</li>
+     * <li>DIRVECTOR_MAP</li>
+     * </ul>
+     */
+    set statistic(value) {
+        this._statistic = value;
+        if (value === psaasGlobals_1.GlobalStatistics.TOTAL_FUEL_CONSUMED || value === psaasGlobals_1.GlobalStatistics.SURFACE_FUEL_CONSUMED ||
+            value === psaasGlobals_1.GlobalStatistics.CROWN_FUEL_CONSUMED || value === psaasGlobals_1.GlobalStatistics.RADIATIVE_POWER) {
+            this.interpMethod = Output_GridFileInterpolation.DISCRETIZED;
+        }
     }
     add_subScenarioOverrideTimes(add) {
         this.subScenarioOverrideTimes.push(add);
@@ -4570,6 +5060,9 @@ class Output_GridFile {
         if (this.interpMethod == null) {
             errs.push(new psaasGlobals_1.ValidationError("interpMethod", "The interpolation method has not been specified.", this));
         }
+        if (this.discretize != null && (this.discretize < 1 || this.discretize > 1000)) {
+            errs.push(new psaasGlobals_1.ValidationError("discritize", "The discritization must be an integer greater than 0 and less than 1001.", this));
+        }
         if (this.statistic == null) {
             errs.push(new psaasGlobals_1.ValidationError("statistic", "The statistic to export has not been specified.", this));
         }
@@ -4584,8 +5077,20 @@ class Output_GridFile {
             this.statistic != psaasGlobals_1.GlobalStatistics.ACTIVE_PERIMETER && this.statistic != psaasGlobals_1.GlobalStatistics.BURN && this.statistic != psaasGlobals_1.GlobalStatistics.BURN_PERCENTAGE &&
             this.statistic != psaasGlobals_1.GlobalStatistics.FIRE_ARRIVAL_TIME_MIN && this.statistic != psaasGlobals_1.GlobalStatistics.FIRE_ARRIVAL_TIME_MAX && this.statistic != psaasGlobals_1.GlobalStatistics.TOTAL_FUEL_CONSUMED &&
             this.statistic != psaasGlobals_1.GlobalStatistics.SURFACE_FUEL_CONSUMED && this.statistic != psaasGlobals_1.GlobalStatistics.CROWN_FUEL_CONSUMED && this.statistic != psaasGlobals_1.GlobalStatistics.RADIATIVE_POWER &&
-            this.statistic != psaasGlobals_1.GlobalStatistics.HFI && this.statistic != psaasGlobals_1.GlobalStatistics.HCFB) {
+            this.statistic != psaasGlobals_1.GlobalStatistics.HFI && this.statistic != psaasGlobals_1.GlobalStatistics.HCFB && this.statistic != psaasGlobals_1.GlobalStatistics.HROS_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.FROS_MAP &&
+            this.statistic != psaasGlobals_1.GlobalStatistics.BROS_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.RSS_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.RAZ_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.FMC_MAP &&
+            this.statistic != psaasGlobals_1.GlobalStatistics.CFB_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.CFC_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.SFC_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.TFC_MAP &&
+            this.statistic != psaasGlobals_1.GlobalStatistics.FI_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.FL_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.CURINGDEGREE_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.GREENUP_MAP &&
+            this.statistic != psaasGlobals_1.GlobalStatistics.PC_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.PDF_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.CBH_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.TREE_HEIGHT_MAP &&
+            this.statistic != psaasGlobals_1.GlobalStatistics.FUEL_LOAD_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.CFL_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.GRASSPHENOLOGY_MAP &&
+            this.statistic != psaasGlobals_1.GlobalStatistics.ROSVECTOR_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.DIRVECTOR_MAP) {
             errs.push(new psaasGlobals_1.ValidationError("statistic", "Invalid statistic specified for grid export.", this));
+        }
+        //catch an error where the interpolation method is restricted for the output statistic
+        else if ((this.statistic === psaasGlobals_1.GlobalStatistics.TOTAL_FUEL_CONSUMED || this.statistic === psaasGlobals_1.GlobalStatistics.SURFACE_FUEL_CONSUMED ||
+            this.statistic === psaasGlobals_1.GlobalStatistics.CROWN_FUEL_CONSUMED || this.statistic === psaasGlobals_1.GlobalStatistics.RADIATIVE_POWER) &&
+            this.interpMethod !== Output_GridFileInterpolation.DISCRETIZED) {
+            errs.push(new psaasGlobals_1.ValidationError("interpMethod", "Interpolation method must be discretized.", this));
         }
         let subscenarioErrs = new Array();
         for (let i = 0; i < this.subScenarioOverrideTimes.length; i++) {
@@ -4619,6 +5124,18 @@ class Output_GridFile {
         tmp = tmp + '|' + this.shouldMinimize + '|' + Output_GridFile.streamNullableString(this.subScenarioName) + '|' + this.subScenarioOverrideTimes.length;
         for (let e of this.subScenarioOverrideTimes) {
             tmp = tmp + '|' + e.subScenarioName + '|' + e.getExportOverrideTime();
+        }
+        if (this.discretize != null) {
+            tmp = tmp + '|' + this.discretize;
+        }
+        else {
+            tmp = tmp + '|null';
+        }
+        if (this._startOutputTime != null) {
+            tmp = tmp + '|' + this._startOutputTime.toISO();
+        }
+        else {
+            tmp = tmp + '|null';
         }
         builder.write(Output_GridFile.PARAM_GRIDFILE + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
@@ -5165,6 +5682,11 @@ class StatsFile {
          * will be added to the file.
          */
         this.columns = new Array();
+        /**
+         * The amount to discritize the existing grid to (optional).
+         * Must be in [1, 1000].
+         */
+        this.discretize = null;
         this.scenName = scen.getId();
         this.shouldStream = false;
     }
@@ -5292,6 +5814,9 @@ class StatsFile {
             });
             errs.push(temp);
         }
+        if (this.discretize != null && (this.discretize < 1 || this.discretize > 1000)) {
+            errs.push(new psaasGlobals_1.ValidationError("discritize", "The discritization must be an integer greater than 0 and less than 1001.", this));
+        }
         return errs;
     }
     /**
@@ -5309,6 +5834,12 @@ class StatsFile {
         tmp = tmp + '|0|' + this.columns.length;
         for (let col of this.columns) {
             tmp = tmp + '|' + col;
+        }
+        if (this.discretize == null) {
+            tmp = tmp + '|null';
+        }
+        else {
+            tmp = tmp + '|' + this.discretize;
         }
         builder.write(StatsFile.PARAM_STATSFILE + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
@@ -6145,10 +6676,10 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     /**
      * Set the projection file. This file is required.
      * An exception will be thrown if the file does not exist.
-     * @param file
+     * @param filename
      */
-    setProjectionFile(file) {
-        this.inputs.files.projFile = file;
+    setProjectionFile(filename) {
+        this.inputs.files.projFile = filename;
     }
     /**
      * Unset the projection file.
@@ -6159,14 +6690,13 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     /**
      * Set the look up table. This file is required.
      * An exception will be thrown if the file does not exist.
-     * @param file
+     * @param filename
      */
-    setLutFile(file) {
-        this.inputs.files.lutFile = file;
+    setLutFile(filename) {
+        this.inputs.files.lutFile = filename;
     }
     /**
      * Unset the look up table.
-     * @param file
      */
     unsetLutFile() {
         this.inputs.files.lutFile = "";
@@ -6251,11 +6781,11 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     /**
      * Set the fuel map file. This file is required.
      * An exception will be thrown if the file does not exist.
-     * @param file Can either be the actual file path or the
+     * @param filename Can either be the actual file path or the
      * 			   attachment URL returned from {@link addAttachment}
      */
-    setFuelmapFile(file) {
-        this.inputs.files.fuelmapFile = file;
+    setFuelmapFile(filename) {
+        this.inputs.files.fuelmapFile = filename;
     }
     /**
      * Unset the fuel map file.
@@ -6274,31 +6804,30 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     /**
      * Set the elevation grid file. An elevation grid file is optional.
      * An exception will be thrown if the file does not exist.
-     * @param file Can either be the actual file path or the attachment
+     * @param filename Can either be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      */
-    setElevationFile(file) {
-        this.inputs.files.elevFile = file;
+    setElevationFile(filename) {
+        this.inputs.files.elevFile = filename;
     }
     /**
      * Unset the elevation grid file
-     * @param file
      */
     unsetElevationFile() {
         this.inputs.files.elevFile = "";
     }
     /**
      * Add a grid file to the project.
-     * @param file The location of the grid file. Can either
+     * @param filename The location of the grid file. Can either
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
      * @param type Must be one of the GridFile::TYPE_* values.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addGridFile(file, proj, type) {
+    addGridFile(filename, proj, type) {
         let gf = new GridFile();
-        gf.filename = file;
+        gf.filename = filename;
         gf.projection = proj;
         gf.type = type;
         this.inputs.files.gridFiles.push(gf);
@@ -6306,7 +6835,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a grid file to the project.
-     * @param file The location of the grid file. Can either
+     * @param filename The location of the grid file. Can either
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
@@ -6314,9 +6843,9 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * @param comment A user comment to add to the grid file.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addGridFileWithComment(file, proj, type, comment) {
+    addGridFileWithComment(filename, proj, type, comment) {
         let gf = new GridFile();
-        gf.filename = file;
+        gf.filename = filename;
         gf.projection = proj;
         gf.type = type;
         gf.comment = comment;
@@ -6360,16 +6889,16 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a file fuel patch to the job.
-     * @param file The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
+     * @param filename The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
      * @param fromFuel The fuel to change from. Can either be one of the rules defined in FuelPatch (FROM_FUEL_*) or the name of a fuel.
      * @param toFuel The name of the fuel to change to.
      * @param comment An optional user created comment to attach to the fuel patch.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addFileFuelPatch(file, fromFuel, toFuel, comment) {
+    addFileFuelPatch(filename, fromFuel, toFuel, comment) {
         let fp = new FuelPatch();
         fp.type = FuelPatchType.FILE;
-        fp.filename = file;
+        fp.filename = filename;
         if (fromFuel === FromFuel.ALL || fromFuel === FromFuel.ALL_COMBUSTABLE || fromFuel === FromFuel.NODATA) {
             fp.fromFuelRule = fromFuel;
         }
@@ -6422,18 +6951,18 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a fuel break to the project.
-     * @param file The file location of the fuel break. Can either be the actual file
+     * @param filename The file location of the fuel break. Can either be the actual file
      * 			   path or the attachment URL returned from {@link addAttachment}
      * @param comments An optional user created comment to attach to the fuel break.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addFileFuelBreak(file, comments) {
+    addFileFuelBreak(filename, comments) {
         let fb = new FuelBreak();
         if (comments != null) {
             fb.comments = comments;
         }
         fb.type = FuelBreakType.FILE;
-        fb.filename = file;
+        fb.filename = filename;
         this.inputs.files.fuelBreakFiles.push(fb);
         return fb;
     }
@@ -6963,6 +7492,80 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         return false;
     }
     /**
+     * Add a new target using a shapefile.
+     * @param filename The location of the shapefile to use as the shape of the target.
+     * @param comments Any user defined comments for the target. Can be null if there are no comments.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
+     */
+    addFileTarget(filename, comments) {
+        var target = new TargetFile();
+        if (comments != null) {
+            target.comments = comments;
+        }
+        target.type = AssetShapeType.FILE;
+        target.filename = filename;
+        this.inputs.targetFiles.push(target);
+        return target;
+    }
+    /**
+     * Add a new target using a single point.
+     * @param location The lat/lon of the target.
+     * @param comments Any user defined comments for the target. Can be null if there are no comments.
+     */
+    addPointTarget(location, comments) {
+        var target = new TargetFile();
+        if (comments != null) {
+            target.comments = comments;
+        }
+        target.type = AssetShapeType.POINT;
+        target.feature.push(location);
+        this.inputs.targetFiles.push(target);
+        return target;
+    }
+    /**
+     * Add a new target using a polygon.
+     * @param locations An array of lat/lons that make up the polygon.
+     * @param comments Any user defined comments for the target. Can be null if there are no comments.
+     */
+    addPolygonTarget(locations, comments) {
+        var target = new TargetFile();
+        if (comments != null) {
+            target.comments = comments;
+        }
+        target.type = AssetShapeType.POLYGON;
+        target.feature = locations;
+        this.inputs.targetFiles.push(target);
+        return target;
+    }
+    /**
+     * Add a new target using a polyline.
+     * @param locations An array of lat/lons that make up the polyline.
+     * @param comments Any user defined comments for the asset. Can be null if there are no comments.
+     */
+    addPolylineTarget(locations, comments) {
+        var target = new TargetFile();
+        if (comments != null) {
+            target.comments = comments;
+        }
+        target.type = AssetShapeType.POLYLINE;
+        target.feature = locations;
+        this.inputs.targetFiles.push(target);
+        return target;
+    }
+    /**
+     * Remove an target from the job. This will not remove it from any
+     * scenarios that it may be associated with.
+     * @param target The target to remove.
+     */
+    removeTarget(target) {
+        var index = this.inputs.targetFiles.indexOf(target);
+        if (index != -1) {
+            this.inputs.targetFiles.splice(index, 1);
+            return true;
+        }
+        return false;
+    }
+    /**
      * Add a scenario to the job.
      * @param startTime The start time of the scenario. If a string is used it must be formatted as 'YYYY-MM-DDThh:mm:ss'.
      * @param endTime The end time of the scenario. If a string is used it must be formatted as 'YYYY-MM-DDThh:mm:ss'.
@@ -7019,7 +7622,25 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
             ogf.outputTime = time;
         }
         else {
-            ogf.lOutputTime = time;
+            if (time instanceof psaasGlobals_1.TimeRange) {
+                if (typeof time.endTime === "string") {
+                    ogf.outputTime = time.endTime;
+                }
+                else {
+                    ogf.lOutputTime = time.endTime;
+                }
+                if (time.startTime != null) {
+                    if (typeof time.startTime === "string") {
+                        ogf.startOutputTime = time.startTime;
+                    }
+                    else {
+                        ogf.lStartOutputTime = time.startTime;
+                    }
+                }
+            }
+            else {
+                ogf.lOutputTime = time;
+            }
         }
         ogf.scenarioName = scen.getId();
         ogf.statistic = stat;
@@ -7166,6 +7787,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      * @returns Will return false if the filename is not valid, otherwise the URL to use as the filename
      *          when referencing the attachment will be returned.
      * @example
+     * ```javascript
      * fs.readFile("/mnt/location/file.txt", "utf8", (err, data) => {
      *     //on successful read data will be a string containing the contents of the file
      *     let psaas = new PSaaS();
@@ -7179,6 +7801,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      *     let att = psaas.addAttachment("file.kmz", data);
      *     psaas.addFileIgnition("2019-02-20T12:00:00", att, "No comment");
      * });
+     * ```
      */
     addAttachment(filename, contents) {
         if (!this.validateFilename(filename)) {

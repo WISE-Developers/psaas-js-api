@@ -10,7 +10,7 @@
 /// <reference types="node" />
 import { DateTime } from "luxon";
 import * as net from "net";
-import { LatLon, Duration, FGMOptions, FBPOptions, FMCOptions, FWIOptions, Timezone, VectorMetadata, SummaryOutputs, IPSaaSSerializable, AssetOperation, GlobalStatistics, ValidationError } from "./psaasGlobals";
+import { LatLon, Duration, FGMOptions, FBPOptions, FMCOptions, FWIOptions, Timezone, VectorMetadata, SummaryOutputs, IPSaaSSerializable, AssetOperation, GlobalStatistics, ValidationError, TimeRange } from "./psaasGlobals";
 export declare class VersionInfo {
     static readonly version_info: string;
     static readonly release_date: string;
@@ -27,7 +27,9 @@ export declare enum GridFileType {
     PERCENT_CONIFER = 3,
     PERCENT_DEAD_FIR = 4,
     CROWN_BASE_HEIGHT = 5,
-    TREE_HEIGHT = 6
+    TREE_HEIGHT = 6,
+    FUEL_LOAD = 7,
+    FBP_VECTOR = 8
 }
 /**
  * Information about a grid input file.
@@ -591,6 +593,20 @@ export declare class WeatherGrid {
      * Whether this wind grid is for wind speed, or wind direction (required). Must be one of TYPE_DIRECTION and TYPE_SPEED.
      */
     type: WeatherGridType;
+    /**
+     * The default sector data. If specified {@link defaultValuesProjection} must also be specified.
+     */
+    defaultValuesFile: string;
+    /**
+     * The projection file for the default sector data. Must be specified if {@link defaultValuesFile} is specified.
+     */
+    defaultValuesProjection: string;
+    /**
+     * A convenience method for specifying the default values grid file and its projection.
+     * @param defaultValuesFile The file or attachment that contains a grid of default values for the grid.
+     * @param defaultValuesProjection The projection file for the specified default values file.
+     */
+    setDefaultValuesGrid(defaultValuesFile: string, defaultValuesProjection: string): void;
     getId(): string;
     /**
      * Set the name of the weather grid. This name must be unique within
@@ -1431,6 +1447,73 @@ export declare class AssetFile {
     stream(builder: net.Socket): void;
 }
 /**
+ * A target to direct simulated weather towards.
+ */
+export declare class TargetFile {
+    private static readonly PARAM_TARGET_FILE;
+    protected static counter: number;
+    /**
+     * The name of the target. The name must be unique amongst target file collections.
+     */
+    private _id;
+    /**
+     * Get the name of the target.
+     */
+    get id(): string;
+    /**
+     * Set the name of the target. Must be unique amongst the target collection. Cannot be null or empty.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set id(value: string);
+    /**
+     * User comments about the target (optional).
+     */
+    comments: string;
+    /**
+     * The type of target (required).
+     */
+    type: AssetShapeType;
+    /**
+     * The filename associated with this target. Only valid if type is FILE.
+     */
+    private _filename;
+    /**
+     * Get the location of the file containing the target.
+     */
+    get filename(): string;
+    /**
+     * Set the location of the file containing the target. The file must either be an attachment or exist on the disk (if {@link SocketMsg.skipFileTests} is not set).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set filename(value: string);
+    /**
+     * An array of LatLon describing the target. Only valid if type is POLYLINE, POLYGON, or POINT.
+     */
+    feature: LatLon[];
+    getId(): string;
+    /**
+     * Set the name of the target. This name must be unique within
+     * the simulation. The name will get a default value when the
+     * target is constructed but can be overriden with this method.
+     */
+    setName(name: string): void;
+    constructor();
+    /**
+     * Checks to see if all required values have been set.
+     */
+    isValid(): boolean;
+    /**
+     * Find all errors that may exist in the asset.
+     * @returns A list of errors that were found.
+     */
+    checkValid(): Array<ValidationError>;
+    /**
+     * Streams the ignition to a socket.
+     * @param builder
+     */
+    stream(builder: net.Socket): void;
+}
+/**
  * Options for associating an ignition point with a scenario.
  */
 export declare class IgnitionReference {
@@ -1641,12 +1724,39 @@ export declare class AssetReference {
     checkValid(): Array<ValidationError>;
 }
 /**
+ * A reference to a target that has been added to a scenario. Contains options
+ * for how to handle the target.
+ */
+export declare class TargetReference {
+    /**
+     * The name of the target that was added.
+     */
+    protected name: string;
+    /**
+     * An index of a geometry within the shape to use as the target.
+     */
+    geometryIndex: number;
+    /**
+     * An index of a point within the shape to use as the target.
+     */
+    pointIndex: number;
+    getName(): string;
+    constructor(id: string);
+    checkValid(): Array<ValidationError>;
+}
+/**
  * Settings to modify PSaaS behaviour at the end of every timestep.
  * @author "Travis Redpath"
  */
 export declare class TimestepSettings {
     private static readonly PARAM_EMIT_STATISTIC;
     private statistics;
+    /**
+     * The amount to discritize the existing grid to (optional).
+     * Will only be applied to statistics that require a discretization parameter.
+     * Must be in [1,1001].
+     */
+    discretize: number;
     /**
      * Check to see if a global statistic if valid to be used as a timestep setting.
      * @param stat True if the input statistic if valid for timestep settings.
@@ -1812,6 +1922,8 @@ export declare class Scenario {
     private static readonly PARAM_PRIMARY_STREAM;
     private static readonly PARAM_SCENARIO_TO_COPY;
     private static readonly PARAM_ASSET_REF;
+    private static readonly PARAM_WIND_TARGET_REF;
+    private static readonly PARAM_VECTOR_TARGET_REF;
     protected static counter: number;
     protected isCopy: boolean;
     /**
@@ -1924,6 +2036,14 @@ export declare class Scenario {
      * reaches the shape.
      */
     assetFiles: AssetReference[];
+    /**
+     * A target used by this scenario to modify the wind direction.
+     */
+    windTargetFile: TargetReference;
+    /**
+     * A target used by this scenario to modify the vector behaviour.
+     */
+    vectorTargetFile: TargetReference;
     /**
      * The name of the scenario that will be copied.
      */
@@ -2109,6 +2229,24 @@ export declare class Scenario {
      */
     removeAssetFile(ref: AssetReference): boolean;
     /**
+     * Add a target file to the scenario for wind direction. Must already be added to the {@link PSaaS} object.
+     * @param file The target file to add to the scenario.
+     */
+    setWindTargetFile(file: TargetFile): TargetReference;
+    /**
+     * Remove the wind target file from the scenario.
+     */
+    clearWindTargetFile(): boolean;
+    /**
+     * Add a target file to the scenario for vector direction. Must already be added to the {@link PSaaS} object.
+     * @param file The target file to add to the scenario.
+     */
+    setVectorTargetFile(file: TargetFile): TargetReference;
+    /**
+     * Remove the vector target file from the scenario.
+     */
+    clearVectorTargetFile(): boolean;
+    /**
      * Checks to see if all required values have been set.
      */
     isValid(): boolean;
@@ -2197,6 +2335,10 @@ export declare class PSaaSInputs {
      * Assets that can stop simulations when reached.
      */
     assetFiles: AssetFile[];
+    /**
+     * Targets that can affect how weather information is processed.
+     */
+    targetFiles: TargetFile[];
     constructor();
     /**
      * Validate the user specified inputs.
@@ -2226,7 +2368,10 @@ export declare enum Output_GridFileInterpolation {
     /**
      * Interpolate using voronoi area weighting.
      */
-    AREA_WEIGHTING = "AreaWeighting"
+    AREA_WEIGHTING = "AreaWeighting",
+    CALCULATE = "Calculate",
+    DISCRETIZED = "Discretized",
+    VORONOI_OVERLAP = "VoronoiOverlap"
 }
 /**
  * If the grid file is a TIF file its contents can be
@@ -2306,37 +2451,204 @@ export declare class Output_GridFile {
      */
     filename: string;
     /**
-     * Output time (required).
+     * The end of the output time range (required). Will also be
+     * used as the start of the output time range if the start
+     * output time has not been specified.
      */
     private _outputTime;
     /**
-     * Get the export time as a Luxon DateTime.
+     * Get the end export time as a Luxon DateTime.
      */
     get lOutputTime(): DateTime;
     /**
-     * Get the export time as an ISO8601 string.
-     * @deprecated
+     * Get the end export time as an ISO8601 string.
+     * @deprecated Use lOutputTime instead.
      */
     get outputTime(): string;
     /**
-     * Set the export time using a Luxon DateTime. Cannot be null.
+     * Set the end export time using a Luxon DateTime. Cannot be null. If
+     * the start export time is not set this value will also be used for
+     * the start time.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
      */
     set lOutputTime(value: DateTime);
     /**
      * Set the export time using a string. Cannot be null or empty. Must be formatted in ISO8601.
+     * If the start export time is not set this value will also be used for
+     * the start time.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
-     * @deprecated
+     * @deprecated Use lOutputTime instead.
      */
     set outputTime(value: string);
     /**
-     * The statistic that should be output (required).
+     * The start of the output time range (optional).
      */
-    statistic: GlobalStatistics;
+    private _startOutputTime;
+    /**
+     * Get the start export time as a Luxon DateTime.
+     */
+    get lStartOutputTime(): DateTime;
+    /**
+     * Get the start export time as an ISO8601 string.
+     * @deprecated Use lStartOutputTime instead.
+     */
+    get startOutputTime(): string;
+    /**
+     * Set the start export time using a Luxon DateTime. Use null to clear the value.
+     */
+    set lStartOutputTime(value: DateTime);
+    /**
+     * Set the start export time using a string. Use null to clear the value.
+     * @deprecated Use lOutputTime instead.
+     */
+    set startOutputTime(value: string);
+    private _statistic;
+    /**
+     * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
+     * CROWN_FUEL_CONSUMED, or RADIATIVE_POWER the {@link Output_GridFileInterpolation interpolation method} must be DISCRETIZED.
+     * Setting the output statistic to any of those values will automatically set the interpolation method.
+     *
+     * Valid values:
+     * <ul>
+     * <li>TEMPERATURE</li>
+     * <li>DEW_POINT</li>
+     * <li>RELATIVE_HUMIDITY</li>
+     * <li>WIND_DIRECTION</li>
+     * <li>WIND_SPEED</li>
+     * <li>PRECIPITATION</li>
+     * <li>FFMC</li>
+     * <li>ISI</li>
+     * <li>FWI</li>
+     * <li>BUI</li>
+     * <li>MAX_FI</li>
+     * <li>MAX_FL</li>
+     * <li>MAX_ROS</li>
+     * <li>MAX_SFC</li>
+     * <li>MAX_CFC</li>
+     * <li>MAX_TFC</li>
+     * <li>MAX_CFB</li>
+     * <li>RAZ</li>
+     * <li>BURN_GRID</li>
+     * <li>FIRE_ARRIVAL_TIME</li>
+     * <li>HROS</li>
+     * <li>FROS</li>
+     * <li>BROS</li>
+     * <li>RSS</li>
+     * <li>ACTIVE_PERIMETER</li>
+     * <li>BURN</li>
+     * <li>BURN_PERCENTAGE</li>
+     * <li>FIRE_ARRIVAL_TIME_MIN</li>
+     * <li>FIRE_ARRIVAL_TIME_MAX</li>
+     * <li>TOTAL_FUEL_CONSUMED</li>
+     * <li>SURFACE_FUEL_CONSUMED</li>
+     * <li>CROWN_FUEL_CONSUMED</li>
+     * <li>RADIATIVE_POWER</li>
+     * <li>HFI</li>
+     * <li>HCFB</li>
+     * <li>HROS_MAP</li>
+     * <li>FROS_MAP</li>
+     * <li>BROS_MAP</li>
+     * <li>RSS_MAP</li>
+     * <li>RAZ_MAP</li>
+     * <li>FMC_MAP</li>
+     * <li>CFB_MAP</li>
+     * <li>CFC_MAP</li>
+     * <li>SFC_MAP</li>
+     * <li>TFC_MAP</li>
+     * <li>FI_MAP</li>
+     * <li>FL_MAP</li>
+     * <li>CURINGDEGREE_MAP</li>
+     * <li>GREENUP_MAP</li>
+     * <li>PC_MAP</li>
+     * <li>PDF_MAP</li>
+     * <li>CBH_MAP</li>
+     * <li>TREE_HEIGHT_MAP</li>
+     * <li>FUEL_LOAD_MAP</li>
+     * <li>CFL_MAP</li>
+     * <li>GRASSPHENOLOGY_MAP</li>
+     * <li>ROSVECTOR_MAP</li>
+     * <li>DIRVECTOR_MAP</li>
+     * </ul>
+     */
+    get statistic(): GlobalStatistics;
+    /**
+     * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
+     * CROWN_FUEL_CONSUMED, or RADIATIVE_POWER the {@link Output_GridFileInterpolation interpolation method} must be DISCRETIZED.
+     * Setting the output statistic to any of those values will automatically set the interpolation method.
+     *
+     * Valid values:
+     * <ul>
+     * <li>TEMPERATURE</li>
+     * <li>DEW_POINT</li>
+     * <li>RELATIVE_HUMIDITY</li>
+     * <li>WIND_DIRECTION</li>
+     * <li>WIND_SPEED</li>
+     * <li>PRECIPITATION</li>
+     * <li>FFMC</li>
+     * <li>ISI</li>
+     * <li>FWI</li>
+     * <li>BUI</li>
+     * <li>MAX_FI</li>
+     * <li>MAX_FL</li>
+     * <li>MAX_ROS</li>
+     * <li>MAX_SFC</li>
+     * <li>MAX_CFC</li>
+     * <li>MAX_TFC</li>
+     * <li>MAX_CFB</li>
+     * <li>RAZ</li>
+     * <li>BURN_GRID</li>
+     * <li>FIRE_ARRIVAL_TIME</li>
+     * <li>HROS</li>
+     * <li>FROS</li>
+     * <li>BROS</li>
+     * <li>RSS</li>
+     * <li>ACTIVE_PERIMETER</li>
+     * <li>BURN</li>
+     * <li>BURN_PERCENTAGE</li>
+     * <li>FIRE_ARRIVAL_TIME_MIN</li>
+     * <li>FIRE_ARRIVAL_TIME_MAX</li>
+     * <li>TOTAL_FUEL_CONSUMED</li>
+     * <li>SURFACE_FUEL_CONSUMED</li>
+     * <li>CROWN_FUEL_CONSUMED</li>
+     * <li>RADIATIVE_POWER</li>
+     * <li>HFI</li>
+     * <li>HCFB</li>
+     * <li>HROS_MAP</li>
+     * <li>FROS_MAP</li>
+     * <li>BROS_MAP</li>
+     * <li>RSS_MAP</li>
+     * <li>RAZ_MAP</li>
+     * <li>FMC_MAP</li>
+     * <li>CFB_MAP</li>
+     * <li>CFC_MAP</li>
+     * <li>SFC_MAP</li>
+     * <li>TFC_MAP</li>
+     * <li>FI_MAP</li>
+     * <li>FL_MAP</li>
+     * <li>CURINGDEGREE_MAP</li>
+     * <li>GREENUP_MAP</li>
+     * <li>PC_MAP</li>
+     * <li>PDF_MAP</li>
+     * <li>CBH_MAP</li>
+     * <li>TREE_HEIGHT_MAP</li>
+     * <li>FUEL_LOAD_MAP</li>
+     * <li>CFL_MAP</li>
+     * <li>GRASSPHENOLOGY_MAP</li>
+     * <li>ROSVECTOR_MAP</li>
+     * <li>DIRVECTOR_MAP</li>
+     * </ul>
+     */
+    set statistic(value: GlobalStatistics);
     /**
      * The interpolation method (required).
      */
     interpMethod: Output_GridFileInterpolation;
+    /**
+     * The amount to discritize the existing grid to (optional).
+     * Only applicable if the interpolation mode is set to {@link Output_GridFileInterpolation.DISCRETIZED}.
+     * Must be in [1, 1000].
+     */
+    discretize: number;
     /**
      * The name of the scenario that this output is for (required).
      */
@@ -2655,6 +2967,11 @@ export declare class StatsFile {
      * will be added to the file.
      */
     columns: GlobalStatistics[];
+    /**
+     * The amount to discritize the existing grid to (optional).
+     * Must be in [1, 1000].
+     */
+    discretize: number;
     /**
      * Create a new stats file.
      * @param scen The name of the scenario to output a stats file for.
@@ -3230,9 +3547,9 @@ export declare class PSaaS extends IPSaaSSerializable {
     /**
      * Set the projection file. This file is required.
      * An exception will be thrown if the file does not exist.
-     * @param file
+     * @param filename
      */
-    setProjectionFile(file: string): void;
+    setProjectionFile(filename: string): void;
     /**
      * Unset the projection file.
      */
@@ -3240,12 +3557,11 @@ export declare class PSaaS extends IPSaaSSerializable {
     /**
      * Set the look up table. This file is required.
      * An exception will be thrown if the file does not exist.
-     * @param file
+     * @param filename
      */
-    setLutFile(file: string): void;
+    setLutFile(filename: string): void;
     /**
      * Unset the look up table.
-     * @param file
      */
     unsetLutFile(): void;
     /**
@@ -3291,10 +3607,10 @@ export declare class PSaaS extends IPSaaSSerializable {
     /**
      * Set the fuel map file. This file is required.
      * An exception will be thrown if the file does not exist.
-     * @param file Can either be the actual file path or the
+     * @param filename Can either be the actual file path or the
      * 			   attachment URL returned from {@link addAttachment}
      */
-    setFuelmapFile(file: string): void;
+    setFuelmapFile(filename: string): void;
     /**
      * Unset the fuel map file.
      */
@@ -3309,28 +3625,27 @@ export declare class PSaaS extends IPSaaSSerializable {
     /**
      * Set the elevation grid file. An elevation grid file is optional.
      * An exception will be thrown if the file does not exist.
-     * @param file Can either be the actual file path or the attachment
+     * @param filename Can either be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      */
-    setElevationFile(file: string): void;
+    setElevationFile(filename: string): void;
     /**
      * Unset the elevation grid file
-     * @param file
      */
     unsetElevationFile(): void;
     /**
      * Add a grid file to the project.
-     * @param file The location of the grid file. Can either
+     * @param filename The location of the grid file. Can either
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
      * @param type Must be one of the GridFile::TYPE_* values.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addGridFile(file: string, proj: string, type: GridFileType): GridFile;
+    addGridFile(filename: string, proj: string, type: GridFileType): GridFile;
     /**
      * Add a grid file to the project.
-     * @param file The location of the grid file. Can either
+     * @param filename The location of the grid file. Can either
      * 			   be the actual file path or the attachment
      * 			   URL returned from {@link addAttachment}
      * @param proj The location of the grid files projection.
@@ -3338,7 +3653,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param comment A user comment to add to the grid file.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addGridFileWithComment(file: string, proj: string, type: GridFileType, comment: string): GridFile;
+    addGridFileWithComment(filename: string, proj: string, type: GridFileType, comment: string): GridFile;
     /**
      * Remove a GridFile object from the grid files.
      * @param gridFile The GridFile object to remove
@@ -3354,13 +3669,13 @@ export declare class PSaaS extends IPSaaSSerializable {
     addLandscapeFuelPatch(fromFuel: FromFuel | string, toFuel: string, comment?: string): FuelPatch;
     /**
      * Add a file fuel patch to the job.
-     * @param file The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
+     * @param filename The location of the shape file. Can either be the actual file path or the attachment URL returned from {@link addAttachment}
      * @param fromFuel The fuel to change from. Can either be one of the rules defined in FuelPatch (FROM_FUEL_*) or the name of a fuel.
      * @param toFuel The name of the fuel to change to.
      * @param comment An optional user created comment to attach to the fuel patch.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addFileFuelPatch(file: string, fromFuel: FromFuel | string, toFuel: string, comment?: string): FuelPatch;
+    addFileFuelPatch(filename: string, fromFuel: FromFuel | string, toFuel: string, comment?: string): FuelPatch;
     /**
      * Add a polygon fuel patch to the job.
      * @param vertices The vertices of the polygon. Must be an array of LatLon values. The LatLon values will be copied by reference.
@@ -3377,12 +3692,12 @@ export declare class PSaaS extends IPSaaSSerializable {
     removeFuelPatch(fuelPatch: FuelPatch): boolean;
     /**
      * Add a fuel break to the project.
-     * @param file The file location of the fuel break. Can either be the actual file
+     * @param filename The file location of the fuel break. Can either be the actual file
      * 			   path or the attachment URL returned from {@link addAttachment}
      * @param comments An optional user created comment to attach to the fuel break.
      * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
      */
-    addFileFuelBreak(file: string, comments?: string): FuelBreak;
+    addFileFuelBreak(filename: string, comments?: string): FuelBreak;
     /**
      * Add a fuel break to the project.
      * @param vertices The vertices of the polygon. Must be an array of LatLon values. The LatLon values will be copied by reference.
@@ -3566,6 +3881,37 @@ export declare class PSaaS extends IPSaaSSerializable {
      */
     removeAsset(asset: AssetFile): boolean;
     /**
+     * Add a new target using a shapefile.
+     * @param filename The location of the shapefile to use as the shape of the target.
+     * @param comments Any user defined comments for the target. Can be null if there are no comments.
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set and {@link SocketMsg.skipFileTests} is not set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if the file doesn't exist.
+     */
+    addFileTarget(filename: string, comments?: string): TargetFile;
+    /**
+     * Add a new target using a single point.
+     * @param location The lat/lon of the target.
+     * @param comments Any user defined comments for the target. Can be null if there are no comments.
+     */
+    addPointTarget(location: LatLon, comments?: string): TargetFile;
+    /**
+     * Add a new target using a polygon.
+     * @param locations An array of lat/lons that make up the polygon.
+     * @param comments Any user defined comments for the target. Can be null if there are no comments.
+     */
+    addPolygonTarget(locations: Array<LatLon>, comments?: string): TargetFile;
+    /**
+     * Add a new target using a polyline.
+     * @param locations An array of lat/lons that make up the polyline.
+     * @param comments Any user defined comments for the asset. Can be null if there are no comments.
+     */
+    addPolylineTarget(locations: Array<LatLon>, comments?: string): TargetFile;
+    /**
+     * Remove an target from the job. This will not remove it from any
+     * scenarios that it may be associated with.
+     * @param target The target to remove.
+     */
+    removeTarget(target: TargetFile): boolean;
+    /**
      * Add a scenario to the job.
      * @param startTime The start time of the scenario. If a string is used it must be formatted as 'YYYY-MM-DDThh:mm:ss'.
      * @param endTime The end time of the scenario. If a string is used it must be formatted as 'YYYY-MM-DDThh:mm:ss'.
@@ -3589,7 +3935,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param scen The scenario to output the data for.
      * @return Output_GridFile
      */
-    addOutputGridFileToScenario(stat: GlobalStatistics.TEMPERATURE | GlobalStatistics.DEW_POINT | GlobalStatistics.RELATIVE_HUMIDITY | GlobalStatistics.WIND_DIRECTION | GlobalStatistics.WIND_SPEED | GlobalStatistics.PRECIPITATION | GlobalStatistics.FFMC | GlobalStatistics.ISI | GlobalStatistics.FWI | GlobalStatistics.BUI | GlobalStatistics.MAX_FI | GlobalStatistics.MAX_FL | GlobalStatistics.MAX_ROS | GlobalStatistics.MAX_SFC | GlobalStatistics.MAX_CFC | GlobalStatistics.MAX_TFC | GlobalStatistics.MAX_CFB | GlobalStatistics.RAZ | GlobalStatistics.BURN_GRID | GlobalStatistics.FIRE_ARRIVAL_TIME | GlobalStatistics.HROS | GlobalStatistics.FROS | GlobalStatistics.BROS | GlobalStatistics.RSS | GlobalStatistics.ACTIVE_PERIMETER | GlobalStatistics.BURN | GlobalStatistics.BURN_PERCENTAGE | GlobalStatistics.FIRE_ARRIVAL_TIME_MIN | GlobalStatistics.FIRE_ARRIVAL_TIME_MAX | GlobalStatistics.TOTAL_FUEL_CONSUMED | GlobalStatistics.SURFACE_FUEL_CONSUMED | GlobalStatistics.CROWN_FUEL_CONSUMED | GlobalStatistics.RADIATIVE_POWER | GlobalStatistics.HFI | GlobalStatistics.HCFB, filename: string, time: string | DateTime, interpMethod: Output_GridFileInterpolation, scen: Scenario): Output_GridFile;
+    addOutputGridFileToScenario(stat: GlobalStatistics.TEMPERATURE | GlobalStatistics.DEW_POINT | GlobalStatistics.RELATIVE_HUMIDITY | GlobalStatistics.WIND_DIRECTION | GlobalStatistics.WIND_SPEED | GlobalStatistics.PRECIPITATION | GlobalStatistics.FFMC | GlobalStatistics.ISI | GlobalStatistics.FWI | GlobalStatistics.BUI | GlobalStatistics.MAX_FI | GlobalStatistics.MAX_FL | GlobalStatistics.MAX_ROS | GlobalStatistics.MAX_SFC | GlobalStatistics.MAX_CFC | GlobalStatistics.MAX_TFC | GlobalStatistics.MAX_CFB | GlobalStatistics.RAZ | GlobalStatistics.BURN_GRID | GlobalStatistics.FIRE_ARRIVAL_TIME | GlobalStatistics.HROS | GlobalStatistics.FROS | GlobalStatistics.BROS | GlobalStatistics.RSS | GlobalStatistics.ACTIVE_PERIMETER | GlobalStatistics.BURN | GlobalStatistics.BURN_PERCENTAGE | GlobalStatistics.FIRE_ARRIVAL_TIME_MIN | GlobalStatistics.FIRE_ARRIVAL_TIME_MAX | GlobalStatistics.TOTAL_FUEL_CONSUMED | GlobalStatistics.SURFACE_FUEL_CONSUMED | GlobalStatistics.CROWN_FUEL_CONSUMED | GlobalStatistics.RADIATIVE_POWER | GlobalStatistics.HFI | GlobalStatistics.HCFB | GlobalStatistics.HROS_MAP | GlobalStatistics.FROS_MAP | GlobalStatistics.BROS_MAP | GlobalStatistics.RSS_MAP | GlobalStatistics.RAZ_MAP | GlobalStatistics.FMC_MAP | GlobalStatistics.CFB_MAP | GlobalStatistics.CFC_MAP | GlobalStatistics.SFC_MAP | GlobalStatistics.TFC_MAP | GlobalStatistics.FI_MAP | GlobalStatistics.FL_MAP | GlobalStatistics.CURINGDEGREE_MAP | GlobalStatistics.GREENUP_MAP | GlobalStatistics.PC_MAP | GlobalStatistics.PDF_MAP | GlobalStatistics.CBH_MAP | GlobalStatistics.TREE_HEIGHT_MAP | GlobalStatistics.FUEL_LOAD_MAP | GlobalStatistics.CFL_MAP | GlobalStatistics.GRASSPHENOLOGY_MAP | GlobalStatistics.ROSVECTOR_MAP | GlobalStatistics.DIRVECTOR_MAP, filename: string, time: string | DateTime | TimeRange, interpMethod: Output_GridFileInterpolation, scen: Scenario): Output_GridFile;
     /**
      * Removes the output grid file from a scenario
      */
@@ -3668,6 +4014,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @returns Will return false if the filename is not valid, otherwise the URL to use as the filename
      *          when referencing the attachment will be returned.
      * @example
+     * ```javascript
      * fs.readFile("/mnt/location/file.txt", "utf8", (err, data) => {
      *     //on successful read data will be a string containing the contents of the file
      *     let psaas = new PSaaS();
@@ -3681,6 +4028,7 @@ export declare class PSaaS extends IPSaaSSerializable {
      *     let att = psaas.addAttachment("file.kmz", data);
      *     psaas.addFileIgnition("2019-02-20T12:00:00", att, "No comment");
      * });
+     * ```
      */
     addAttachment(filename: string, contents: string | Buffer): string | boolean;
     /**

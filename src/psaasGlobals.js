@@ -3,8 +3,7 @@
  * Global classes needed for multiple parts of the API.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ValidationError = exports.GlobalStatistics = exports.SummaryOutputs = exports.PSaaSLogger = exports.PSaaSLogLevel = exports.VectorMetadata = exports.FWIOptions = exports.FMCOptions = exports.FBPOptions = exports.FGMOptions = exports.AssetOperation = exports.Timezone = exports.TimezoneName = exports.Duration = exports.LatLon = exports.Province = exports.Units = exports.IPSaaSSerializable = exports.SocketHelper = exports.SocketMsg = void 0;
-/** ignore this comment */
+exports.ValidationError = exports.GlobalStatistics = exports.SummaryOutputs = exports.PSaaSLogger = exports.PSaaSLogLevel = exports.VectorMetadata = exports.FWIOptions = exports.FMCOptions = exports.FBPOptions = exports.FGMOptions = exports.AssetOperation = exports.Timezone = exports.TimezoneName = exports.TimeRange = exports.Duration = exports.LatLon = exports.Province = exports.Units = exports.IPSaaSSerializable = exports.SocketHelper = exports.SocketMsg = void 0;
 const net = require("net");
 class SocketMsg {
 }
@@ -454,6 +453,16 @@ class Duration {
 }
 exports.Duration = Duration;
 /**
+ * A range of times represented by a start and end time.
+ */
+class TimeRange {
+    constructor(startTime, endTime) {
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
+}
+exports.TimeRange = TimeRange;
+/**
  * An error type indicating that a {@link Duration} is not valid.
  */
 class DurationError extends Error {
@@ -745,6 +754,32 @@ class FGMOptions {
          */
         this._dwd = null;
         /**
+         * What to change the wind direction to, to perform probabilistic analyses on weather.
+         * Applied after all patches and grids, and does not recalculate any FWI calculations.
+         * Applied before any FBP calculations.
+         * Provided in compass degrees, 0 to 360 is acceptable.
+         * Applied to both simulations, and to instantaneous calculations as shown on the map trace view query, for consistency.
+         */
+        this._owd = null;
+        /**
+         * Used to calculate grid-based statistics without modelling a fire. Where-as various inputs will determine the dimensions and
+         * orientation of the ellipse representing fire growth at a location, this value determines the direction of vector growth out
+         * of the defined ellipse. In this mode, provided FBP equationsa are used. oVD stands for overrideVectorDirection.
+         * What to define (or change) the vector direction to.
+         * Applied after all patches and grids, and does not recalculate any FWI calculations.
+         * Provided in compass degrees, 0 to 360 is acceptable.
+         */
+        this._ovd = null;
+        /**
+         * Used to calculate grid-based statistics without modelling a fire.  Where-as various inputs will determine the dimensions and
+         * orientation of the ellipse representing fire growth at a location, this value determines the direction of vector growth out
+         * of the defined ellipse.  In this mode, provided FBP equations are used.  dVD stands for deltaVectorDirection.
+         * How much to nudge wind direction to perform probabilistic analyses on weather.
+         * Applied after all patches and grids, and does not recalculate any FWI calculations.
+         * Provided in compass degrees, -360 to 360 is acceptable.
+         */
+        this._dvd = null;
+        /**
          * Whether the growth percentile value is applied (optional).
          * Has a default value.
          */
@@ -791,6 +826,24 @@ class FGMOptions {
          * Only valid if globalAssetOperation in AssetOperation::STOP_AFTER_X.
          */
         this.assetCollisionCount = -1;
+        /**
+         * ![v7](https://img.shields.io/badge/-v7-blue)![2021.04.01](https://img.shields.io/badge/-2021.04.01-red)
+         *
+         * Use a false origin to work with location information in the PSaaS backend. Currently the origin will always be the
+         * lower-left location of the fuel map.
+         *
+         * This is a v7 only setting. On v6 false origin is always on.
+         */
+        this.enableFalseOrigin = true;
+        /**
+         * ![v7](https://img.shields.io/badge/-v7-blue)![2021.04.01](https://img.shields.io/badge/-2021.04.01-red)
+         *
+         * Use scaling to work with location information in the PSaaS backend. Currently the scale will be the scale defined
+         * in the fuel map's projection.
+         *
+         * This is a v7 only setting. On v6 false scaling is always on.
+         */
+        this.enableFalseScaling = true;
     }
     /**
      * Get the maximum time step during acceleration.
@@ -929,6 +982,54 @@ class FGMOptions {
         this._dwd = value;
     }
     /**
+     * Get the value to override wind directions to perform probabilistic analyses on weather.
+     */
+    get owd() {
+        return this._owd;
+    }
+    /**
+     * Set the value to change the wind direction to for the entire grid, in compass degrees. Must be between in [0, 360).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set owd(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value < 0 || value >= 360)) {
+            throw new RangeError("The wind direction override value is not valid.");
+        }
+        this._owd = value;
+    }
+    /**
+     * Get the direction of vector growth out of a defined ellipse.
+     */
+    get ovd() {
+        return this._ovd;
+    }
+    /**
+     * Set the value of the vector growth out of a defined ellipse in compass degrees. Must be in [0, 360).
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set ovd(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value < 0 || value >= 360)) {
+            throw new RangeError("The vector growth direction is not valid.");
+        }
+        this._ovd = value;
+    }
+    /**
+     * Get the amount to nudge the wind direction when performing probabilistic analyses on weather.
+     */
+    get dvd() {
+        return this._dvd;
+    }
+    /**
+     * Set the amount to nudge the wind direction when performing probabilistic analyses on weather. Must be in [-360, 360].
+     * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
+     */
+    set dvd(value) {
+        if (SocketMsg.inlineThrowOnError && value != null && (value < -360 || value > 360)) {
+            throw new RangeError("The wind direction nudge distance for probabilistic analysis is not valid.");
+        }
+        this._dvd = value;
+    }
+    /**
      * Get the growth percentile.
      */
     get growthPercentile() {
@@ -1054,6 +1155,21 @@ class FGMOptions {
         if (this._dwd != null) {
             if (this._dwd < -360.0 || this._dwd > 360.0) {
                 errs.push(new ValidationError("dwd", "A delta value for the wind direction is set but is not valid.", this));
+            }
+        }
+        if (this._owd != null) {
+            if (this._owd < 0.0 || this._owd >= 360.0) {
+                errs.push(new ValidationError("owd", "A wind direction override value is set but is not valid.", this));
+            }
+        }
+        if (this._dvd != null) {
+            if (this._dvd < -360.0 || this._dvd > 360.0) {
+                errs.push(new ValidationError("dvd", "A delta value for the wind direction on probabilistic analysis is set but is not valid.", this));
+            }
+        }
+        if (this._ovd != null) {
+            if (this._ovd < 0.0 || this._ovd >= 360.0) {
+                errs.push(new ValidationError("ovd", "A vector growth direction is set but is not valid.", this));
             }
         }
         if (this.growthPercentileApplied != null && this.growthPercentileApplied) {
@@ -1190,6 +1306,18 @@ class FGMOptions {
             builder.write(FGMOptions.PARAM_DWD + SocketMsg.NEWLINE);
             builder.write(this._dwd + SocketMsg.NEWLINE);
         }
+        if (this._owd != null) {
+            builder.write(FGMOptions.PARAM_OWD + SocketMsg.NEWLINE);
+            builder.write(this._owd + SocketMsg.NEWLINE);
+        }
+        if (this._dvd != null) {
+            builder.write(FGMOptions.PARAM_DVD + SocketMsg.NEWLINE);
+            builder.write(this._dvd + SocketMsg.NEWLINE);
+        }
+        if (this._ovd != null) {
+            builder.write(FGMOptions.PARAM_OVD + SocketMsg.NEWLINE);
+            builder.write(this._ovd + SocketMsg.NEWLINE);
+        }
         if (this.growthPercentileApplied != null) {
             builder.write(FGMOptions.PARAM_GROWTHAPPLIED + SocketMsg.NEWLINE);
             builder.write((+this.growthPercentileApplied) + SocketMsg.NEWLINE);
@@ -1218,6 +1346,10 @@ class FGMOptions {
             builder.write(FGMOptions.PARAM_PERIMETER_SPACING + SocketMsg.NEWLINE);
             builder.write(this._perimeterSpacing + SocketMsg.NEWLINE);
         }
+        builder.write(FGMOptions.PARAM_FALSE_ORIGIN + SocketMsg.NEWLINE);
+        builder.write((+this.enableFalseOrigin) + SocketMsg.NEWLINE);
+        builder.write(FGMOptions.PARAM_FALSE_SCALING + SocketMsg.NEWLINE);
+        builder.write((+this.enableFalseScaling) + SocketMsg.NEWLINE);
         builder.write(FGMOptions.PARAM_SIM_PROPS + SocketMsg.NEWLINE);
         builder.write((+this._ignitionSize) + "|" + this._initialVertexCount.toFixed() + "|" + this.globalAssetOperation + "|" + this.assetCollisionCount + SocketMsg.NEWLINE);
     }
@@ -1278,6 +1410,18 @@ class FGMOptions {
             builder.write(FGMOptions.PARAM_DWD + SocketMsg.NEWLINE);
             builder.write(this._dwd + SocketMsg.NEWLINE);
         }
+        if (this._owd != null) {
+            builder.write(FGMOptions.PARAM_OWD + SocketMsg.NEWLINE);
+            builder.write(this._owd + SocketMsg.NEWLINE);
+        }
+        if (this._dvd != null) {
+            builder.write(FGMOptions.PARAM_DVD + SocketMsg.NEWLINE);
+            builder.write(this._dvd + SocketMsg.NEWLINE);
+        }
+        if (this._ovd != null) {
+            builder.write(FGMOptions.PARAM_OVD + SocketMsg.NEWLINE);
+            builder.write(this._ovd + SocketMsg.NEWLINE);
+        }
         if (this.growthPercentileApplied != null) {
             builder.write(FGMOptions.PARAM_GROWTHAPPLIED + SocketMsg.NEWLINE);
             builder.write((+this.growthPercentileApplied) + SocketMsg.NEWLINE);
@@ -1325,6 +1469,9 @@ FGMOptions.PARAM_DX = "fgm_dx";
 FGMOptions.PARAM_DY = "fgm_dy";
 FGMOptions.PARAM_DT = "fgm_dt";
 FGMOptions.PARAM_DWD = "fgm_dwd";
+FGMOptions.PARAM_OWD = "fgm_owd";
+FGMOptions.PARAM_DVD = "fgm_dvd";
+FGMOptions.PARAM_OVD = "fgm_ovd";
 FGMOptions.PARAM_GROWTHAPPLIED = "fgm_growthPercApplied";
 FGMOptions.PARAM_GROWTHPERC = "fgm_growthPercentile";
 FGMOptions.PARAM_SUPPRESS_TIGHT_CONCAVE = "fgm_suppressTightConcave";
@@ -1333,6 +1480,8 @@ FGMOptions.PARAM_NON_FUELS_TO_VECTOR_BREAKS = "fgm_nonFuelsToVectorBreaks";
 FGMOptions.PARAM_USE_INDEPENDENT_TIMESTEPS = "fgm_useIndependentTimesteps";
 FGMOptions.PARAM_PERIMETER_SPACING = "fgm_perimeterSpacing";
 FGMOptions.PARAM_SIM_PROPS = "simulation_properties";
+FGMOptions.PARAM_FALSE_ORIGIN = "fgm_falseOrigin";
+FGMOptions.PARAM_FALSE_SCALING = "fgm_falseScaling";
 FGMOptions.DEFAULT_MAXACCTS = "MAXACCTS";
 FGMOptions.DEFAULT_DISTRES = "DISTRES";
 FGMOptions.DEFAULT_PERIMRES = "PERIMRES";
@@ -1436,7 +1585,7 @@ class FMCOptions {
          * The elevation where NODATA or no grid exists (required). Must be between 0 and 7000.
          * Has a default value.
          */
-        this._nodataElev = -9999;
+        this._nodataElev = -99;
         /**
          * Optional.
          * Has a default value.
@@ -1476,7 +1625,7 @@ class FMCOptions {
      * @throws If {@link SocketMsg.inlineThrowOnError} is set a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError RangeError} will be thrown if value is not valid.
      */
     set nodataElev(value) {
-        if (SocketMsg.inlineThrowOnError && (value == null || (value < 0 && value != -1 && value != -99 && value != -9999) || value > 7000)) {
+        if (SocketMsg.inlineThrowOnError && (value == null || (value < 0 && value != -1 && value != -99) || value > 7000)) {
             throw new RangeError("The ignition size is not valid.");
         }
         this._nodataElev = value;
@@ -2184,6 +2333,29 @@ var GlobalStatistics;
      */
     GlobalStatistics[GlobalStatistics["AREA_CHANGE"] = 83] = "AREA_CHANGE";
     GlobalStatistics[GlobalStatistics["BURN"] = 84] = "BURN";
+    GlobalStatistics[GlobalStatistics["HROS_MAP"] = 85] = "HROS_MAP";
+    GlobalStatistics[GlobalStatistics["FROS_MAP"] = 86] = "FROS_MAP";
+    GlobalStatistics[GlobalStatistics["BROS_MAP"] = 87] = "BROS_MAP";
+    GlobalStatistics[GlobalStatistics["RSS_MAP"] = 88] = "RSS_MAP";
+    GlobalStatistics[GlobalStatistics["RAZ_MAP"] = 89] = "RAZ_MAP";
+    GlobalStatistics[GlobalStatistics["FMC_MAP"] = 90] = "FMC_MAP";
+    GlobalStatistics[GlobalStatistics["CFB_MAP"] = 91] = "CFB_MAP";
+    GlobalStatistics[GlobalStatistics["CFC_MAP"] = 92] = "CFC_MAP";
+    GlobalStatistics[GlobalStatistics["SFC_MAP"] = 93] = "SFC_MAP";
+    GlobalStatistics[GlobalStatistics["TFC_MAP"] = 94] = "TFC_MAP";
+    GlobalStatistics[GlobalStatistics["FI_MAP"] = 95] = "FI_MAP";
+    GlobalStatistics[GlobalStatistics["FL_MAP"] = 96] = "FL_MAP";
+    GlobalStatistics[GlobalStatistics["CURINGDEGREE_MAP"] = 97] = "CURINGDEGREE_MAP";
+    GlobalStatistics[GlobalStatistics["GREENUP_MAP"] = 98] = "GREENUP_MAP";
+    GlobalStatistics[GlobalStatistics["PC_MAP"] = 99] = "PC_MAP";
+    GlobalStatistics[GlobalStatistics["PDF_MAP"] = 100] = "PDF_MAP";
+    GlobalStatistics[GlobalStatistics["CBH_MAP"] = 101] = "CBH_MAP";
+    GlobalStatistics[GlobalStatistics["TREE_HEIGHT_MAP"] = 102] = "TREE_HEIGHT_MAP";
+    GlobalStatistics[GlobalStatistics["FUEL_LOAD_MAP"] = 103] = "FUEL_LOAD_MAP";
+    GlobalStatistics[GlobalStatistics["CFL_MAP"] = 104] = "CFL_MAP";
+    GlobalStatistics[GlobalStatistics["GRASSPHENOLOGY_MAP"] = 105] = "GRASSPHENOLOGY_MAP";
+    GlobalStatistics[GlobalStatistics["ROSVECTOR_MAP"] = 106] = "ROSVECTOR_MAP";
+    GlobalStatistics[GlobalStatistics["DIRVECTOR_MAP"] = 107] = "DIRVECTOR_MAP";
 })(GlobalStatistics = exports.GlobalStatistics || (exports.GlobalStatistics = {}));
 class ValidationError {
     constructor(propertyName, message, object) {
