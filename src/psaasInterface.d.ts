@@ -2441,108 +2441,6 @@ export declare class ExportTimeOverride {
     getExportOverrideTime(): string;
     checkValid(): Array<ValidationError>;
 }
-/**
- * A collection of predefined calculated origins for exported grid files.
- */
-export declare enum Output_GridFile_Origin {
-    /**
-     * Use the origin given by the fuel map.
-     */
-    FUELMAP_ORIGIN = 0,
-    /**
-     * Use the lower left boundary of the bounding box of the fire perimeter.
-     */
-    PRECISE_PERIMETER = 1,
-    /**
-     * Using the fuel map origin and the provided export resolution (will use the fuel map origin if not provided)
-     * calculate the closest even multiple of the grid to place the origin near the bounding box of the fire
-     * perimeter.
-     */
-    MINIMIZE_PERIMETER_CUSTOM = 2,
-    /**
-     * Using the fuel map origin and resolution calculate the closest even multiple of the grid
-     * to place the origin near the bounding box of the fire perimeter.
-     */
-    MINIMIZE_PERIMETER = 3,
-    /**
-     * Use the center of the bounding box around the fire perimeter as the origin.
-     */
-    CENTER_PERIMETER = 4
-}
-/**
- * Options for scaling the underlying grid in an exported grid file.
- */
-export declare class Output_GridFile_Scale {
-    private _resolution;
-    private _scale;
-    private _location;
-    private _origin;
-    /**
-     * The resolution to use in the exported grid resolution. At most one of the
-     * resolution and scale can be set. Setting the resolution will clear the
-     * scale if it was set. Not setting a resolution or scale will default to
-     * using the fuel map resolution.
-     */
-    set resolution(res: number);
-    /**
-     * The resolution to use in the exported grid resolution. At most one of the
-     * resolution and scale can be set. Setting the resolution will clear the
-     * scale if it was set. Not setting a resolution or scale will default to
-     * using the fuel map resolution.
-     */
-    get resolution(): number;
-    /**
-     * Scale the exported grid from the fuel map grid. Positive scales will
-     * increase the resolution of the grid, negative values will decrease
-     * the resolution. At most one of this and the resolution can be set at once.
-     * Setting the scale will clear the resolution if it was set. Not setting
-     * a resolution or scale will default to using the fuel map resolution.
-     */
-    set scale(scl: number);
-    /**
-     * Scale the exported grid from the fuel map grid. Positive scales will
-     * increase the resolution of the grid, negative values will decrease
-     * the resolution. At most one of this and the resolution can be set at once.
-     * Setting the scale will clear the resolution if it was set. Not setting
-     * a resolution or scale will default to using the fuel map resolution.
-     */
-    get scale(): number;
-    /**
-     * Clear the resolution and scale values and allow the grid to be exported
-     * using the default fuel map resolution.
-     */
-    useFuelMap(): void;
-    /**
-     * Does this grid have a custom resolution or scale specified or will
-     * the default fuel map resolution be used for export.
-     * @returns True if the exported grid will use the default fuel map resolution.
-     */
-    isUseFuelMap(): boolean;
-    /**
-     * The location to use for the origin of the exported grid.
-     * One of this or origin must be set. The default will be to use
-     * the fuelmap origin.
-     */
-    set location(loc: LatLon);
-    /**
-     * The location to use for the origin of the exported grid.
-     * One of this or origin must be set. The default will be to use
-     * the fuelmap origin.
-     */
-    get location(): LatLon;
-    /**
-     * A predefined calculated origin to use for the exported grid. The
-     * default will be FUELMAP_ORIGIN. Only one of this and location can
-     * be set. If origin is set location will be cleared.
-     */
-    set origin(orig: Output_GridFile_Origin);
-    /**
-     * A predefined calculated origin to use for the exported grid. The
-     * default will be FUELMAP_ORIGIN. Only one of this and location can
-     * be set. If origin is set location will be cleared.
-     */
-    get origin(): Output_GridFile_Origin;
-}
 export declare class Output_GridFile {
     private static readonly PARAM_GRIDFILE;
     /**
@@ -2776,11 +2674,6 @@ export declare class Output_GridFile {
      * The name of a specific sub-scenario that the output is for (if it should be for a subscenario).
      */
     subScenarioName: string;
-    /**
-     * Optional values to set the scale/resolution and origin for the exported grid. Leave as null
-     * to use the default values.
-     */
-    gridOptions: Output_GridFile_Scale;
     /**
      * A list of export time overrides for different sub-scenarios that may be created
      * for the specified scenario.

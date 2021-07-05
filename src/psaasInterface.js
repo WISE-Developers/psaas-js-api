@@ -9,7 +9,7 @@
  * For an example see index.js.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Admin = exports.StopPriority = exports.StartJobWrapper = exports.PSaaS = exports.JobOptions = exports.LoadBalanceType = exports.UnitSettings = exports.MassAreaUnit = exports.IntensityUnit = exports.VelocityUnit = exports.CoordinateUnit = exports.AngleUnit = exports.PercentUnit = exports.EnergyUnit = exports.MassUnit = exports.PressureUnit = exports.TemperatureUnit = exports.VolumeUnit = exports.AreaUnit = exports.DistanceUnit = exports.TimeUnit = exports.GeoServerOutputStreamInfo = exports.MqttOutputStreamInfo = exports.OutputStreamInfo = exports.PSaaSOutputs = exports.StatsFile = exports.StatsFileType = exports.SummaryFile = exports.VectorFile = exports.PerimeterTimeOverride = exports.VectorFileType = exports.Output_GridFile = exports.Output_GridFile_Scale = exports.Output_GridFile_Origin = exports.ExportTimeOverride = exports.Output_GridFileCompression = exports.Output_GridFileInterpolation = exports.PSaaSInputs = exports.FuelOption = exports.FuelOptionType = exports.Scenario = exports.StationStream = exports.StreamOptions = exports.TimestepSettings = exports.TargetReference = exports.AssetReference = exports.LayerInfo = exports.LayerInfoOptions = exports.BurningConditions = exports.SinglePointIgnitionOptions = exports.MultiPointIgnitionOptions = exports.PolylineIgnitionOptions = exports.IgnitionReference = exports.TargetFile = exports.AssetFile = exports.AssetShapeType = exports.Ignition = exports.IgnitionType = exports.WeatherStation = exports.WeatherStream = exports.HFFMCMethod = exports.PSaaSInputsFiles = exports.FuelBreak = exports.FuelBreakType = exports.FuelPatch = exports.FromFuel = exports.FuelPatchType = exports.WeatherGrid = exports.WeatherGrid_GridFile = exports.WeatherGridType = exports.WeatherGridSector = exports.WeatherPatch = exports.WeatherPatch_WindDirection = exports.WeatherPatch_WindSpeed = exports.WeatherPatch_Precipitation = exports.WeatherPatch_RelativeHumidity = exports.WeatherPatch_Temperature = exports.WeatherPatchDetails = exports.WeatherPatchType = exports.WeatherPatchOperation = exports.GridFile = exports.GridFileType = exports.VersionInfo = void 0;
+exports.Admin = exports.StopPriority = exports.StartJobWrapper = exports.PSaaS = exports.JobOptions = exports.LoadBalanceType = exports.UnitSettings = exports.MassAreaUnit = exports.IntensityUnit = exports.VelocityUnit = exports.CoordinateUnit = exports.AngleUnit = exports.PercentUnit = exports.EnergyUnit = exports.MassUnit = exports.PressureUnit = exports.TemperatureUnit = exports.VolumeUnit = exports.AreaUnit = exports.DistanceUnit = exports.TimeUnit = exports.GeoServerOutputStreamInfo = exports.MqttOutputStreamInfo = exports.OutputStreamInfo = exports.PSaaSOutputs = exports.StatsFile = exports.StatsFileType = exports.SummaryFile = exports.VectorFile = exports.PerimeterTimeOverride = exports.VectorFileType = exports.Output_GridFile = exports.ExportTimeOverride = exports.Output_GridFileCompression = exports.Output_GridFileInterpolation = exports.PSaaSInputs = exports.FuelOption = exports.FuelOptionType = exports.Scenario = exports.StationStream = exports.StreamOptions = exports.TimestepSettings = exports.TargetReference = exports.AssetReference = exports.LayerInfo = exports.LayerInfoOptions = exports.BurningConditions = exports.SinglePointIgnitionOptions = exports.MultiPointIgnitionOptions = exports.PolylineIgnitionOptions = exports.IgnitionReference = exports.TargetFile = exports.AssetFile = exports.AssetShapeType = exports.Ignition = exports.IgnitionType = exports.WeatherStation = exports.WeatherStream = exports.HFFMCMethod = exports.PSaaSInputsFiles = exports.FuelBreak = exports.FuelBreakType = exports.FuelPatch = exports.FromFuel = exports.FuelPatchType = exports.WeatherGrid = exports.WeatherGrid_GridFile = exports.WeatherGridType = exports.WeatherGridSector = exports.WeatherPatch = exports.WeatherPatch_WindDirection = exports.WeatherPatch_WindSpeed = exports.WeatherPatch_Precipitation = exports.WeatherPatch_RelativeHumidity = exports.WeatherPatch_Temperature = exports.WeatherPatchDetails = exports.WeatherPatchType = exports.WeatherPatchOperation = exports.GridFile = exports.GridFileType = exports.VersionInfo = void 0;
 /** ignore this comment */
 const fs = require("fs");
 const luxon_1 = require("luxon");
@@ -4769,142 +4769,6 @@ class ExportTimeOverride {
     }
 }
 exports.ExportTimeOverride = ExportTimeOverride;
-/**
- * A collection of predefined calculated origins for exported grid files.
- */
-var Output_GridFile_Origin;
-(function (Output_GridFile_Origin) {
-    /**
-     * Use the origin given by the fuel map.
-     */
-    Output_GridFile_Origin[Output_GridFile_Origin["FUELMAP_ORIGIN"] = 0] = "FUELMAP_ORIGIN";
-    /**
-     * Use the lower left boundary of the bounding box of the fire perimeter.
-     */
-    Output_GridFile_Origin[Output_GridFile_Origin["PRECISE_PERIMETER"] = 1] = "PRECISE_PERIMETER";
-    /**
-     * Using the fuel map origin and the provided export resolution (will use the fuel map origin if not provided)
-     * calculate the closest even multiple of the grid to place the origin near the bounding box of the fire
-     * perimeter.
-     */
-    Output_GridFile_Origin[Output_GridFile_Origin["MINIMIZE_PERIMETER_CUSTOM"] = 2] = "MINIMIZE_PERIMETER_CUSTOM";
-    /**
-     * Using the fuel map origin and resolution calculate the closest even multiple of the grid
-     * to place the origin near the bounding box of the fire perimeter.
-     */
-    Output_GridFile_Origin[Output_GridFile_Origin["MINIMIZE_PERIMETER"] = 3] = "MINIMIZE_PERIMETER";
-    /**
-     * Use the center of the bounding box around the fire perimeter as the origin.
-     */
-    Output_GridFile_Origin[Output_GridFile_Origin["CENTER_PERIMETER"] = 4] = "CENTER_PERIMETER";
-})(Output_GridFile_Origin = exports.Output_GridFile_Origin || (exports.Output_GridFile_Origin = {}));
-/**
- * Options for scaling the underlying grid in an exported grid file.
- */
-class Output_GridFile_Scale {
-    constructor() {
-        this._resolution = null;
-        this._scale = null;
-        this._location = null;
-        this._origin = Output_GridFile_Origin.FUELMAP_ORIGIN;
-    }
-    /**
-     * The resolution to use in the exported grid resolution. At most one of the
-     * resolution and scale can be set. Setting the resolution will clear the
-     * scale if it was set. Not setting a resolution or scale will default to
-     * using the fuel map resolution.
-     */
-    set resolution(res) {
-        this._scale = null;
-        this._resolution = res;
-    }
-    /**
-     * The resolution to use in the exported grid resolution. At most one of the
-     * resolution and scale can be set. Setting the resolution will clear the
-     * scale if it was set. Not setting a resolution or scale will default to
-     * using the fuel map resolution.
-     */
-    get resolution() {
-        return this._resolution;
-    }
-    /**
-     * Scale the exported grid from the fuel map grid. Positive scales will
-     * increase the resolution of the grid, negative values will decrease
-     * the resolution. At most one of this and the resolution can be set at once.
-     * Setting the scale will clear the resolution if it was set. Not setting
-     * a resolution or scale will default to using the fuel map resolution.
-     */
-    set scale(scl) {
-        this._scale = scl;
-        this._resolution = null;
-    }
-    /**
-     * Scale the exported grid from the fuel map grid. Positive scales will
-     * increase the resolution of the grid, negative values will decrease
-     * the resolution. At most one of this and the resolution can be set at once.
-     * Setting the scale will clear the resolution if it was set. Not setting
-     * a resolution or scale will default to using the fuel map resolution.
-     */
-    get scale() {
-        return this._scale;
-    }
-    /**
-     * Clear the resolution and scale values and allow the grid to be exported
-     * using the default fuel map resolution.
-     */
-    useFuelMap() {
-        this._scale = null;
-        this._resolution = null;
-    }
-    /**
-     * Does this grid have a custom resolution or scale specified or will
-     * the default fuel map resolution be used for export.
-     * @returns True if the exported grid will use the default fuel map resolution.
-     */
-    isUseFuelMap() {
-        return this._scale == null || this._resolution == null;
-    }
-    /**
-     * The location to use for the origin of the exported grid.
-     * One of this or origin must be set. The default will be to use
-     * the fuelmap origin.
-     */
-    set location(loc) {
-        this._location = loc;
-        if (this._location == null) {
-            this._origin = Output_GridFile_Origin.FUELMAP_ORIGIN;
-        }
-        else {
-            this._origin = null;
-        }
-    }
-    /**
-     * The location to use for the origin of the exported grid.
-     * One of this or origin must be set. The default will be to use
-     * the fuelmap origin.
-     */
-    get location() {
-        return this._location;
-    }
-    /**
-     * A predefined calculated origin to use for the exported grid. The
-     * default will be FUELMAP_ORIGIN. Only one of this and location can
-     * be set. If origin is set location will be cleared.
-     */
-    set origin(orig) {
-        this._origin = orig !== null && orig !== void 0 ? orig : Output_GridFile_Origin.FUELMAP_ORIGIN;
-        this._location = null;
-    }
-    /**
-     * A predefined calculated origin to use for the exported grid. The
-     * default will be FUELMAP_ORIGIN. Only one of this and location can
-     * be set. If origin is set location will be cleared.
-     */
-    get origin() {
-        return this._origin;
-    }
-}
-exports.Output_GridFile_Scale = Output_GridFile_Scale;
 class Output_GridFile {
     constructor() {
         /**
@@ -4955,11 +4819,6 @@ class Output_GridFile {
          * The name of a specific sub-scenario that the output is for (if it should be for a subscenario).
          */
         this.subScenarioName = null;
-        /**
-         * Optional values to set the scale/resolution and origin for the exported grid. Leave as null
-         * to use the default values.
-         */
-        this.gridOptions = null;
         /**
          * A list of export time overrides for different sub-scenarios that may be created
          * for the specified scenario.
@@ -5277,26 +5136,6 @@ class Output_GridFile {
         }
         else {
             tmp = tmp + '|null';
-        }
-        if (this.gridOptions != null) {
-            if (this.gridOptions.resolution != null) {
-                tmp = tmp + `|res|${this.gridOptions.resolution}`;
-            }
-            else if (this.gridOptions.scale != null) {
-                tmp = tmp + `|scl|${this.gridOptions.scale}`;
-            }
-            else {
-                tmp = tmp + '|def';
-            }
-            if (this.gridOptions.location != null) {
-                tmp = tmp + `|loc|${this.gridOptions.location.latitude}|${this.gridOptions.location.longitude}`;
-            }
-            else {
-                tmp = tmp + `|loc|${this.gridOptions.origin}`;
-            }
-        }
-        else {
-            tmp = tmp + '|non';
         }
         builder.write(Output_GridFile.PARAM_GRIDFILE + psaasGlobals_1.SocketMsg.NEWLINE);
         builder.write(tmp + psaasGlobals_1.SocketMsg.NEWLINE);
