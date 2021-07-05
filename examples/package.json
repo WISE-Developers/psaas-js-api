@@ -1,6 +1,6 @@
 {
     "name": "psaas-js-api_examples",
-    "version": "6.2.6",
+    "version": "2021.07.00",
     "description": "PSaaS JS API",
     "author": "Heartland Software Solutions Inc.",
     "repository": {
@@ -16,7 +16,7 @@
         "socket.io": "^2.2.0",
         "protobufjs": "6.8.8",
         "npm-conf": "^1.1.3",
-        "psaas-js-api": "bitbucket:psaasredapp/psaas-js-api#working/20210501",
+        "psaas-js-api": "bitbucket:psaasredapp/psaas-js-api#v2021.07.00",
         "semver": "7.3.2"
     }
 }

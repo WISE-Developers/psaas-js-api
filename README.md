@@ -14,7 +14,7 @@ This module can be referenced from the package.json for your project. The depend
 {
     "name": "test-project",
     "dependencies": {
-        "psaas-js-api": "bitbucket:psaasredapp/psaas-js-api#v6.2.6.2_20201227"
+        "psaas-js-api": "bitbucket:psaasredapp/psaas-js-api#v2021.07.00"
     }
 }
 ```

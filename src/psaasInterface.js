@@ -24,8 +24,8 @@ class VersionInfo {
     }
 }
 exports.VersionInfo = VersionInfo;
-VersionInfo.version_info = '2021.05.01' /*/vers*/;
-VersionInfo.release_date = 'May 16, 2021' /*/rld*/;
+VersionInfo.version_info = '2021.07.00' /*/vers*/;
+VersionInfo.release_date = 'July 4, 2021' /*/rld*/;
 var GridFileType;
 (function (GridFileType) {
     GridFileType[GridFileType["NONE"] = -1] = "NONE";
