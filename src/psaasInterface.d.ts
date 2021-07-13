@@ -2270,7 +2270,8 @@ export declare enum FuelOptionType {
     GRASS_CURING = 1,
     PERCENT_CONIFER = 2,
     PERCENT_DEAD_FIR = 3,
-    CROWN_BASE_HEIGHT = 4
+    CROWN_BASE_HEIGHT = 4,
+    CROWN_FUEL_LOAD = 5
 }
 /**
  * Stores options for various fuel types including default grass fuel load,
@@ -3594,10 +3595,16 @@ export declare class PSaaS extends IPSaaSSerializable {
     setGrassFuelLoad(fuel: "O-1a" | "O-1b" | "NZ-2" | "NZ-15" | "NZ-30" | "NZ-31" | "NZ-32" | "NZ-33" | "NZ-40" | "NZ-41" | "NZ-43" | "NZ-46" | "NZ-50" | "NZ-53" | "NZ-62" | "NZ-63" | "NZ-65", value: number): void;
     /**
      * Set the crown base height.
-     * @param fuel The fuel type to set the grass fuel load for. Must be C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
+     * @param fuel The fuel type to set the crown base height for. Must be C-1, C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
      * @param value The crown base height (m).
      */
-    setCrownBaseHeight(fuel: "C-6" | "NZ-60" | "NZ-61" | "NZ-66" | "NZ-67" | "NZ-71", value: number): void;
+    setCrownBaseHeight(fuel: "C-1" | "C-6" | "NZ-60" | "NZ-61" | "NZ-66" | "NZ-67" | "NZ-71", value: number): void;
+    /**
+     * Set the crown fuel load in kg/m^2.
+     * @param fuel The fuel type to set the crown fuel load for. Must be C-1, C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
+     * @param value The crown fuel load (kg/m^2).
+     */
+    setCrownFuelLoad(fuel: "C-1" | "C-6" | "NZ-60" | "NZ-61" | "NZ-66" | "NZ-67" | "NZ-71", value: number): void;
     /**
      * Remove a FuelOption object from the input fuel options.
      * @param fuelOption The FuelOption object to remove

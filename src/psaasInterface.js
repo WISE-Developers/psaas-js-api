@@ -4366,6 +4366,7 @@ var FuelOptionType;
     FuelOptionType[FuelOptionType["PERCENT_CONIFER"] = 2] = "PERCENT_CONIFER";
     FuelOptionType[FuelOptionType["PERCENT_DEAD_FIR"] = 3] = "PERCENT_DEAD_FIR";
     FuelOptionType[FuelOptionType["CROWN_BASE_HEIGHT"] = 4] = "CROWN_BASE_HEIGHT";
+    FuelOptionType[FuelOptionType["CROWN_FUEL_LOAD"] = 5] = "CROWN_FUEL_LOAD";
 })(FuelOptionType = exports.FuelOptionType || (exports.FuelOptionType = {}));
 /**
  * Stores options for various fuel types including default grass fuel load,
@@ -4405,6 +4406,11 @@ class FuelOption {
         else if (this.optionType == FuelOptionType.PERCENT_DEAD_FIR) {
             if (this.value < 0.0 || this.value > 100.0) {
                 errs.push(new psaasGlobals_1.ValidationError("value", "An invalid percent dead fir has been specified.", this));
+            }
+        }
+        else if (this.optionType == FuelOptionType.CROWN_FUEL_LOAD) {
+            if (this.value < 0.0) {
+                errs.push(new psaasGlobals_1.ValidationError("value", "An invalid crown fuel load has been specified.", this));
             }
         }
         return errs;
@@ -6755,13 +6761,25 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Set the crown base height.
-     * @param fuel The fuel type to set the grass fuel load for. Must be C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
+     * @param fuel The fuel type to set the crown base height for. Must be C-1, C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
      * @param value The crown base height (m).
      */
     setCrownBaseHeight(fuel, value) {
         let option = new FuelOption();
         option.fuelType = fuel;
         option.optionType = FuelOptionType.CROWN_BASE_HEIGHT;
+        option.value = value;
+        this.inputs.fuelOptions.push(option);
+    }
+    /**
+     * Set the crown fuel load in kg/m^2.
+     * @param fuel The fuel type to set the crown fuel load for. Must be C-1, C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
+     * @param value The crown fuel load (kg/m^2).
+     */
+    setCrownFuelLoad(fuel, value) {
+        let option = new FuelOption();
+        option.fuelType = fuel;
+        option.optionType = FuelOptionType.CROWN_FUEL_LOAD;
         option.value = value;
         this.inputs.fuelOptions.push(option);
     }
@@ -6867,7 +6885,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a landscape fuel patch to the job.
-     * @param fromFuel The fuel to change from. Can either be one of the rules defined in FuelPatch (FROM_FUEL_*) or the name of a fuel.
+     * @param fromFuel The fuel to change from. Can either be one of the {@link FromFuel} wildcard rules or the name of a fuel.
      * @param toFuel The name of the fuel to change to.
      * @param comment An optional user created comment to attach to the fuel patch.
      */
