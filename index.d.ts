@@ -7,3 +7,4 @@ export * as fwi from "./src/fwi";
 export * as psaas from "./src/psaasInterface";
 export * as solar from "./src/solar";
 export * as weather from "./src/weather";
+export * as fuels from "./src/fuels";

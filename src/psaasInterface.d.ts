@@ -10,6 +10,7 @@
 /// <reference types="node" />
 import { DateTime } from "luxon";
 import * as net from "net";
+import { FuelDefinition } from "./fuels";
 import { LatLon, Duration, FGMOptions, FBPOptions, FMCOptions, FWIOptions, Timezone, VectorMetadata, SummaryOutputs, IPSaaSSerializable, AssetOperation, GlobalStatistics, ValidationError, TimeRange } from "./psaasGlobals";
 export declare class VersionInfo {
     static readonly version_info: string;
@@ -3561,6 +3562,13 @@ export declare class PSaaS extends IPSaaSSerializable {
      * @param filename
      */
     setLutFile(filename: string): void;
+    /**
+     * Set the LUT using an array of fuel definitions. Replaces any existing LUT.
+     * @param fuels A list of fuel definitions to use as the LUT table.
+     * @param filename An optional filename that will be used as a placeholder in the FGM for the LUT.
+     * @returns False if the fuel definitions were not able to be added, the attachment name if setting the LUT was successful.
+     */
+    setLutDefinition(fuels: Array<FuelDefinition>, filename?: string): string | boolean;
     /**
      * Unset the look up table.
      */

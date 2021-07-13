@@ -24,8 +24,8 @@ class VersionInfo {
     }
 }
 exports.VersionInfo = VersionInfo;
-VersionInfo.version_info = '2021.07.00' /*/vers*/;
-VersionInfo.release_date = 'July 4, 2021' /*/rld*/;
+VersionInfo.version_info = '2021.07.01' /*/vers*/;
+VersionInfo.release_date = 'July 13, 2021' /*/rld*/;
 var GridFileType;
 (function (GridFileType) {
     GridFileType[GridFileType["NONE"] = -1] = "NONE";
@@ -6700,6 +6700,25 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
      */
     setLutFile(filename) {
         this.inputs.files.lutFile = filename;
+    }
+    /**
+     * Set the LUT using an array of fuel definitions. Replaces any existing LUT.
+     * @param fuels A list of fuel definitions to use as the LUT table.
+     * @param filename An optional filename that will be used as a placeholder in the FGM for the LUT.
+     * @returns False if the fuel definitions were not able to be added, the attachment name if setting the LUT was successful.
+     */
+    setLutDefinition(fuels, filename = "api_fuel_def.csv") {
+        let s = "API_FUEL_DEF";
+        for (const fuel of fuels) {
+            s += "|API_FUEL|";
+            s += fuel.toString();
+        }
+        const att = this.addAttachment(filename, s);
+        if (!att) {
+            throw new Error("Invalid LUT definition. Unable to attach to job.");
+        }
+        this.setLutFile('' + att);
+        return att;
     }
     /**
      * Unset the look up table.
