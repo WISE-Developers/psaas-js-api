@@ -3662,7 +3662,7 @@ export declare class PSaaS extends IPSaaSSerializable {
     removeGridFile(gridFile: GridFile): boolean;
     /**
      * Add a landscape fuel patch to the job.
-     * @param fromFuel The fuel to change from. Can either be one of the rules defined in FuelPatch (FROM_FUEL_*) or the name of a fuel.
+     * @param fromFuel The fuel to change from. Can either be one of the {@link FromFuel} wildcard rules or the name of a fuel.
      * @param toFuel The name of the fuel to change to.
      * @param comment An optional user created comment to attach to the fuel patch.
      */
