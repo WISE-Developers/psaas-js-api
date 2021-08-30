@@ -535,7 +535,7 @@ export declare class HSLColor implements Color {
     stream(): string;
 }
 /**
- * The definition for a fuel type. Can be constructed from any combination of paramters,
+ * The definition for a fuel type. Can be constructed from any combination of parameters,
  * even if potentially not valid for a real fuel type.
  */
 export declare class FuelDefinition {

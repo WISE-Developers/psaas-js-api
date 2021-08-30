@@ -539,7 +539,7 @@ class HSLColor {
 }
 exports.HSLColor = HSLColor;
 /**
- * The definition for a fuel type. Can be constructed from any combination of paramters,
+ * The definition for a fuel type. Can be constructed from any combination of parameters,
  * even if potentially not valid for a real fuel type.
  */
 class FuelDefinition {

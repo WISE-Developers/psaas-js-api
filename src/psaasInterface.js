@@ -6694,7 +6694,8 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         this.inputs.files.projFile = "";
     }
     /**
-     * Set the look up table. This file is required.
+     * Set the look up table. Replaces any existing LUT. One of this and {@link setLutDefinition} must be used but they
+     * cannot be used together.
      * An exception will be thrown if the file does not exist.
      * @param filename
      */
@@ -6702,7 +6703,8 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         this.inputs.files.lutFile = filename;
     }
     /**
-     * Set the LUT using an array of fuel definitions. Replaces any existing LUT.
+     * Set the LUT using an array of fuel definitions. Replaces any existing LUT. One of this and {@link setLutFile} must be used but they
+     * cannot be used together.
      * @param fuels A list of fuel definitions to use as the LUT table.
      * @param filename An optional filename that will be used as a placeholder in the FGM for the LUT.
      * @returns False if the fuel definitions were not able to be added, the attachment name if setting the LUT was successful.
