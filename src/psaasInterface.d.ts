@@ -10,6 +10,7 @@
 /// <reference types="node" />
 import { DateTime } from "luxon";
 import * as net from "net";
+import { FuelDefinition } from "./fuels";
 import { LatLon, Duration, FGMOptions, FBPOptions, FMCOptions, FWIOptions, Timezone, VectorMetadata, SummaryOutputs, IPSaaSSerializable, AssetOperation, GlobalStatistics, ValidationError, TimeRange } from "./psaasGlobals";
 export declare class VersionInfo {
     static readonly version_info: string;
@@ -2270,7 +2271,8 @@ export declare enum FuelOptionType {
     GRASS_CURING = 1,
     PERCENT_CONIFER = 2,
     PERCENT_DEAD_FIR = 3,
-    CROWN_BASE_HEIGHT = 4
+    CROWN_BASE_HEIGHT = 4,
+    CROWN_FUEL_LOAD = 5
 }
 /**
  * Stores options for various fuel types including default grass fuel load,
@@ -3555,11 +3557,20 @@ export declare class PSaaS extends IPSaaSSerializable {
      */
     unsetProjectionFile(): void;
     /**
-     * Set the look up table. This file is required.
+     * Set the look up table. Replaces any existing LUT. One of this and {@link setLutDefinition} must be used but they
+     * cannot be used together.
      * An exception will be thrown if the file does not exist.
      * @param filename
      */
     setLutFile(filename: string): void;
+    /**
+     * Set the LUT using an array of fuel definitions. Replaces any existing LUT. One of this and {@link setLutFile} must be used but they
+     * cannot be used together.
+     * @param fuels A list of fuel definitions to use as the LUT table.
+     * @param filename An optional filename that will be used as a placeholder in the FGM for the LUT.
+     * @returns False if the fuel definitions were not able to be added, the attachment name if setting the LUT was successful.
+     */
+    setLutDefinition(fuels: Array<FuelDefinition>, filename?: string): string | boolean;
     /**
      * Unset the look up table.
      */
@@ -3594,10 +3605,16 @@ export declare class PSaaS extends IPSaaSSerializable {
     setGrassFuelLoad(fuel: "O-1a" | "O-1b" | "NZ-2" | "NZ-15" | "NZ-30" | "NZ-31" | "NZ-32" | "NZ-33" | "NZ-40" | "NZ-41" | "NZ-43" | "NZ-46" | "NZ-50" | "NZ-53" | "NZ-62" | "NZ-63" | "NZ-65", value: number): void;
     /**
      * Set the crown base height.
-     * @param fuel The fuel type to set the grass fuel load for. Must be C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
+     * @param fuel The fuel type to set the crown base height for. Must be C-1, C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
      * @param value The crown base height (m).
      */
-    setCrownBaseHeight(fuel: "C-6" | "NZ-60" | "NZ-61" | "NZ-66" | "NZ-67" | "NZ-71", value: number): void;
+    setCrownBaseHeight(fuel: "C-1" | "C-6" | "NZ-60" | "NZ-61" | "NZ-66" | "NZ-67" | "NZ-71", value: number): void;
+    /**
+     * Set the crown fuel load in kg/m^2.
+     * @param fuel The fuel type to set the crown fuel load for. Must be C-1, C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
+     * @param value The crown fuel load (kg/m^2).
+     */
+    setCrownFuelLoad(fuel: "C-1" | "C-6" | "NZ-60" | "NZ-61" | "NZ-66" | "NZ-67" | "NZ-71", value: number): void;
     /**
      * Remove a FuelOption object from the input fuel options.
      * @param fuelOption The FuelOption object to remove
@@ -3662,7 +3679,7 @@ export declare class PSaaS extends IPSaaSSerializable {
     removeGridFile(gridFile: GridFile): boolean;
     /**
      * Add a landscape fuel patch to the job.
-     * @param fromFuel The fuel to change from. Can either be one of the rules defined in FuelPatch (FROM_FUEL_*) or the name of a fuel.
+     * @param fromFuel The fuel to change from. Can either be one of the {@link FromFuel} wildcard rules or the name of a fuel.
      * @param toFuel The name of the fuel to change to.
      * @param comment An optional user created comment to attach to the fuel patch.
      */

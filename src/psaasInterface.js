@@ -24,8 +24,8 @@ class VersionInfo {
     }
 }
 exports.VersionInfo = VersionInfo;
-VersionInfo.version_info = '2021.07.00' /*/vers*/;
-VersionInfo.release_date = 'July 4, 2021' /*/rld*/;
+VersionInfo.version_info = '2021.07.01' /*/vers*/;
+VersionInfo.release_date = 'July 13, 2021' /*/rld*/;
 var GridFileType;
 (function (GridFileType) {
     GridFileType[GridFileType["NONE"] = -1] = "NONE";
@@ -4366,6 +4366,7 @@ var FuelOptionType;
     FuelOptionType[FuelOptionType["PERCENT_CONIFER"] = 2] = "PERCENT_CONIFER";
     FuelOptionType[FuelOptionType["PERCENT_DEAD_FIR"] = 3] = "PERCENT_DEAD_FIR";
     FuelOptionType[FuelOptionType["CROWN_BASE_HEIGHT"] = 4] = "CROWN_BASE_HEIGHT";
+    FuelOptionType[FuelOptionType["CROWN_FUEL_LOAD"] = 5] = "CROWN_FUEL_LOAD";
 })(FuelOptionType = exports.FuelOptionType || (exports.FuelOptionType = {}));
 /**
  * Stores options for various fuel types including default grass fuel load,
@@ -4405,6 +4406,11 @@ class FuelOption {
         else if (this.optionType == FuelOptionType.PERCENT_DEAD_FIR) {
             if (this.value < 0.0 || this.value > 100.0) {
                 errs.push(new psaasGlobals_1.ValidationError("value", "An invalid percent dead fir has been specified.", this));
+            }
+        }
+        else if (this.optionType == FuelOptionType.CROWN_FUEL_LOAD) {
+            if (this.value < 0.0) {
+                errs.push(new psaasGlobals_1.ValidationError("value", "An invalid crown fuel load has been specified.", this));
             }
         }
         return errs;
@@ -6688,12 +6694,33 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
         this.inputs.files.projFile = "";
     }
     /**
-     * Set the look up table. This file is required.
+     * Set the look up table. Replaces any existing LUT. One of this and {@link setLutDefinition} must be used but they
+     * cannot be used together.
      * An exception will be thrown if the file does not exist.
      * @param filename
      */
     setLutFile(filename) {
         this.inputs.files.lutFile = filename;
+    }
+    /**
+     * Set the LUT using an array of fuel definitions. Replaces any existing LUT. One of this and {@link setLutFile} must be used but they
+     * cannot be used together.
+     * @param fuels A list of fuel definitions to use as the LUT table.
+     * @param filename An optional filename that will be used as a placeholder in the FGM for the LUT.
+     * @returns False if the fuel definitions were not able to be added, the attachment name if setting the LUT was successful.
+     */
+    setLutDefinition(fuels, filename = "api_fuel_def.csv") {
+        let s = "API_FUEL_DEF";
+        for (const fuel of fuels) {
+            s += "|API_FUEL|";
+            s += fuel.toString();
+        }
+        const att = this.addAttachment(filename, s);
+        if (!att) {
+            throw new Error("Invalid LUT definition. Unable to attach to job.");
+        }
+        this.setLutFile('' + att);
+        return att;
     }
     /**
      * Unset the look up table.
@@ -6755,13 +6782,25 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Set the crown base height.
-     * @param fuel The fuel type to set the grass fuel load for. Must be C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
+     * @param fuel The fuel type to set the crown base height for. Must be C-1, C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
      * @param value The crown base height (m).
      */
     setCrownBaseHeight(fuel, value) {
         let option = new FuelOption();
         option.fuelType = fuel;
         option.optionType = FuelOptionType.CROWN_BASE_HEIGHT;
+        option.value = value;
+        this.inputs.fuelOptions.push(option);
+    }
+    /**
+     * Set the crown fuel load in kg/m^2.
+     * @param fuel The fuel type to set the crown fuel load for. Must be C-1, C-6, NZ-60, NZ-61, NZ-66, NZ-67, or NZ-71.
+     * @param value The crown fuel load (kg/m^2).
+     */
+    setCrownFuelLoad(fuel, value) {
+        let option = new FuelOption();
+        option.fuelType = fuel;
+        option.optionType = FuelOptionType.CROWN_FUEL_LOAD;
         option.value = value;
         this.inputs.fuelOptions.push(option);
     }
@@ -6867,7 +6906,7 @@ class PSaaS extends psaasGlobals_1.IPSaaSSerializable {
     }
     /**
      * Add a landscape fuel patch to the job.
-     * @param fromFuel The fuel to change from. Can either be one of the rules defined in FuelPatch (FROM_FUEL_*) or the name of a fuel.
+     * @param fromFuel The fuel to change from. Can either be one of the {@link FromFuel} wildcard rules or the name of a fuel.
      * @param toFuel The name of the fuel to change to.
      * @param comment An optional user created comment to attach to the fuel patch.
      */

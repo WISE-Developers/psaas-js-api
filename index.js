@@ -9,5 +9,6 @@ module.exports = {
     fwi: require('./src/fwi'),
     psaas: require('./src/psaasInterface'),
     solar: require('./src/solar'),
-    weather: require('./src/weather')
+    weather: require('./src/weather'),
+    fuels: require('./src/fuels')
 }

@@ -16,7 +16,7 @@
         "socket.io": "^2.2.0",
         "protobufjs": "6.8.8",
         "npm-conf": "^1.1.3",
-        "psaas-js-api": "bitbucket:psaasredapp/psaas-js-api#v2021.07.00",
+        "psaas-js-api": "bitbucket:psaasredapp/psaas-js-api#working/fuel_upgrade",
         "semver": "7.3.2"
     }
 }
