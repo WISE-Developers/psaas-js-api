@@ -4896,9 +4896,7 @@ class Output_GridFile {
         this._startOutputTime = luxon_1.DateTime.fromISO(value);
     }
     /**
-     * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
-     * CROWN_FUEL_CONSUMED, or RADIATIVE_POWER the {@link Output_GridFileInterpolation interpolation method} must be DISCRETIZED.
-     * Setting the output statistic to any of those values will automatically set the interpolation method.
+     * The statistic that should be output (required).
      *
      * Valid values:
      * <ul>
@@ -4966,9 +4964,7 @@ class Output_GridFile {
         return this._statistic;
     }
     /**
-     * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
-     * CROWN_FUEL_CONSUMED, or RADIATIVE_POWER the {@link Output_GridFileInterpolation interpolation method} must be DISCRETIZED.
-     * Setting the output statistic to any of those values will automatically set the interpolation method.
+     * The statistic that should be output (required).
      *
      * Valid values:
      * <ul>
@@ -5034,10 +5030,6 @@ class Output_GridFile {
      */
     set statistic(value) {
         this._statistic = value;
-        if (value === psaasGlobals_1.GlobalStatistics.TOTAL_FUEL_CONSUMED || value === psaasGlobals_1.GlobalStatistics.SURFACE_FUEL_CONSUMED ||
-            value === psaasGlobals_1.GlobalStatistics.CROWN_FUEL_CONSUMED || value === psaasGlobals_1.GlobalStatistics.RADIATIVE_POWER) {
-            this.interpMethod = Output_GridFileInterpolation.DISCRETIZED;
-        }
     }
     add_subScenarioOverrideTimes(add) {
         this.subScenarioOverrideTimes.push(add);
@@ -5091,12 +5083,6 @@ class Output_GridFile {
             this.statistic != psaasGlobals_1.GlobalStatistics.FUEL_LOAD_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.CFL_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.GRASSPHENOLOGY_MAP &&
             this.statistic != psaasGlobals_1.GlobalStatistics.ROSVECTOR_MAP && this.statistic != psaasGlobals_1.GlobalStatistics.DIRVECTOR_MAP) {
             errs.push(new psaasGlobals_1.ValidationError("statistic", "Invalid statistic specified for grid export.", this));
-        }
-        //catch an error where the interpolation method is restricted for the output statistic
-        else if ((this.statistic === psaasGlobals_1.GlobalStatistics.TOTAL_FUEL_CONSUMED || this.statistic === psaasGlobals_1.GlobalStatistics.SURFACE_FUEL_CONSUMED ||
-            this.statistic === psaasGlobals_1.GlobalStatistics.CROWN_FUEL_CONSUMED || this.statistic === psaasGlobals_1.GlobalStatistics.RADIATIVE_POWER) &&
-            this.interpMethod !== Output_GridFileInterpolation.DISCRETIZED) {
-            errs.push(new psaasGlobals_1.ValidationError("interpMethod", "Interpolation method must be discretized.", this));
         }
         let subscenarioErrs = new Array();
         for (let i = 0; i < this.subScenarioOverrideTimes.length; i++) {

@@ -2506,9 +2506,7 @@ export declare class Output_GridFile {
     set startOutputTime(value: string);
     private _statistic;
     /**
-     * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
-     * CROWN_FUEL_CONSUMED, or RADIATIVE_POWER the {@link Output_GridFileInterpolation interpolation method} must be DISCRETIZED.
-     * Setting the output statistic to any of those values will automatically set the interpolation method.
+     * The statistic that should be output (required).
      *
      * Valid values:
      * <ul>
@@ -2574,9 +2572,7 @@ export declare class Output_GridFile {
      */
     get statistic(): GlobalStatistics;
     /**
-     * The statistic that should be output (required). If the statistic is TOTAL_FUEL_CONSUMED, SURFACE_FUEL_CONSUMED,
-     * CROWN_FUEL_CONSUMED, or RADIATIVE_POWER the {@link Output_GridFileInterpolation interpolation method} must be DISCRETIZED.
-     * Setting the output statistic to any of those values will automatically set the interpolation method.
+     * The statistic that should be output (required).
      *
      * Valid values:
      * <ul>
