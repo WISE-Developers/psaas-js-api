@@ -10,13 +10,13 @@
         "url": "bitbucket:psaasredapp/psaas-js-api"
     },
     "dependencies": {
-        "luxon": "latest",
-        "mqtt": "latest",
-        "npm-conf": "latest",
-        "protobufjs": "latest",
-        "readline": "latest",
-        "replace-in-file": "latest",
-        "socket.io": "latest"
+        "luxon": "^2.1.1",
+        "mqtt": "^4.2.8",
+        "npm-conf": "^1.1.3",
+        "protobufjs": "^6.11.2",
+        "readline": "^1.3.0",
+        "replace-in-file": "^6.3.2",
+        "socket.io": "^4.4.0"
     },
     "config": {
         "job_directory": "C:\\jobs"
